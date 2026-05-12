@@ -3,6 +3,13 @@
 //  app.js — lógica completa + sincronização em tempo real
 // ══════════════════════════════════════════════════════
 
+// ── SENHA DO CONFERENTE ────────────────────────────────
+const CONF_PASSWORD = '1234';   // ← altere aqui se desejar
+
+// ── CONTROLE DE ACESSO E CHECKLIST ────────────────────
+let confUnlocked   = false;   // true após senha correta
+let checklistDone  = false;   // true após checklist concluído no turno
+
 // ── PRODUTOS ─────────────────────────────────────────
 const PRODUCTS = [
   { codigo: 347, descricao: "SUKITA PET 1L CAIXA C/12" },
@@ -12,7 +19,7 @@ const PRODUCTS = [
 
 // ── STATE LOCAL ───────────────────────────────────────
 let S = {
-  tarefas:    [],          // fonte de verdade vem do Firestore quando online
+  tarefas:    [],
   operadores: ["CARLOS", "JORGE", "MARCOS", "FABIO"],
   conferentes:["ANA", "ROBERTO", "PATRICIA"],
   selProd:    null,
@@ -23,15 +30,13 @@ let S = {
 const FB_KEY = 'pk_firebase_config';
 let fbApp      = null;
 let fbDb       = null;
-let fbUnsub    = null;   // cancela o listener onSnapshot quando necessário
+let fbUnsub    = null;
 
-/** Lê config salvo no localStorage */
 function loadFbConfig() {
   try { return JSON.parse(localStorage.getItem(FB_KEY) || 'null'); }
   catch(e) { return null; }
 }
 
-/** Preenche o formulário com o config salvo */
 function populateFbForm() {
   const cfg = loadFbConfig();
   if (!cfg) return;
@@ -46,7 +51,6 @@ function populateFbForm() {
   });
 }
 
-/** Salva config no localStorage e inicializa Firebase */
 function saveFbConfig() {
   const cfg = {
     apiKey:            document.getElementById('fb-apiKey')?.value.trim(),
@@ -57,22 +61,17 @@ function saveFbConfig() {
     appId:             document.getElementById('fb-appId')?.value.trim(),
     measurementId:     document.getElementById('fb-measurementId')?.value.trim(),
   };
-
   if (!cfg.apiKey || !cfg.projectId || !cfg.appId) {
-    showFbResult('❌ Preencha ao menos: API Key, Project ID e App ID', 'err');
-    return;
+    showFbResult('❌ Preencha ao menos: API Key, Project ID e App ID', 'err'); return;
   }
   if (!cfg.apiKey.startsWith('AIza')) {
-    showFbResult('❌ API Key inválida — deve começar com "AIza..."', 'err');
-    return;
+    showFbResult('❌ API Key inválida — deve começar com "AIza..."', 'err'); return;
   }
-
   localStorage.setItem(FB_KEY, JSON.stringify(cfg));
   toast('✅ Config Firebase salva!');
   initFirebase(cfg);
 }
 
-/** Remove config salvo */
 function clearFbConfig() {
   if (!confirm('Remover configuração do Firebase?')) return;
   if (fbUnsub) { fbUnsub(); fbUnsub = null; }
@@ -84,19 +83,13 @@ function clearFbConfig() {
   toast('Config removida', true);
 }
 
-/** Inicializa o Firebase e arranca a sincronização em tempo real */
-async function initFirebase(cfg) {
+function initFirebase(cfg) {
   try {
-    // Cancela listener anterior se existir
     if (fbUnsub) { fbUnsub(); fbUnsub = null; }
-
-    // IMPORTANTE: aguarda o delete completo antes de reinicializar
-    if (firebase.apps.length) {
-      await Promise.all(firebase.apps.map(a => a.delete()));
-    }
+    if (firebase.apps.length) { firebase.apps.forEach(a => a.delete()); }
     fbApp = firebase.initializeApp(cfg);
     fbDb  = firebase.firestore();
-
+    fbDb.enablePersistence({ synchronizeTabs: true }).catch(() => {});
     setFbIndicator('connecting');
     updateSettingsToggle(false);
     startRealtimeSync();
@@ -106,27 +99,16 @@ async function initFirebase(cfg) {
   }
 }
 
-/**
- * Liga o listener onSnapshot na coleção "tarefas".
- * Qualquer mudança feita em QUALQUER dispositivo reflete aqui automaticamente.
- */
 function startRealtimeSync() {
   if (!fbDb) return;
-
   fbUnsub = fbDb.collection('tarefas')
     .orderBy('criadoEm', 'asc')
     .onSnapshot(
       snap => {
-        // Substitui a lista local pela versão do Firestore
         S.tarefas = snap.docs.map(d => ({ _docId: d.id, ...d.data() }));
-
-        // Ajusta o nextId para evitar colisões ao criar tarefas offline
         const maxId = S.tarefas.reduce((m, t) => Math.max(m, t.id || 0), 0);
         if (maxId >= S.nextId) S.nextId = maxId + 1;
-
-        save();          // mantém cópia local como fallback offline
-        renderAll();
-
+        save(); renderAll();
         setFbIndicator('online');
         updateSettingsToggle(true);
       },
@@ -141,7 +123,6 @@ function startRealtimeSync() {
     );
 }
 
-/** Testa a conexão tentando acessar o Firestore */
 async function testFbConnection() {
   saveFbConfig();
   if (!fbDb) return;
@@ -162,19 +143,15 @@ async function testFbConnection() {
 }
 
 // ══════════════════════════════════════════════════════
-//  FIRESTORE — escrita de tarefas (sincronizadas)
+//  FIRESTORE — escrita
 // ══════════════════════════════════════════════════════
-
-/** Salva/atualiza uma tarefa no Firestore */
 async function fbSaveTask(task) {
-  if (!fbDb) return;   // sem Firebase, já foi salvo localmente em save()
+  if (!fbDb) return;
   try {
     const { _docId, ...data } = task;
     if (_docId) {
-      // Atualiza documento existente
       await fbDb.collection('tarefas').doc(_docId).set(data);
     } else {
-      // Cria novo documento e guarda o ID gerado
       const ref = await fbDb.collection('tarefas').add(data);
       task._docId = ref.id;
     }
@@ -183,7 +160,6 @@ async function fbSaveTask(task) {
   }
 }
 
-/** Remove uma tarefa do Firestore */
 async function fbDeleteTask(task) {
   if (!fbDb || !task._docId) return;
   try {
@@ -193,54 +169,42 @@ async function fbDeleteTask(task) {
   }
 }
 
-/** Também grava na coleção "registros" quando finaliza (para o relatório histórico) */
 async function fbPushToReport(task) {
   if (!fbDb) return;
   try {
     await fbDb.collection('registros').add({
-      id:           task.id,
-      codigo:       task.codigo,
-      descricao:    task.descricao,
-      quantidade:   task.quantidade,
-      conferente:   task.conferente,
-      operador:     task.operador,
-      criadoEm:     task.criadoEm,
-      iniciadoEm:   task.iniciadoEm,
-      finalizadoEm: task.finalizadoEm,
-      duracaoMin:   task.duracaoMin,
-      enviadoEm:    new Date().toISOString()
+      id: task.id, codigo: task.codigo, descricao: task.descricao,
+      quantidade: task.quantidade, conferente: task.conferente,
+      operador: task.operador, criadoEm: task.criadoEm,
+      iniciadoEm: task.iniciadoEm, finalizadoEm: task.finalizadoEm,
+      duracaoMin: task.duracaoMin, enviadoEm: new Date().toISOString()
     });
-  } catch(e) {
-    // silencioso — não crítico
-  }
+  } catch(e) {}
 }
 
 // ══════════════════════════════════════════════════════
-//  RELATÓRIO — busca da coleção "registros"
+//  RELATÓRIO
 // ══════════════════════════════════════════════════════
 async function pullReport() {
   const area = document.getElementById('report-area');
   if (!fbDb) {
-    area.innerHTML = '<div class="empty"><div class="ico">🔥</div>Configure o Firebase primeiro</div>';
-    return;
+    area.innerHTML = '<div class="empty"><div class="ico">🔥</div>Configure o Firebase primeiro</div>'; return;
   }
   area.innerHTML = '<div class="fb-msg fb-msg-load">⏳ Buscando registros no Firebase...</div>';
   try {
     const snap = await fbDb.collection('registros').orderBy('finalizadoEm','desc').limit(100).get();
     if (snap.empty) {
-      area.innerHTML = '<div class="empty"><div class="ico">📭</div>Nenhum registro encontrado no Firebase</div>';
-      return;
+      area.innerHTML = '<div class="empty"><div class="ico">📭</div>Nenhum registro encontrado no Firebase</div>'; return;
     }
-    const records  = snap.docs.map(d => d.data());
-    const hoje     = new Date().toLocaleDateString('pt-BR');
-    const todayR   = records.filter(r => r.finalizadoEm &&
+    const records = snap.docs.map(d => d.data());
+    const hoje    = new Date().toLocaleDateString('pt-BR');
+    const todayR  = records.filter(r => r.finalizadoEm &&
       new Date(r.finalizadoEm).toLocaleDateString('pt-BR') === hoje);
-    const show     = todayR.length ? todayR : records.slice(0, 30);
-    const totalPal = show.reduce((s,r) => s + (r.quantidade||0), 0);
-    const comDur   = show.filter(r => r.duracaoMin);
-    const avgMin   = comDur.length
-      ? comDur.reduce((s,r) => s + r.duracaoMin/r.quantidade, 0) / comDur.length
-      : null;
+    const show    = todayR.length ? todayR : records.slice(0, 30);
+    const totalPal= show.reduce((s,r) => s + (r.quantidade||0), 0);
+    const comDur  = show.filter(r => r.duracaoMin);
+    const avgMin  = comDur.length
+      ? comDur.reduce((s,r) => s + r.duracaoMin/r.quantidade, 0) / comDur.length : null;
 
     area.innerHTML = `
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
@@ -344,8 +308,33 @@ function save() { localStorage.setItem('pk2_s', JSON.stringify(S)); }
 })();
 
 // ══════════════════════════════════════════════════════
-//  TABS E NAVEGAÇÃO
+//  NAVEGAÇÃO — TABS COM CONTROLE DE ACESSO
 // ══════════════════════════════════════════════════════
+
+/** Chamado ao clicar na aba Conferente */
+function requestConfTab() {
+  if (confUnlocked) {
+    goTab('conf');
+    return;
+  }
+  // Abre modal de senha
+  document.getElementById('modal-senha').style.display = 'flex';
+  document.getElementById('inp-senha').value = '';
+  document.getElementById('senha-erro').style.display = 'none';
+  setTimeout(() => document.getElementById('inp-senha').focus(), 100);
+}
+
+/** Chamado ao clicar na aba Empilhador */
+function requestEmpTab() {
+  if (!checklistDone) {
+    // Reseta e abre o checklist
+    resetChecklist();
+    document.getElementById('modal-checklist').style.display = 'flex';
+    return;
+  }
+  goTab('emp');
+}
+
 function goTab(t) {
   ['conf','emp'].forEach(x => {
     document.getElementById('pane-'+x).classList.toggle('active', x===t);
@@ -364,6 +353,112 @@ function toggleSettings() {
   const arrow = document.getElementById('settings-toggle-status');
   if (arrow) arrow.textContent =
     document.getElementById('settings-body').classList.contains('open') ? '▴' : '▾';
+}
+
+// ══════════════════════════════════════════════════════
+//  MODAL SENHA — CONFERENTE
+// ══════════════════════════════════════════════════════
+function confirmarSenha() {
+  const inp = document.getElementById('inp-senha');
+  const erro = document.getElementById('senha-erro');
+
+  if (inp.value === CONF_PASSWORD) {
+    confUnlocked = true;
+    document.getElementById('modal-senha').style.display = 'none';
+    goTab('conf');
+    toast('🔓 Acesso liberado — Bem-vindo, Conferente!');
+  } else {
+    erro.style.display = 'block';
+    inp.classList.add('shake');
+    inp.value = '';
+    setTimeout(() => inp.classList.remove('shake'), 450);
+    inp.focus();
+  }
+}
+
+function fecharModalSenha() {
+  document.getElementById('modal-senha').style.display = 'none';
+}
+
+function togglePwdView() {
+  const inp = document.getElementById('inp-senha');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+// Permite ESC para fechar o modal de senha
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    fecharModalSenha();
+    fecharModalChecklist();
+    fecharModalPOP();
+  }
+});
+
+// ══════════════════════════════════════════════════════
+//  MODAL CHECKLIST — EMPILHADOR
+// ══════════════════════════════════════════════════════
+const TOTAL_CHECKS = 5;   // total de checkboxes no HTML
+
+function resetChecklist() {
+  const boxes = document.querySelectorAll('.chk-box');
+  boxes.forEach(b => { b.checked = false; });
+  atualizarProgressoChecklist();
+}
+
+function avaliarChecklist() {
+  atualizarProgressoChecklist();
+}
+
+function atualizarProgressoChecklist() {
+  const boxes   = document.querySelectorAll('.chk-box');
+  const checked = [...boxes].filter(b => b.checked).length;
+  const pct     = Math.round((checked / TOTAL_CHECKS) * 100);
+
+  document.getElementById('chk-fill').style.width  = pct + '%';
+  document.getElementById('chk-label').textContent = `${checked} / ${TOTAL_CHECKS} itens confirmados`;
+
+  const btn = document.getElementById('btn-chk-ok');
+  if (checked === TOTAL_CHECKS) {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  } else {
+    btn.disabled = true;
+    btn.style.opacity = '.5';
+  }
+}
+
+function confirmarChecklist() {
+  const boxes   = document.querySelectorAll('.chk-box');
+  const checked = [...boxes].filter(b => b.checked).length;
+  if (checked < TOTAL_CHECKS) {
+    toast('⚠ Marque todos os itens antes de continuar', true);
+    return;
+  }
+  checklistDone = true;
+  document.getElementById('modal-checklist').style.display = 'none';
+  goTab('emp');
+  toast('✅ Checklist concluído — Bom turno, operador!');
+}
+
+function fecharModalChecklist() {
+  document.getElementById('modal-checklist').style.display = 'none';
+  // Aba permanece na que estava (não vai para emp sem checklist)
+}
+
+// ══════════════════════════════════════════════════════
+//  MODAL POP + RACI
+// ══════════════════════════════════════════════════════
+function abrirModalPOP() {
+  document.getElementById('modal-pop').style.display = 'flex';
+}
+
+function fecharModalPOP() {
+  document.getElementById('modal-pop').style.display = 'none';
+}
+
+/** Fecha ao clicar no overlay (fora do box) */
+function fecharPOP(e) {
+  if (e.target === document.getElementById('modal-pop')) fecharModalPOP();
 }
 
 // ══════════════════════════════════════════════════════
@@ -410,13 +505,11 @@ function filterProds() {
   const q  = v('inp-search').toLowerCase().trim();
   const el = document.getElementById('prod-list');
   if(!q) {
-    el.innerHTML='<div class="empty"><div class="ico">🔍</div>Digite o código ou nome do produto</div>';
-    return;
+    el.innerHTML='<div class="empty"><div class="ico">🔍</div>Digite o código ou nome do produto</div>'; return;
   }
   const list = PRODUCTS.filter(p=>String(p.codigo).includes(q)||p.descricao.toLowerCase().includes(q));
   if(!list.length){
-    el.innerHTML='<div class="empty"><div class="ico">🔍</div>Nenhum produto encontrado</div>';
-    return;
+    el.innerHTML='<div class="empty"><div class="ico">🔍</div>Nenhum produto encontrado</div>'; return;
   }
   el.innerHTML = list.map(p=>`
     <div class="prod-item ${S.selProd?.codigo===p.codigo?'sel':''}" onclick="selProd(${p.codigo})">
@@ -430,7 +523,7 @@ function selProd(codigo) {
 }
 
 // ══════════════════════════════════════════════════════
-//  TAREFAS — CRUD (com sincronização Firestore)
+//  TAREFAS — CRUD
 // ══════════════════════════════════════════════════════
 async function criarTarefa() {
   const conf = v('sel-conf');
@@ -442,24 +535,15 @@ async function criarTarefa() {
   if(!qty||qty<1){ toast('⚠ Informe a quantidade',true); return; }
 
   const t = {
-    id:           S.nextId++,
-    codigo:       S.selProd.codigo,
-    descricao:    S.selProd.descricao,
-    quantidade:   qty,
-    conferente:   conf,
-    operador:     op,
-    status:       'pending',
-    criadoEm:     new Date().toISOString(),
-    iniciadoEm:   null,
-    finalizadoEm: null,
-    duracaoMin:   null
+    id: S.nextId++, codigo: S.selProd.codigo, descricao: S.selProd.descricao,
+    quantidade: qty, conferente: conf, operador: op, status: 'pending',
+    criadoEm: new Date().toISOString(), iniciadoEm: null,
+    finalizadoEm: null, duracaoMin: null
   };
 
   if (fbDb) {
-    // Com Firebase: salva no Firestore — o onSnapshot atualiza a tela automaticamente
     await fbSaveTask(t);
   } else {
-    // Sem Firebase: salva só localmente
     S.tarefas.push(t);
     save(); renderAll();
   }
@@ -476,12 +560,7 @@ async function iniciar(id) {
   if(!t) return;
   t.status='in_progress';
   t.iniciadoEm=new Date().toISOString();
-
-  if (fbDb) {
-    await fbSaveTask(t);   // onSnapshot reflete em todos os dispositivos
-  } else {
-    save(); renderAll();
-  }
+  if (fbDb) { await fbSaveTask(t); } else { save(); renderAll(); }
   toast(`▶ Tarefa #${id} INICIADA às ${fmtTime(t.iniciadoEm)}`);
 }
 
@@ -491,13 +570,7 @@ async function finalizar(id) {
   t.status='done';
   t.finalizadoEm=new Date().toISOString();
   t.duracaoMin=Math.round((new Date(t.finalizadoEm)-new Date(t.iniciadoEm))/6000)/10;
-
-  if (fbDb) {
-    await fbSaveTask(t);          // atualiza a tarefa na coleção "tarefas"
-    await fbPushToReport(t);      // cópia histórica em "registros"
-  } else {
-    save(); renderAll();
-  }
+  if (fbDb) { await fbSaveTask(t); await fbPushToReport(t); } else { save(); renderAll(); }
   toast(`🏁 Tarefa #${id} CONCLUÍDA em ${fmtMin(t.duracaoMin)}`);
 }
 
@@ -505,10 +578,7 @@ async function excluir(id) {
   if(!confirm(`Excluir tarefa #${id}?`)) return;
   const t = S.tarefas.find(t=>t.id===id);
   if(!t) return;
-
-  if (fbDb) {
-    await fbDeleteTask(t);   // onSnapshot remove dos outros dispositivos também
-  } else {
+  if (fbDb) { await fbDeleteTask(t); } else {
     S.tarefas=S.tarefas.filter(t=>t.id!==id);
     save(); renderAll();
   }
@@ -634,9 +704,15 @@ filterProds();
 renderAll();
 populateFbForm();
 
-// Se já tem config salvo, conecta automaticamente e inicia sincronização
 const _cfg = loadFbConfig();
 if (_cfg && _cfg.apiKey && _cfg.projectId) {
   setFbIndicator('connecting');
   initFirebase(_cfg);
 }
+
+// Na primeira carga, a aba ativa é CONFERENTE — abre o modal de senha
+// imediatamente para forçar autenticação
+window.addEventListener('DOMContentLoaded', () => {
+  // Pequeno delay para o layout renderizar
+  setTimeout(() => requestConfTab(), 300);
+});
