@@ -96,9 +96,6 @@ function initFirebase(cfg) {
     fbApp = firebase.initializeApp(cfg);
     fbDb  = firebase.firestore();
 
-    // Habilita persistência offline (opcional mas útil em mobile)
-    fbDb.enablePersistence({ synchronizeTabs: true }).catch(() => {});
-
     setFbIndicator('connecting');
     updateSettingsToggle(false);
     startRealtimeSync();
