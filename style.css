@@ -1,0 +1,152 @@
+/* ═══════════════════════════════════════════
+   PICKING / REABASTECIMENTO — ARMAZEMFACIL
+   ═══════════════════════════════════════════ */
+
+:root {
+  --bg:#0d0f12; --surface:#161a1f; --surface2:#1e242c;
+  --border:#2a3340; --amber:#f5a623; --amber-dim:#2a1f00;
+  --green:#22c55e; --green-dim:#0f2d1a;
+  --red:#ef4444; --red-dim:#2d0f0f;
+  --blue:#3b82f6; --blue-dim:#0f1e35;
+  --text:#e8edf2; --text-dim:#7a8a9a; --text-muted:#3d4d5d;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh}
+
+/* ── HEADER ── */
+.header{background:var(--surface);border-bottom:2px solid var(--amber);padding:0 20px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:19px;letter-spacing:2px;color:var(--amber)}
+.logo span{color:var(--text-dim);font-weight:400;font-size:12px}
+.header-right{display:flex;align-items:center;gap:12px}
+.clock{font-family:'Share Tech Mono',monospace;font-size:17px;color:var(--amber);letter-spacing:2px}
+
+/* ── INDICADOR FIREBASE ── */
+.fb-indicator{display:inline-flex;align-items:center;gap:5px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;padding:3px 10px;border-radius:20px;border:1px solid transparent;transition:all .4s}
+.fb-off       {background:var(--surface2);color:var(--text-muted);border-color:var(--border)}
+.fb-connecting{background:var(--blue-dim);color:var(--blue);border-color:#1e3a5f;animation:fbpulse 1.2s ease-in-out infinite}
+.fb-online    {background:var(--green-dim);color:var(--green);border-color:#166534}
+.fb-error     {background:var(--red-dim);color:var(--red);border-color:#7f1d1d}
+@keyframes fbpulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── TABS ── */
+.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px}
+.tab{padding:13px 24px;border:none;background:none;color:var(--text-dim);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-bottom:3px solid transparent;position:relative;top:1px;transition:all .2s}
+.tab.active{color:var(--amber);border-bottom-color:var(--amber)}
+.badge{display:inline-flex;align-items:center;justify-content:center;background:var(--red);color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;padding:0 4px;margin-left:6px;font-family:'Barlow',sans-serif}
+
+/* ── PANES ── */
+.pane{display:none}.pane.active{display:block}
+.wrap{max-width:900px;margin:0 auto;padding:20px}
+
+/* ── FORMS ── */
+.field-label{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px}
+select,input[type="text"],input[type="number"],input[type="password"]{
+  width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;
+  color:var(--text);font-family:'Barlow',sans-serif;font-size:14px;padding:10px 12px;
+  outline:none;transition:border-color .2s;-webkit-appearance:none;appearance:none}
+select:focus,input:focus{border-color:var(--amber)}
+select option{background:var(--surface2)}
+
+/* ── GRIDS ── */
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:600px){.row2,.row3{grid-template-columns:1fr}}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px;margin-bottom:14px}
+.card-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:14px}
+
+/* ── SECTION DIVIDER ── */
+.sh{display:flex;align-items:center;gap:10px;margin:20px 0 12px}
+.sh h2{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:18px;letter-spacing:2px;text-transform:uppercase;white-space:nowrap}
+.sh .line{flex:1;height:1px;background:var(--border)}
+
+/* ── COLLAPSIBLE SECTIONS ── */
+.sec-head{display:flex;align-items:center;gap:10px;margin:14px 0 0;cursor:pointer;user-select:none;padding:11px 15px;background:var(--surface);border:1px solid var(--border);border-radius:8px;transition:border-color .2s}
+.sec-head:hover{border-color:var(--amber)}
+.sec-head.open{border-bottom-left-radius:0;border-bottom-right-radius:0;border-bottom-color:var(--border)}
+.sec-head h2{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:16px;letter-spacing:2px;text-transform:uppercase;flex:1;color:var(--text)}
+.sec-cnt{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:900;background:var(--red);color:#fff;min-width:22px;height:22px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;padding:0 7px;letter-spacing:0}
+.sec-cnt.zero{background:var(--text-muted)}
+.sec-arrow{color:var(--text-dim);font-size:13px;transition:transform .25s;margin-left:2px}
+.sec-head.open .sec-arrow{transform:rotate(180deg)}
+.sec-body{background:var(--surface2);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;padding:12px;margin-bottom:6px;display:none}
+.sec-body.open{display:block}
+
+/* ── PRODUCT LIST ── */
+.prod-list{border:1px solid var(--border);border-radius:6px;max-height:200px;overflow-y:auto;margin-bottom:12px}
+.prod-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.prod-item:last-child{border-bottom:none}
+.prod-item:hover{background:var(--surface2)}
+.prod-item.sel{background:#1a2810;border-left:3px solid var(--green)}
+.prod-code{font-family:'Share Tech Mono',monospace;font-size:15px;color:var(--amber);min-width:42px}
+.prod-desc{font-size:13px;color:var(--text);line-height:1.3}
+
+/* ── BUTTONS ── */
+.btn{border:none;border-radius:6px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;padding:10px 20px;transition:all .15s;white-space:nowrap}
+.btn-amber{background:var(--amber);color:#0d0f12}.btn-amber:hover{background:#ffc14d}
+.btn-amber:disabled{background:var(--text-muted);color:var(--text-dim);cursor:not-allowed}
+.btn-start{background:var(--blue-dim);color:var(--blue);border:1px solid var(--blue)}.btn-start:hover{background:var(--blue);color:#fff}
+.btn-finish{background:var(--green-dim);color:var(--green);border:1px solid var(--green)}.btn-finish:hover{background:var(--green);color:#fff}
+.btn-ghost{background:none;color:var(--text-dim);border:1px solid var(--border)}.btn-ghost:hover{border-color:var(--amber);color:var(--amber)}
+.btn-sm{padding:7px 13px;font-size:11px}
+.btn-red{background:var(--red-dim);color:var(--red);border:1px solid var(--red)}.btn-red:hover{background:var(--red);color:#fff}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.add-row{display:flex;gap:8px;align-items:flex-end}
+.add-row > div{flex:1}
+
+/* ── TASK CARDS ── */
+.tc{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:15px 16px;margin-bottom:10px;border-left:4px solid transparent}
+.tc.pending{border-left-color:var(--amber)}
+.tc.in_progress{border-left-color:var(--blue)}
+.tc.done{border-left-color:var(--green)}
+.tc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.tc-code{font-family:'Share Tech Mono',monospace;font-size:18px;color:var(--amber)}
+.tc-desc{font-size:12px;color:var(--text-dim);margin-top:2px}
+.tc-qty-val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:30px;color:var(--text);line-height:1;text-align:right}
+.tc-qty-lbl{font-size:10px;color:var(--text-dim);letter-spacing:1px;text-align:right}
+.tc-meta{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--text-dim);margin-bottom:10px}
+.tc-meta strong{color:var(--text)}
+
+/* ── BADGES ── */
+.bdg{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif}
+.bdg-amber{background:var(--amber-dim);color:var(--amber);border:1px solid #5a3b00}
+.bdg-blue{background:var(--blue-dim);color:var(--blue);border:1px solid #1e3a5f}
+.bdg-green{background:var(--green-dim);color:var(--green);border:1px solid #166534}
+
+/* ── MISC ── */
+.empty{text-align:center;padding:32px 20px;color:var(--text-muted);font-size:13px}
+.empty .ico{font-size:32px;margin-bottom:8px}
+.sep{height:1px;background:var(--border);margin:18px 0}
+
+/* ── SETTINGS / FIREBASE CONFIG ── */
+.settings-toggle{width:100%;text-align:left;background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);padding:10px 14px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;margin-bottom:8px;transition:all .2s;display:flex;align-items:center;justify-content:space-between}
+.settings-toggle:hover{border-color:var(--amber);color:var(--amber)}
+.settings-toggle.connected{border-color:var(--green);color:var(--green)}
+.settings-body{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px;margin-bottom:16px;display:none}
+.settings-body.open{display:block}
+.settings-note{font-size:11px;color:var(--text-dim);margin-top:12px;line-height:1.7;padding:12px;background:var(--bg);border-radius:6px;border:1px solid var(--border)}
+.settings-note a{color:var(--amber)}
+.settings-note strong{color:var(--text)}
+.settings-note code{font-family:'Share Tech Mono',monospace;color:var(--amber);background:rgba(0,0,0,.3);padding:1px 5px;border-radius:3px}
+
+/* ── STATUS MESSAGES ── */
+.fb-msg{display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:10px 14px;border-radius:6px;margin-top:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:.5px;line-height:1.5}
+.fb-msg-ok  {background:var(--green-dim);color:var(--green);border:1px solid #166534}
+.fb-msg-err {background:var(--red-dim);color:var(--red);border:1px solid #7f1d1d}
+.fb-msg-load{background:var(--blue-dim);color:var(--blue);border:1px solid #1e3a5f}
+
+/* ── REPORT TABLE ── */
+.rpt-table{width:100%;border-collapse:collapse;font-size:12px}
+.rpt-table th{text-align:left;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);padding:8px 10px;border-bottom:1px solid var(--border)}
+.rpt-table td{padding:9px 10px;border-bottom:1px solid var(--border);color:var(--text)}
+.rpt-table tr:last-child td{border-bottom:none}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:20px;right:20px;padding:11px 20px;border-radius:6px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;z-index:999;transform:translateY(60px);opacity:0;transition:all .3s;max-width:340px;line-height:1.4}
+#toast.show{transform:translateY(0);opacity:1}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
