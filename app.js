@@ -85,13 +85,14 @@ function clearFbConfig() {
 }
 
 /** Inicializa o Firebase e arranca a sincronização em tempo real */
-function initFirebase(cfg) {
+async function initFirebase(cfg) {
   try {
     // Cancela listener anterior se existir
     if (fbUnsub) { fbUnsub(); fbUnsub = null; }
 
+    // IMPORTANTE: aguarda o delete completo antes de reinicializar
     if (firebase.apps.length) {
-      firebase.apps.forEach(a => a.delete());
+      await Promise.all(firebase.apps.map(a => a.delete()));
     }
     fbApp = firebase.initializeApp(cfg);
     fbDb  = firebase.firestore();
