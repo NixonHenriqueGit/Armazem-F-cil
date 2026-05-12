@@ -1,10 +1,9 @@
 // ══════════════════════════════════════════════════════
 //  PICKING / REABASTECIMENTO — ARMAZEMFACIL
-//  app.js — lógica completa + integração Firebase
+//  app.js — lógica completa + sincronização em tempo real
 // ══════════════════════════════════════════════════════
 
 // ── PRODUTOS ─────────────────────────────────────────
-// Edite este array para adicionar ou remover produtos
 const PRODUCTS = [
   { codigo: 347, descricao: "SUKITA PET 1L CAIXA C/12" },
   { codigo: 371, descricao: "MALZBIER BRAHMA LONG NECK 355ML SIX-PACK BAND" },
@@ -13,7 +12,7 @@ const PRODUCTS = [
 
 // ── STATE LOCAL ───────────────────────────────────────
 let S = {
-  tarefas:    [],
+  tarefas:    [],          // fonte de verdade vem do Firestore quando online
   operadores: ["CARLOS", "JORGE", "MARCOS", "FABIO"],
   conferentes:["ANA", "ROBERTO", "PATRICIA"],
   selProd:    null,
@@ -22,8 +21,9 @@ let S = {
 
 // ── FIREBASE ──────────────────────────────────────────
 const FB_KEY = 'pk_firebase_config';
-let fbApp = null;
-let fbDb  = null;
+let fbApp      = null;
+let fbDb       = null;
+let fbUnsub    = null;   // cancela o listener onSnapshot quando necessário
 
 /** Lê config salvo no localStorage */
 function loadFbConfig() {
@@ -75,6 +75,7 @@ function saveFbConfig() {
 /** Remove config salvo */
 function clearFbConfig() {
   if (!confirm('Remover configuração do Firebase?')) return;
+  if (fbUnsub) { fbUnsub(); fbUnsub = null; }
   localStorage.removeItem(FB_KEY);
   fbApp = null; fbDb = null;
   setFbIndicator('off');
@@ -83,21 +84,63 @@ function clearFbConfig() {
   toast('Config removida', true);
 }
 
-/** Inicializa o Firebase com o config fornecido */
+/** Inicializa o Firebase e arranca a sincronização em tempo real */
 function initFirebase(cfg) {
   try {
+    // Cancela listener anterior se existir
+    if (fbUnsub) { fbUnsub(); fbUnsub = null; }
+
     if (firebase.apps.length) {
       firebase.apps.forEach(a => a.delete());
     }
     fbApp = firebase.initializeApp(cfg);
     fbDb  = firebase.firestore();
-    setFbIndicator('online');
-    updateSettingsToggle(true);
-    toast('🔥 Firebase conectado!');
+
+    // Habilita persistência offline (opcional mas útil em mobile)
+    fbDb.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+
+    setFbIndicator('connecting');
+    updateSettingsToggle(false);
+    startRealtimeSync();
   } catch(e) {
     setFbIndicator('error');
     showFbResult('❌ Erro ao inicializar: ' + e.message, 'err');
   }
+}
+
+/**
+ * Liga o listener onSnapshot na coleção "tarefas".
+ * Qualquer mudança feita em QUALQUER dispositivo reflete aqui automaticamente.
+ */
+function startRealtimeSync() {
+  if (!fbDb) return;
+
+  fbUnsub = fbDb.collection('tarefas')
+    .orderBy('criadoEm', 'asc')
+    .onSnapshot(
+      snap => {
+        // Substitui a lista local pela versão do Firestore
+        S.tarefas = snap.docs.map(d => ({ _docId: d.id, ...d.data() }));
+
+        // Ajusta o nextId para evitar colisões ao criar tarefas offline
+        const maxId = S.tarefas.reduce((m, t) => Math.max(m, t.id || 0), 0);
+        if (maxId >= S.nextId) S.nextId = maxId + 1;
+
+        save();          // mantém cópia local como fallback offline
+        renderAll();
+
+        setFbIndicator('online');
+        updateSettingsToggle(true);
+      },
+      err => {
+        setFbIndicator('error');
+        if (err.code === 'permission-denied') {
+          toast('⚠ Firebase: sem permissão. Corrija as Regras do Firestore.', true);
+        } else {
+          toast('⚠ Erro Firebase: ' + err.message, true);
+        }
+      }
+    );
 }
 
 /** Testa a conexão tentando acessar o Firestore */
@@ -106,7 +149,7 @@ async function testFbConnection() {
   if (!fbDb) return;
   showFbResult('⏳ Testando conexão com o Firestore...', 'load');
   try {
-    const snap = await fbDb.collection('registros').limit(1).get();
+    const snap = await fbDb.collection('tarefas').limit(1).get();
     showFbResult(`✅ Conexão OK — Firestore acessível (${snap.size} doc encontrado)`, 'ok');
     setFbIndicator('online');
     updateSettingsToggle(true);
@@ -120,12 +163,41 @@ async function testFbConnection() {
   }
 }
 
-/** Envia tarefa finalizada para o Firestore */
-async function fbPushTask(task) {
-  if (!fbDb) {
-    toast('⚠ Firebase não configurado — tarefa salva só localmente', true);
-    return;
+// ══════════════════════════════════════════════════════
+//  FIRESTORE — escrita de tarefas (sincronizadas)
+// ══════════════════════════════════════════════════════
+
+/** Salva/atualiza uma tarefa no Firestore */
+async function fbSaveTask(task) {
+  if (!fbDb) return;   // sem Firebase, já foi salvo localmente em save()
+  try {
+    const { _docId, ...data } = task;
+    if (_docId) {
+      // Atualiza documento existente
+      await fbDb.collection('tarefas').doc(_docId).set(data);
+    } else {
+      // Cria novo documento e guarda o ID gerado
+      const ref = await fbDb.collection('tarefas').add(data);
+      task._docId = ref.id;
+    }
+  } catch(e) {
+    toast('⚠ Erro ao salvar no Firebase: ' + e.message, true);
   }
+}
+
+/** Remove uma tarefa do Firestore */
+async function fbDeleteTask(task) {
+  if (!fbDb || !task._docId) return;
+  try {
+    await fbDb.collection('tarefas').doc(task._docId).delete();
+  } catch(e) {
+    toast('⚠ Erro ao excluir no Firebase: ' + e.message, true);
+  }
+}
+
+/** Também grava na coleção "registros" quando finaliza (para o relatório histórico) */
+async function fbPushToReport(task) {
+  if (!fbDb) return;
   try {
     await fbDb.collection('registros').add({
       id:           task.id,
@@ -140,13 +212,14 @@ async function fbPushTask(task) {
       duracaoMin:   task.duracaoMin,
       enviadoEm:    new Date().toISOString()
     });
-    toast('☁ Tarefa #' + task.id + ' salva no Firebase!');
   } catch(e) {
-    toast('⚠ Erro Firebase: ' + e.message, true);
+    // silencioso — não crítico
   }
 }
 
-/** Puxa relatório do Firestore */
+// ══════════════════════════════════════════════════════
+//  RELATÓRIO — busca da coleção "registros"
+// ══════════════════════════════════════════════════════
 async function pullReport() {
   const area = document.getElementById('report-area');
   if (!fbDb) {
@@ -250,7 +323,7 @@ function updateSettingsToggle(connected) {
 }
 
 // ══════════════════════════════════════════════════════
-//  PERSIST LOCAL
+//  PERSIST LOCAL (fallback offline)
 // ══════════════════════════════════════════════════════
 function load() {
   try {
@@ -359,9 +432,9 @@ function selProd(codigo) {
 }
 
 // ══════════════════════════════════════════════════════
-//  TAREFAS — CRUD
+//  TAREFAS — CRUD (com sincronização Firestore)
 // ══════════════════════════════════════════════════════
-function criarTarefa() {
+async function criarTarefa() {
   const conf = v('sel-conf');
   const op   = v('sel-op-assign');
   const qty  = parseInt(v('inp-qty'));
@@ -371,32 +444,46 @@ function criarTarefa() {
   if(!qty||qty<1){ toast('⚠ Informe a quantidade',true); return; }
 
   const t = {
-    id: S.nextId++,
-    codigo: S.selProd.codigo,
-    descricao: S.selProd.descricao,
-    quantidade: qty,
-    conferente: conf,
-    operador: op,
-    status: 'pending',
-    criadoEm: new Date().toISOString(),
-    iniciadoEm: null,
+    id:           S.nextId++,
+    codigo:       S.selProd.codigo,
+    descricao:    S.selProd.descricao,
+    quantidade:   qty,
+    conferente:   conf,
+    operador:     op,
+    status:       'pending',
+    criadoEm:     new Date().toISOString(),
+    iniciadoEm:   null,
     finalizadoEm: null,
-    duracaoMin: null
+    duracaoMin:   null
   };
-  S.tarefas.push(t);
+
+  if (fbDb) {
+    // Com Firebase: salva no Firestore — o onSnapshot atualiza a tela automaticamente
+    await fbSaveTask(t);
+  } else {
+    // Sem Firebase: salva só localmente
+    S.tarefas.push(t);
+    save(); renderAll();
+  }
+
   S.selProd=null;
   document.getElementById('inp-search').value='';
   document.getElementById('inp-qty').value=1;
-  save(); filterProds(); renderAll();
+  filterProds();
   toast(`✅ Tarefa #${t.id} criada → ${op}`);
 }
 
-function iniciar(id) {
+async function iniciar(id) {
   const t = S.tarefas.find(t=>t.id===id);
   if(!t) return;
   t.status='in_progress';
   t.iniciadoEm=new Date().toISOString();
-  save(); renderAll();
+
+  if (fbDb) {
+    await fbSaveTask(t);   // onSnapshot reflete em todos os dispositivos
+  } else {
+    save(); renderAll();
+  }
   toast(`▶ Tarefa #${id} INICIADA às ${fmtTime(t.iniciadoEm)}`);
 }
 
@@ -406,15 +493,27 @@ async function finalizar(id) {
   t.status='done';
   t.finalizadoEm=new Date().toISOString();
   t.duracaoMin=Math.round((new Date(t.finalizadoEm)-new Date(t.iniciadoEm))/6000)/10;
-  save(); renderAll();
-  toast(`🏁 Tarefa #${id} CONCLUÍDA em ${fmtMin(t.duracaoMin)} — enviando ao Firebase...`);
-  await fbPushTask(t);
+
+  if (fbDb) {
+    await fbSaveTask(t);          // atualiza a tarefa na coleção "tarefas"
+    await fbPushToReport(t);      // cópia histórica em "registros"
+  } else {
+    save(); renderAll();
+  }
+  toast(`🏁 Tarefa #${id} CONCLUÍDA em ${fmtMin(t.duracaoMin)}`);
 }
 
-function excluir(id) {
+async function excluir(id) {
   if(!confirm(`Excluir tarefa #${id}?`)) return;
-  S.tarefas=S.tarefas.filter(t=>t.id!==id);
-  save(); renderAll();
+  const t = S.tarefas.find(t=>t.id===id);
+  if(!t) return;
+
+  if (fbDb) {
+    await fbDeleteTask(t);   // onSnapshot remove dos outros dispositivos também
+  } else {
+    S.tarefas=S.tarefas.filter(t=>t.id!==id);
+    save(); renderAll();
+  }
 }
 
 function clearLocal() {
@@ -537,7 +636,7 @@ filterProds();
 renderAll();
 populateFbForm();
 
-// Se já tem config salvo, conecta automaticamente
+// Se já tem config salvo, conecta automaticamente e inicia sincronização
 const _cfg = loadFbConfig();
 if (_cfg && _cfg.apiKey && _cfg.projectId) {
   setFbIndicator('connecting');
