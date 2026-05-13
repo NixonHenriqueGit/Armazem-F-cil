@@ -3,7 +3,7 @@
 //  app.js — lógica completa + sincronização em tempo real
 // ══════════════════════════════════════════════════════
 
-const CONF_PASSWORD = '1234';
+const CONF_PASSWORD = '4321';
 
 let confUnlocked  = false;
 let checklistDone = false;
