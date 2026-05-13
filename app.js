@@ -738,21 +738,53 @@ async function downloadCSV() {
       return;
     }
 
-    const headers = ['ID','Codigo','Descricao','Paletes','Conferente','Operador','Criado Em','Iniciado Em','Finalizado Em','Duracao (min)','Duracao / Palete (min)'];
+    // Formata duração para texto legível: "4min 32s" ou "45s"
+    function fmtDurCSV(min) {
+      if (min === null || min === undefined || min === '') return '';
+      const totalSec = Math.round(min * 60);
+      const m = Math.floor(totalSec / 60);
+      const s = totalSec % 60;
+      if (m > 0 && s > 0) return m + 'min ' + s + 's';
+      if (m > 0)          return m + 'min';
+      return totalSec + 's';
+    }
 
-    const rows = filtered.map(r => {
-      const durPal = r.duracaoMin && r.quantidade ? (r.duracaoMin / r.quantidade).toFixed(2) : '';
-      return [
-        r.id ?? '', r.codigo ?? '', r.descricao ?? '', r.quantidade ?? '',
-        r.conferente ?? '', r.operador ?? '',
-        r.criadoEm     ? new Date(r.criadoEm).toLocaleString('pt-BR')     : '',
-        r.iniciadoEm   ? new Date(r.iniciadoEm).toLocaleString('pt-BR')   : '',
-        r.finalizadoEm ? new Date(r.finalizadoEm).toLocaleString('pt-BR') : '',
-        r.duracaoMin != null ? r.duracaoMin : '', durPal
-      ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',');
-    });
+    function fmtDateCSV(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      const pad = n => String(n).padStart(2,'0');
+      return pad(d.getDate()) + '/' + pad(d.getMonth()+1) + '/' + d.getFullYear()
+        + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+    }
 
-    const csvContent = [headers.join(','), ...rows].join('\r\n');
+    // Separador ponto-e-vírgula para Excel BR abrir colunas corretamente
+    const SEP = ';';
+
+    const headers = [
+      'CODIGO DO PRODUTO',
+      'DESCRICAO DO PRODUTO',
+      'QUANTIDADE DE PALETES',
+      'CONFERENTE',
+      'OPERADOR',
+      'CRIADO EM',
+      'INICIADO EM',
+      'FINALIZADO EM',
+      'DURACAO DA OPERACAO'
+    ];
+
+    const rows = filtered.map(r => [
+      r.codigo        ?? '',
+      r.descricao     ?? '',
+      r.quantidade    ?? '',
+      r.conferente    ?? '',
+      r.operador      ?? '',
+      fmtDateCSV(r.criadoEm),
+      fmtDateCSV(r.iniciadoEm),
+      fmtDateCSV(r.finalizadoEm),
+      fmtDurCSV(r.duracaoMin)
+    ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(SEP));
+
+    const csvContent = [headers.map(h => '"'+h+'"').join(SEP), ...rows].join('\r\n');
     const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url  = URL.createObjectURL(blob);
     const link = document.createElement('a');
