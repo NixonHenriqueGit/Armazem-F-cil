@@ -7,7 +7,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 
-<!-- Firebase SDK via CDN (compat — funciona sem bundler) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
@@ -20,15 +19,6 @@
     <div class="fb-indicator fb-off" id="fb-indicator">🔴 OFFLINE</div>
     <div class="clock" id="clock">--:--:--</div>
   </div>
-</div>
-
-<!-- ── TABS ────────────────────────────────────────── -->
-<div class="tabs">
-  <button class="tab active" id="btn-tab-conf" onclick="requestConfTab()">📋 CONFERENTE</button>
-  <button class="tab" id="btn-tab-emp" onclick="requestEmpTab()">
-    🚜 EMPILHADOR
-    <span class="badge" id="badge" style="display:none">0</span>
-  </button>
 </div>
 
 <!-- ══════════════════════════════════════════════════
@@ -144,7 +134,6 @@
       <button class="btn btn-ghost btn-sm" onclick="fecharModalPOP()" style="flex-shrink:0;margin-left:16px">✕ FECHAR</button>
     </div>
 
-    <!-- OBJETIVO -->
     <div class="pop-section">
       <div class="pop-section-title">🎯 OBJETIVO</div>
       <p class="pop-text">
@@ -154,152 +143,78 @@
       </p>
     </div>
 
-    <!-- ETAPAS DO PROCESSO -->
     <div class="pop-section">
       <div class="pop-section-title">⚙ ETAPAS DO PROCESSO</div>
       <div class="pop-steps">
-
         <div class="pop-step">
           <div class="pop-step-num">01</div>
           <div class="pop-step-body">
             <div class="pop-step-title">IDENTIFICAÇÃO DA NECESSIDADE</div>
-            <div class="pop-step-desc">
-              O Conferente identifica produto com nível baixo no picking e cria a tarefa no sistema,
-              atribuindo ao operador disponível. Nenhuma movimentação deve ocorrer sem tarefa criada.
-            </div>
+            <div class="pop-step-desc">O Conferente identifica produto com nível baixo no picking e cria a tarefa no sistema, atribuindo ao operador disponível. Nenhuma movimentação deve ocorrer sem tarefa criada.</div>
             <div class="pop-step-resp">Responsável: <span class="pop-role-conf">CONFERENTE</span></div>
           </div>
         </div>
-
         <div class="pop-step">
           <div class="pop-step-num">02</div>
           <div class="pop-step-body">
             <div class="pop-step-title">CHECKLIST PRÉ-OPERAÇÃO</div>
-            <div class="pop-step-desc">
-              O Empilhador realiza o checklist completo antes de iniciar o turno:
-              equipamento, EPI, sinalização do corredor e comunicação com a equipe.
-              <strong>O sistema bloqueia o acesso até todos os itens serem confirmados.</strong>
-            </div>
+            <div class="pop-step-desc">O Empilhador realiza o checklist completo antes de iniciar o turno: equipamento, EPI, sinalização do corredor e comunicação com a equipe. <strong>O sistema bloqueia o acesso até todos os itens serem confirmados.</strong></div>
             <div class="pop-step-resp">Responsável: <span class="pop-role-emp">EMPILHADOR</span></div>
           </div>
         </div>
-
         <div class="pop-step">
           <div class="pop-step-num">03</div>
           <div class="pop-step-body">
             <div class="pop-step-title">ISOLAMENTO DO CORREDOR</div>
-            <div class="pop-step-desc">
-              Antes de iniciar o deslocamento, o operador isola com cones ou fitas as duas
-              extremidades do corredor onde irá operar. Nenhum pedestre deve estar na área.
-              Em cruzamentos, buzinar ao aproximar-se.
-            </div>
+            <div class="pop-step-desc">Antes de iniciar o deslocamento, o operador isola com cones ou fitas as duas extremidades do corredor onde irá operar. Nenhum pedestre deve estar na área. Em cruzamentos, buzinar ao aproximar-se.</div>
             <div class="pop-step-resp">Responsável: <span class="pop-role-emp">EMPILHADOR</span></div>
           </div>
         </div>
-
         <div class="pop-step">
           <div class="pop-step-num">04</div>
           <div class="pop-step-body">
             <div class="pop-step-title">RETIRADA DO PALETE NO PULMÃO</div>
-            <div class="pop-step-desc">
-              Localizar o palete pela descrição e código informados na tarefa.
-              Confirmar o produto antes de movimentar. Velocidade máxima: <strong>6 km/h</strong>
-              em corredores. Garfos a no máximo 15 cm do chão durante o deslocamento.
-            </div>
+            <div class="pop-step-desc">Localizar o palete pela descrição e código informados na tarefa. Confirmar o produto antes de movimentar. Velocidade máxima: <strong>6 km/h</strong> em corredores. Garfos a no máximo 15 cm do chão durante o deslocamento.</div>
             <div class="pop-step-resp">Responsável: <span class="pop-role-emp">EMPILHADOR</span></div>
           </div>
         </div>
-
         <div class="pop-step">
           <div class="pop-step-num">05</div>
           <div class="pop-step-body">
             <div class="pop-step-title">ABASTECIMENTO DO PICKING</div>
-            <div class="pop-step-desc">
-              Transportar o palete até o endereço de picking indicado. Confirmar que não há
-              pedestres na rota. Posicionar o palete com segurança, sem bloquear corredores
-              de emergência ou saídas. Conferente acompanha se houver necessidade.
-            </div>
-            <div class="pop-step-resp">
-              Responsável: <span class="pop-role-emp">EMPILHADOR</span>
-              · Apoio: <span class="pop-role-conf">CONFERENTE</span>
-            </div>
+            <div class="pop-step-desc">Transportar o palete até o endereço de picking indicado. Confirmar que não há pedestres na rota. Posicionar o palete com segurança, sem bloquear corredores de emergência ou saídas. Conferente acompanha se houver necessidade.</div>
+            <div class="pop-step-resp">Responsável: <span class="pop-role-emp">EMPILHADOR</span> · Apoio: <span class="pop-role-conf">CONFERENTE</span></div>
           </div>
         </div>
-
         <div class="pop-step">
           <div class="pop-step-num">06</div>
           <div class="pop-step-body">
             <div class="pop-step-title">FINALIZAÇÃO E REGISTRO</div>
-            <div class="pop-step-desc">
-              O Empilhador finaliza a tarefa no sistema. O Conferente valida a conclusão
-              visualmente. O sistema registra automaticamente horário, operador, produto
-              e duração no Firebase para rastreabilidade.
-            </div>
-            <div class="pop-step-resp">
-              Responsável: <span class="pop-role-emp">EMPILHADOR</span>
-              · Validação: <span class="pop-role-conf">CONFERENTE</span>
-            </div>
+            <div class="pop-step-desc">O Empilhador finaliza a tarefa no sistema. O Conferente valida a conclusão visualmente. O sistema registra automaticamente horário, operador, produto e duração no Firebase para rastreabilidade.</div>
+            <div class="pop-step-resp">Responsável: <span class="pop-role-emp">EMPILHADOR</span> · Validação: <span class="pop-role-conf">CONFERENTE</span></div>
           </div>
         </div>
-
       </div>
     </div>
 
-    <!-- RACI -->
     <div class="pop-section">
       <div class="pop-section-title">📊 MATRIZ RACI</div>
       <div style="overflow-x:auto">
       <table class="raci-table">
         <thead>
           <tr>
-            <th>Atividade</th>
-            <th>Conferente</th>
-            <th>Empilhador</th>
-            <th>Supervisor</th>
-            <th>Seg. Trabalho</th>
+            <th>Atividade</th><th>Conferente</th><th>Empilhador</th><th>Supervisor</th><th>Seg. Trabalho</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>Criar tarefa no sistema</td>
-            <td class="raci-r">R</td><td class="raci-i">I</td>
-            <td class="raci-a">A</td><td class="raci-i">I</td>
-          </tr>
-          <tr>
-            <td>Realizar checklist de segurança</td>
-            <td class="raci-i">I</td><td class="raci-r">R</td>
-            <td class="raci-a">A</td><td class="raci-c">C</td>
-          </tr>
-          <tr>
-            <td>Isolar corredor de operação</td>
-            <td class="raci-c">C</td><td class="raci-r">R</td>
-            <td class="raci-a">A</td><td class="raci-c">C</td>
-          </tr>
-          <tr>
-            <td>Operar empilhadeira / movimentar palete</td>
-            <td class="raci-i">I</td><td class="raci-r">R</td>
-            <td class="raci-a">A</td><td class="raci-i">I</td>
-          </tr>
-          <tr>
-            <td>Garantir área livre de pedestres</td>
-            <td class="raci-c">C</td><td class="raci-r">R</td>
-            <td class="raci-a">A</td><td class="raci-c">C</td>
-          </tr>
-          <tr>
-            <td>Finalizar e registrar tarefa</td>
-            <td class="raci-c">C</td><td class="raci-r">R</td>
-            <td class="raci-a">A</td><td class="raci-i">I</td>
-          </tr>
-          <tr>
-            <td>Validar conclusão e produto correto</td>
-            <td class="raci-r">R</td><td class="raci-i">I</td>
-            <td class="raci-a">A</td><td class="raci-i">I</td>
-          </tr>
-          <tr>
-            <td>Auditar conformidade do POP</td>
-            <td class="raci-i">I</td><td class="raci-i">I</td>
-            <td class="raci-c">C</td><td class="raci-r">R</td>
-          </tr>
+          <tr><td>Criar tarefa no sistema</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-a">A</td><td class="raci-i">I</td></tr>
+          <tr><td>Realizar checklist de segurança</td><td class="raci-i">I</td><td class="raci-r">R</td><td class="raci-a">A</td><td class="raci-c">C</td></tr>
+          <tr><td>Isolar corredor de operação</td><td class="raci-c">C</td><td class="raci-r">R</td><td class="raci-a">A</td><td class="raci-c">C</td></tr>
+          <tr><td>Operar empilhadeira / movimentar palete</td><td class="raci-i">I</td><td class="raci-r">R</td><td class="raci-a">A</td><td class="raci-i">I</td></tr>
+          <tr><td>Garantir área livre de pedestres</td><td class="raci-c">C</td><td class="raci-r">R</td><td class="raci-a">A</td><td class="raci-c">C</td></tr>
+          <tr><td>Finalizar e registrar tarefa</td><td class="raci-c">C</td><td class="raci-r">R</td><td class="raci-a">A</td><td class="raci-i">I</td></tr>
+          <tr><td>Validar conclusão e produto correto</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-a">A</td><td class="raci-i">I</td></tr>
+          <tr><td>Auditar conformidade do POP</td><td class="raci-i">I</td><td class="raci-i">I</td><td class="raci-c">C</td><td class="raci-r">R</td></tr>
         </tbody>
       </table>
       </div>
@@ -311,52 +226,15 @@
       </div>
     </div>
 
-    <!-- SEGURANÇA -->
     <div class="pop-section">
       <div class="pop-section-title">🦺 MEDIDAS DE SEGURANÇA — EMPILHADEIRA × PEDESTRE</div>
       <div class="pop-safety-grid">
-        <div class="pop-safety-card">
-          <div class="pop-safety-icon">🚧</div>
-          <div class="pop-safety-title">SEPARAÇÃO FÍSICA</div>
-          <div class="pop-safety-desc">Corredores exclusivos para empilhadeiras sinalizados no piso com faixas amarelas. Proibido pedestre em corredor em operação.</div>
-          <div class="pop-safety-medida">📏 MEDIDA</div>
-          <div class="pop-safety-med-txt">Faixas no piso + cones durante operação</div>
-        </div>
-        <div class="pop-safety-card">
-          <div class="pop-safety-icon">🔔</div>
-          <div class="pop-safety-title">ALERTAS SONOROS</div>
-          <div class="pop-safety-desc">Alarme de ré obrigatório. Buzina em todos os cruzamentos cegos. Verificado no checklist antes de cada turno.</div>
-          <div class="pop-safety-medida">📏 MEDIDA</div>
-          <div class="pop-safety-med-txt">Checklist diário + manutenção preventiva mensal</div>
-        </div>
-        <div class="pop-safety-card">
-          <div class="pop-safety-icon">💡</div>
-          <div class="pop-safety-title">SINALIZAÇÃO VISUAL</div>
-          <div class="pop-safety-desc">Luz giratória (strobo) ativa durante toda a operação. Espelhos convexos em cruzamentos internos.</div>
-          <div class="pop-safety-medida">📏 MEDIDA</div>
-          <div class="pop-safety-med-txt">Strobo + espelhos + faixas de atenção no piso</div>
-        </div>
-        <div class="pop-safety-card">
-          <div class="pop-safety-icon">📋</div>
-          <div class="pop-safety-title">CONTROLE DIGITAL</div>
-          <div class="pop-safety-desc">Nenhuma movimentação autorizada sem tarefa criada pelo Conferente. Sistema rastreia início, duração e conclusão de cada operação.</div>
-          <div class="pop-safety-medida">📏 MEDIDA</div>
-          <div class="pop-safety-med-txt">Registro 100% digital — rastreabilidade total</div>
-        </div>
-        <div class="pop-safety-card">
-          <div class="pop-safety-icon">🎓</div>
-          <div class="pop-safety-title">TREINAMENTO</div>
-          <div class="pop-safety-desc">Operadores habilitados com CNH categoria específica. Reciclagem semestral obrigatória sobre POP e segurança.</div>
-          <div class="pop-safety-medida">📏 MEDIDA</div>
-          <div class="pop-safety-med-txt">Registro de treinamentos + avaliação prática</div>
-        </div>
-        <div class="pop-safety-card">
-          <div class="pop-safety-icon">🚨</div>
-          <div class="pop-safety-title">RESPOSTA A INCIDENTES</div>
-          <div class="pop-safety-desc">Em caso de quase-acidente ou acidente, parar operação imediatamente, acionar supervisor e registrar ocorrência. Zero tolerância.</div>
-          <div class="pop-safety-medida">📏 MEDIDA</div>
-          <div class="pop-safety-med-txt">Comunicação imediata + análise de causa raiz</div>
-        </div>
+        <div class="pop-safety-card"><div class="pop-safety-icon">🚧</div><div class="pop-safety-title">SEPARAÇÃO FÍSICA</div><div class="pop-safety-desc">Corredores exclusivos para empilhadeiras sinalizados no piso com faixas amarelas.</div><div class="pop-safety-medida">📏 MEDIDA</div><div class="pop-safety-med-txt">Faixas no piso + cones durante operação</div></div>
+        <div class="pop-safety-card"><div class="pop-safety-icon">🔔</div><div class="pop-safety-title">ALERTAS SONOROS</div><div class="pop-safety-desc">Alarme de ré obrigatório. Buzina em todos os cruzamentos cegos.</div><div class="pop-safety-medida">📏 MEDIDA</div><div class="pop-safety-med-txt">Checklist diário + manutenção preventiva mensal</div></div>
+        <div class="pop-safety-card"><div class="pop-safety-icon">💡</div><div class="pop-safety-title">SINALIZAÇÃO VISUAL</div><div class="pop-safety-desc">Luz giratória (strobo) ativa durante toda a operação. Espelhos convexos em cruzamentos internos.</div><div class="pop-safety-medida">📏 MEDIDA</div><div class="pop-safety-med-txt">Strobo + espelhos + faixas de atenção no piso</div></div>
+        <div class="pop-safety-card"><div class="pop-safety-icon">📋</div><div class="pop-safety-title">CONTROLE DIGITAL</div><div class="pop-safety-desc">Nenhuma movimentação autorizada sem tarefa criada pelo Conferente.</div><div class="pop-safety-medida">📏 MEDIDA</div><div class="pop-safety-med-txt">Registro 100% digital — rastreabilidade total</div></div>
+        <div class="pop-safety-card"><div class="pop-safety-icon">🎓</div><div class="pop-safety-title">TREINAMENTO</div><div class="pop-safety-desc">Operadores habilitados com CNH categoria específica. Reciclagem semestral obrigatória.</div><div class="pop-safety-medida">📏 MEDIDA</div><div class="pop-safety-med-txt">Registro de treinamentos + avaliação prática</div></div>
+        <div class="pop-safety-card"><div class="pop-safety-icon">🚨</div><div class="pop-safety-title">RESPOSTA A INCIDENTES</div><div class="pop-safety-desc">Em caso de quase-acidente, parar imediatamente, acionar supervisor e registrar ocorrência.</div><div class="pop-safety-medida">📏 MEDIDA</div><div class="pop-safety-med-txt">Comunicação imediata + análise de causa raiz</div></div>
       </div>
     </div>
 
@@ -367,10 +245,73 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════
-     ABA CONFERENTE
+     PANE — MENU PRINCIPAL
      ══════════════════════════════════════════════════ -->
-<div class="pane active" id="pane-conf">
+<div class="pane active" id="pane-menu">
+  <div class="menu-screen">
+    <div class="menu-header">
+      <div class="menu-title">⬛ PICKING</div>
+      <div class="menu-sub">Selecione o modo de acesso</div>
+    </div>
+
+    <div class="menu-grid">
+
+      <!-- CONFERENTE -->
+      <button class="menu-btn conf" onclick="requestConfTab()">
+        <div class="menu-btn-icon">📋</div>
+        <div class="menu-btn-label conf">CONFERENTE</div>
+        <div class="menu-btn-sub">Criar e gerenciar tarefas</div>
+        <div class="menu-btn-lock" id="conf-lock-state">🔒 Senha necessária</div>
+      </button>
+
+      <!-- EMPILHADOR -->
+      <button class="menu-btn emp" onclick="requestEmpTab()">
+        <span class="menu-badge" id="menu-badge" style="display:none">0</span>
+        <div class="menu-btn-icon">🚜</div>
+        <div class="menu-btn-label emp">EMPILHADOR</div>
+        <div class="menu-btn-sub">Executar tarefas do turno</div>
+        <div class="menu-btn-lock" id="emp-lock-state">📋 Checklist necessário</div>
+      </button>
+
+      <!-- RELATÓRIO DO DIA -->
+      <button class="menu-btn report" onclick="goPane('relatorio')">
+        <div class="menu-btn-icon">📊</div>
+        <div class="menu-btn-label report">REL. DO DIA</div>
+        <div class="menu-btn-sub">Pendentes, andamento e concluídas</div>
+        <div class="menu-btn-counts" id="menu-counts">
+          <span class="mc-pend" id="mc-pend">— pend.</span>
+          <span class="mc-prog" id="mc-prog">— and.</span>
+          <span class="mc-done" id="mc-done">— conc.</span>
+        </div>
+      </button>
+
+      <!-- BAIXAR CSV -->
+      <button class="menu-btn csv" onclick="goPane('reports')">
+        <div class="menu-btn-icon">⬇</div>
+        <div class="menu-btn-label csv">BAIXAR CSV</div>
+        <div class="menu-btn-sub">Relatório por data do Firebase</div>
+        <div class="menu-btn-lock" style="color:#8b5cf6;border-color:#4c1d95">📅 Escolha a data</div>
+      </button>
+
+    </div>
+
+    <div class="menu-footer">
+      <span id="menu-fb-status">Conecte o Firebase nas configurações do Conferente</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PANE — CONFERENTE
+     ══════════════════════════════════════════════════ -->
+<div class="pane" id="pane-conf">
   <div class="wrap">
+
+    <!-- Nav de volta ao menu -->
+    <div class="pane-nav">
+      <button class="btn btn-ghost btn-sm" onclick="goMenu()">← MENU</button>
+      <span class="pane-nav-title">📋 CONFERENTE</span>
+    </div>
 
     <!-- 🔥 CONFIGURAÇÃO FIREBASE -->
     <button class="settings-toggle" id="settings-toggle-btn" onclick="toggleSettings()">
@@ -504,7 +445,7 @@
       </div>
     </div>
 
-    <!-- Relatório -->
+    <!-- Relatório Firebase -->
     <div class="sep"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
       <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase">
@@ -521,12 +462,17 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════
-     ABA EMPILHADOR
+     PANE — EMPILHADOR
      ══════════════════════════════════════════════════ -->
 <div class="pane" id="pane-emp">
   <div class="wrap">
 
-    <!-- Botão POP + RACI -->
+    <!-- Nav de volta ao menu -->
+    <div class="pane-nav">
+      <button class="btn btn-ghost btn-sm" onclick="goMenu()">← MENU</button>
+      <span class="pane-nav-title">🚜 EMPILHADOR</span>
+    </div>
+
     <div style="text-align:right;margin-bottom:12px">
       <button class="btn btn-pop" onclick="abrirModalPOP()">📋 VER POP + RACI DE SEGURANÇA</button>
     </div>
@@ -582,6 +528,118 @@
       <div class="sec-body open" id="sec-emp-done-body">
         <div id="emp-done"></div>
       </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PANE — RELATÓRIO DO DIA
+     ══════════════════════════════════════════════════ -->
+<div class="pane" id="pane-relatorio">
+  <div class="wrap">
+
+    <div class="pane-nav">
+      <button class="btn btn-ghost btn-sm" onclick="goMenu()">← MENU</button>
+      <span class="pane-nav-title">📊 RELATÓRIO DO DIA</span>
+      <button class="btn btn-ghost btn-sm" onclick="renderRelatorioDia()" style="margin-left:auto">↺ ATUALIZAR</button>
+    </div>
+
+    <!-- Resumo -->
+    <div class="rel-summary" id="rel-summary">
+      <div class="rel-sum-card pend">
+        <div class="rel-sum-num" id="rel-num-pend">—</div>
+        <div class="rel-sum-lbl">PENDENTES</div>
+      </div>
+      <div class="rel-sum-card prog">
+        <div class="rel-sum-num" id="rel-num-prog">—</div>
+        <div class="rel-sum-lbl">EM ANDAMENTO</div>
+      </div>
+      <div class="rel-sum-card done">
+        <div class="rel-sum-num" id="rel-num-done">—</div>
+        <div class="rel-sum-lbl">CONCLUÍDAS HOJE</div>
+      </div>
+    </div>
+
+    <!-- Pendentes -->
+    <div style="margin-top:16px">
+      <div class="sec-head open" id="sec-rel-pend-head" onclick="toggleSec('rel-pend')">
+        <h2>⏳ Pendentes de Execução</h2>
+        <span class="sec-cnt zero" id="cnt-rel-pend">0</span>
+        <span class="sec-arrow">▼</span>
+      </div>
+      <div class="sec-body open" id="sec-rel-pend-body">
+        <div id="rel-pend"></div>
+      </div>
+    </div>
+
+    <!-- Em Andamento -->
+    <div style="margin-top:6px">
+      <div class="sec-head open" id="sec-rel-prog-head" onclick="toggleSec('rel-prog')">
+        <h2>🚜 Em Andamento</h2>
+        <span class="sec-cnt zero" id="cnt-rel-prog">0</span>
+        <span class="sec-arrow">▼</span>
+      </div>
+      <div class="sec-body open" id="sec-rel-prog-body">
+        <div id="rel-prog"></div>
+      </div>
+    </div>
+
+    <!-- Concluídas -->
+    <div style="margin-top:6px">
+      <div class="sec-head open" id="sec-rel-done-head" onclick="toggleSec('rel-done')">
+        <h2>✅ Concluídas Hoje</h2>
+        <span class="sec-cnt zero" id="cnt-rel-done">0</span>
+        <span class="sec-arrow">▼</span>
+      </div>
+      <div class="sec-body open" id="sec-rel-done-body">
+        <div id="rel-done"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PANE — BAIXAR RELATÓRIO CSV
+     ══════════════════════════════════════════════════ -->
+<div class="pane" id="pane-reports">
+  <div class="wrap">
+
+    <div class="pane-nav">
+      <button class="btn btn-ghost btn-sm" onclick="goMenu()">← MENU</button>
+      <span class="pane-nav-title">⬇ BAIXAR RELATÓRIOS CSV</span>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📅 Selecione a Data do Relatório</div>
+      <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">
+        Escolha um dia e baixe todos os registros de tarefas concluídas nessa data, 
+        buscados diretamente do Firebase. O arquivo CSV pode ser aberto no Excel ou Google Planilhas.
+      </p>
+      <div class="row2" style="align-items:flex-end;gap:12px">
+        <div>
+          <div class="field-label">Data</div>
+          <input type="date" id="csv-date">
+        </div>
+        <div>
+          <button class="btn btn-amber" style="width:100%;padding:11px 20px" onclick="downloadCSV()">
+            ⬇ BUSCAR E BAIXAR CSV
+          </button>
+        </div>
+      </div>
+      <div id="csv-status" style="margin-top:12px"></div>
+    </div>
+
+    <!-- Preview dos dados -->
+    <div id="csv-preview"></div>
+
+    <!-- Dica de uso -->
+    <div class="settings-note" style="margin-top:16px">
+      <strong>Colunas do arquivo CSV:</strong><br>
+      ID · Código · Descrição · Paletes · Conferente · Operador · Criado Em · Iniciado Em · Finalizado Em · Duração (min) · Duração / Palete
+      <br><br>
+      <strong>Dica:</strong> Para abrir corretamente no Excel, use <em>Dados → Obter dados externos → De arquivo de texto/CSV</em> e selecione delimitador vírgula.
     </div>
 
   </div>
