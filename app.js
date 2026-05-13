@@ -115,8 +115,8 @@ const PRODUCTS = [
 
 let S = {
   tarefas:    [],
-  operadores: ["CARLOS", "JORGE", "MARCOS", "FABIO"],
-  conferentes:["ANA", "ROBERTO", "PATRICIA"],
+  operadores: [],
+  conferentes:[],
   selProd:    null,
   nextId:     1
 };
@@ -314,7 +314,7 @@ function updateMenuFbStatus(connected) {
 //  PERSIST LOCAL
 // ══════════════════════════════════════════════════════
 // ── Versão dos nomes — aumente se mudar operadores/conferentes no código
-const NAMES_VERSION = 2;
+const NAMES_VERSION = 3;
 
 function load() {
   try {
