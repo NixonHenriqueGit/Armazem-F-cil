@@ -8,6 +8,105 @@ const CONF_PASSWORD = '1234';
 let confUnlocked  = false;
 let checklistDone = false;
 
+// ══════════════════════════════════════════════════════
+//  RASTREAMENTO DE LOCALIZACAO
+// ══════════════════════════════════════════════════════
+const LOC_SPEED_IDLE   = 0.4;   // m/s abaixo disso = parado (~1.4 km/h)
+const LOC_IDLE_CONFIRM = 20;    // segundos parado para confirmar idle
+
+let loc = {
+  watchId:       null,
+  taskId:        null,
+  positions:     [],
+  idleSegments:  [],
+  idleStartTs:   null,
+  lastPos:       null,
+  totalDistM:    0,
+  supported:     ('geolocation' in navigator),
+  denied:        false,
+};
+
+function haversineM(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 +
+            Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function startLocationTracking(taskId) {
+  if (!loc.supported || loc.denied) return;
+  loc.taskId = taskId; loc.positions = []; loc.idleSegments = [];
+  loc.idleStartTs = null; loc.lastPos = null; loc.totalDistM = 0;
+  loc.watchId = navigator.geolocation.watchPosition(
+    pos => onLocationUpdate(pos),
+    err => { if (err.code === 1) { loc.denied = true; toast('GPS negado — rastreamento desativado', true); } },
+    { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
+  );
+}
+
+function onLocationUpdate(pos) {
+  const { latitude: lat, longitude: lng, speed } = pos.coords;
+  const ts  = pos.timestamp;
+  const spd = (speed !== null && speed >= 0) ? speed : null;
+  if (loc.lastPos) {
+    const dist    = haversineM(loc.lastPos.lat, loc.lastPos.lng, lat, lng);
+    const dtSec   = (ts - loc.lastPos.ts) / 1000;
+    const estSpd  = dtSec > 0 ? dist / dtSec : 0;
+    const effSpd  = spd !== null ? spd : estSpd;
+    if (dist < 500) loc.totalDistM += dist;
+    if (effSpd < LOC_SPEED_IDLE) {
+      if (!loc.idleStartTs) loc.idleStartTs = ts;
+    } else {
+      if (loc.idleStartTs) {
+        const idleSec = (ts - loc.idleStartTs) / 1000;
+        if (idleSec >= LOC_IDLE_CONFIRM) loc.idleSegments.push({ start: loc.idleStartTs, end: ts, sec: Math.round(idleSec) });
+        loc.idleStartTs = null;
+      }
+    }
+  }
+  loc.positions.push({ lat, lng, speed: spd, ts });
+  loc.lastPos = { lat, lng, ts };
+}
+
+function stopLocationTracking() {
+  if (loc.watchId !== null) { navigator.geolocation.clearWatch(loc.watchId); loc.watchId = null; }
+  if (loc.idleStartTs) {
+    const now = Date.now(); const idleSec = (now - loc.idleStartTs) / 1000;
+    if (idleSec >= LOC_IDLE_CONFIRM) loc.idleSegments.push({ start: loc.idleStartTs, end: now, sec: Math.round(idleSec) });
+    loc.idleStartTs = null;
+  }
+  const totalIdleSec = loc.idleSegments.reduce((s, seg) => s + seg.sec, 0);
+  const first = loc.positions[0] || null;
+  const last  = loc.positions[loc.positions.length - 1] || null;
+  return {
+    distanciaM:      Math.round(loc.totalDistM),
+    totalIdleSec,
+    segmentosParado: loc.idleSegments.length,
+    posInicial:      first ? { lat: first.lat, lng: first.lng } : null,
+    posFinal:        last  ? { lat: last.lat,  lng: last.lng  } : null,
+    mapsLink:        last  ? 'https://www.google.com/maps?q=' + last.lat + ',' + last.lng : null,
+    totalLeituras:   loc.positions.length,
+  };
+}
+
+function fmtLocSummary(locData) {
+  if (!locData || !locData.totalLeituras) return '';
+  const idleMin  = Math.round(locData.totalIdleSec / 60);
+  const distTxt  = locData.distanciaM >= 1000
+    ? (locData.distanciaM / 1000).toFixed(2) + ' km'
+    : locData.distanciaM + ' m';
+  let html = '<div class="loc-summary">' +
+    '<span class="loc-chip">📍 ' + distTxt + '</span>' +
+    '<span class="loc-chip idle">⏸ ' + idleMin + 'min parado</span>';
+  if (locData.mapsLink) {
+    html += '<a class="loc-chip link" href="' + locData.mapsLink + '" target="_blank">🗺 Ver no mapa</a>';
+  }
+  html += '</div>';
+  return html;
+}
+
 const PRODUCTS = [
   { codigo: 347, descricao: "SUKITA PET 1L CAIXA C/12" },
   { codigo: 371, descricao: "MALZBIER BRAHMA LONG NECK 355ML SIX-PACK BAND" },
@@ -16,8 +115,8 @@ const PRODUCTS = [
 
 let S = {
   tarefas:    [],
-  operadores: ["MARIVALDO", "RONILDO", "PAULO", "TERCEIRO"],
-  conferentes:["GILSON", "MATHEUS", "TERCEIRO"],
+  operadores: ["CARLOS", "JORGE", "MARCOS", "FABIO"],
+  conferentes:["ANA", "ROBERTO", "PATRICIA"],
   selProd:    null,
   nextId:     1
 };
@@ -159,7 +258,11 @@ async function fbPushToReport(task) {
       quantidade: task.quantidade, conferente: task.conferente,
       operador: task.operador, criadoEm: task.criadoEm,
       iniciadoEm: task.iniciadoEm, finalizadoEm: task.finalizadoEm,
-      duracaoMin: task.duracaoMin, enviadoEm: new Date().toISOString()
+      duracaoMin: task.duracaoMin, enviadoEm: new Date().toISOString(),
+      locDistanciaM:   task.locData?.distanciaM   ?? null,
+      locIdleSec:      task.locData?.totalIdleSec ?? null,
+      locParadas:      task.locData?.segmentosParado ?? null,
+      locMapsLink:     task.locData?.mapsLink     ?? null,
     });
   } catch(e) {}
 }
@@ -210,20 +313,29 @@ function updateMenuFbStatus(connected) {
 // ══════════════════════════════════════════════════════
 //  PERSIST LOCAL
 // ══════════════════════════════════════════════════════
+// ── Versão dos nomes — aumente se mudar operadores/conferentes no código
+const NAMES_VERSION = 2;
+
 function load() {
   try {
     const d = localStorage.getItem('pk2_s');
     if (!d) return;
     const saved = JSON.parse(d);
-    // Tarefas e contador sempre do localStorage
-    if (saved.tarefas)  S.tarefas  = saved.tarefas;
-    if (saved.nextId)   S.nextId   = saved.nextId;
-    // Nomes: sempre parte dos fixos no código, adiciona apenas extras salvos pelo usuário
-    if (saved.operadores)  saved.operadores.forEach(n  => { if (!S.operadores.includes(n))   S.operadores.push(n);   });
-    if (saved.conferentes) saved.conferentes.forEach(n => { if (!S.conferentes.includes(n))  S.conferentes.push(n);  });
+    if (saved.tarefas) S.tarefas = saved.tarefas;
+    if (saved.nextId)  S.nextId  = saved.nextId;
+
+    // Se a versão dos nomes mudou, ignora os nomes salvos e usa só os do código
+    if ((saved.namesVersion || 0) < NAMES_VERSION) {
+      // Descarta nomes antigos — usa apenas os hardcoded acima
+      return;
+    }
+
+    // Mesma versão: mantém extras adicionados pelo usuário via +ADD
+    if (saved.operadores)  saved.operadores.forEach(n  => { if (!S.operadores.includes(n))  S.operadores.push(n);  });
+    if (saved.conferentes) saved.conferentes.forEach(n => { if (!S.conferentes.includes(n)) S.conferentes.push(n); });
   } catch(e) {}
 }
-function save() { localStorage.setItem('pk2_s', JSON.stringify(S)); }
+function save() { localStorage.setItem('pk2_s', JSON.stringify({...S, namesVersion: NAMES_VERSION})); }
 
 // ══════════════════════════════════════════════════════
 //  RELOGIO
@@ -507,8 +619,10 @@ async function iniciar(id) {
   if (!t) return;
   t.status = 'in_progress';
   t.iniciadoEm = new Date().toISOString();
+  t.locData = null;
+  startLocationTracking(id);
   if (fbDb) { await fbSaveTask(t); } else { save(); renderAll(); }
-  toast('Tarefa #' + id + ' INICIADA');
+  toast('Tarefa #' + id + ' INICIADA — GPS ativado');
 }
 
 async function finalizar(id) {
@@ -517,6 +631,10 @@ async function finalizar(id) {
   t.status = 'done';
   t.finalizadoEm = new Date().toISOString();
   t.duracaoMin = Math.round((new Date(t.finalizadoEm) - new Date(t.iniciadoEm)) / 6000) / 10;
+  // Salva dados de localização se disponíveis
+  if (loc.taskId === id) {
+    t.locData = stopLocationTracking();
+  }
   if (fbDb) { await fbSaveTask(t); await fbPushToReport(t); } else { save(); renderAll(); }
   toast('Tarefa #' + id + ' CONCLUIDA em ' + fmtMin(t.duracaoMin));
 }
@@ -791,6 +909,8 @@ function taskCard(t, ctx) {
       (t.status==='done' ? '<span>TOTAL <strong style="color:var(--green)">' + fmtMin(t.duracaoMin) + '</strong></span>' : '') +
       (pp && t.status==='done' ? '<span>/ PALETE <strong style="color:var(--green)">' + pp + '</strong></span>' : '') +
     '</div>' +
+    (t.status === 'done' && t.locData ? fmtLocSummary(t.locData) : '') +
+    (t.status === 'in_progress' && loc.taskId === t.id ? '<div class="loc-tracking-live">📡 GPS ativo — rastreando movimento</div>' : '') +
     '<div class="btn-row">' + actions + '</div></div>';
 }
 
