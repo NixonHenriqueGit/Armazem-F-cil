@@ -211,7 +211,17 @@ function updateMenuFbStatus(connected) {
 //  PERSIST LOCAL
 // ══════════════════════════════════════════════════════
 function load() {
-  try { const d = localStorage.getItem('pk2_s'); if (d) S = {...S, ...JSON.parse(d)}; } catch(e) {}
+  try {
+    const d = localStorage.getItem('pk2_s');
+    if (!d) return;
+    const saved = JSON.parse(d);
+    // Tarefas e contador sempre do localStorage
+    if (saved.tarefas)  S.tarefas  = saved.tarefas;
+    if (saved.nextId)   S.nextId   = saved.nextId;
+    // Nomes: sempre parte dos fixos no código, adiciona apenas extras salvos pelo usuário
+    if (saved.operadores)  saved.operadores.forEach(n  => { if (!S.operadores.includes(n))   S.operadores.push(n);   });
+    if (saved.conferentes) saved.conferentes.forEach(n => { if (!S.conferentes.includes(n))  S.conferentes.push(n);  });
+  } catch(e) {}
 }
 function save() { localStorage.setItem('pk2_s', JSON.stringify(S)); }
 
