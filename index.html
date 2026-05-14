@@ -492,6 +492,41 @@
           <button class="btn btn-ghost btn-sm" onclick="addOp()">+ ADD</button>
         </div>
       </div>
+
+      <!-- Seleção de tipo de operação -->
+      <div class="op-tipo-section">
+        <div class="field-label" style="margin-bottom:10px">TIPO DE OPERAÇÃO</div>
+        <div class="op-tipo-btns">
+          <button class="btn-tipo" id="btn-tipo-durante" onclick="selecionarTipo('durante')">
+            <span class="btn-tipo-icon">🚛</span>
+            <span class="btn-tipo-label">DURANTE O<br>CARREGAMENTO</span>
+          </button>
+          <button class="btn-tipo" id="btn-tipo-apos" onclick="selecionarTipo('apos')">
+            <span class="btn-tipo-icon">📦</span>
+            <span class="btn-tipo-label">APÓS O<br>CARREGAMENTO</span>
+          </button>
+        </div>
+        <div class="op-tipo-status" id="op-tipo-status">
+          <span id="op-tipo-texto">⚠ Nenhum tipo selecionado — escolha antes de iniciar uma tarefa</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MODAL CONFIRMAÇÃO TIPO DE OPERAÇÃO ── -->
+    <div class="modal-overlay" id="modal-tipo" style="display:none">
+      <div class="modal-box">
+        <div class="modal-icon" id="modal-tipo-icon">🚛</div>
+        <div class="modal-title" id="modal-tipo-title">DURANTE O CARREGAMENTO</div>
+        <div class="modal-sub" style="margin-bottom:6px">Confirme o tipo de operação que será realizada</div>
+        <div class="modal-tipo-desc" id="modal-tipo-desc">
+          As tarefas realizadas serão registradas como <strong>reabastecimento durante o processo de carregamento</strong>.
+        </div>
+        <div class="modal-tipo-operador" id="modal-tipo-operador"></div>
+        <div class="btn-row" style="justify-content:center;margin-top:20px;gap:12px">
+          <button class="btn btn-amber" onclick="confirmarTipo()">✅ CONFIRMAR</button>
+          <button class="btn btn-ghost" onclick="cancelarTipo()">CANCELAR</button>
+        </div>
+      </div>
     </div>
 
     <!-- Pendentes -->
