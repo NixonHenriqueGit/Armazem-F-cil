@@ -7,6 +7,8 @@ const CONF_PASSWORD = '4321';
 
 let confUnlocked  = false;
 let checklistDone = false;
+let tipoOperacao  = null;   // 'durante' | 'apos'
+let tipoPendente  = null;   // guarda qual foi clicado enquanto modal está aberto
 
 // ══════════════════════════════════════════════════════
 //  RASTREAMENTO DE LOCALIZACAO
@@ -259,6 +261,7 @@ async function fbPushToReport(task) {
       operador: task.operador, criadoEm: task.criadoEm,
       iniciadoEm: task.iniciadoEm, finalizadoEm: task.finalizadoEm,
       duracaoMin: task.duracaoMin, enviadoEm: new Date().toISOString(),
+      tipoOperacao:    task.tipoOperacao    ?? null,
       locDistanciaM:   task.locData?.distanciaM   ?? null,
       locIdleSec:      task.locData?.totalIdleSec ?? null,
       locParadas:      task.locData?.segmentosParado ?? null,
@@ -524,6 +527,68 @@ function fecharModalChecklist() {
 }
 
 // ══════════════════════════════════════════════════════
+//  TIPO DE OPERAÇÃO — DURANTE / APÓS CARREGAMENTO
+// ══════════════════════════════════════════════════════
+function selecionarTipo(tipo) {
+  const op = document.getElementById('sel-op')?.value;
+  if (!op) { toast('Selecione seu nome antes de escolher o tipo de operação', true); return; }
+
+  tipoPendente = tipo;
+
+  const isDurante = tipo === 'durante';
+  document.getElementById('modal-tipo-icon').textContent  = isDurante ? '🚛' : '📦';
+  document.getElementById('modal-tipo-title').textContent = isDurante
+    ? 'DURANTE O CARREGAMENTO'
+    : 'APÓS O CARREGAMENTO';
+  document.getElementById('modal-tipo-desc').innerHTML = isDurante
+    ? 'As tarefas realizadas serão registradas como <strong>reabastecimento durante o processo de carregamento</strong>.'
+    : 'As tarefas realizadas serão registradas como <strong>ressuprimento da área de picking após o carregamento</strong>.';
+  document.getElementById('modal-tipo-operador').innerHTML =
+    'Operador: <strong>' + op + '</strong>';
+
+  document.getElementById('modal-tipo').style.display = 'flex';
+}
+
+function confirmarTipo() {
+  tipoOperacao = tipoPendente;
+  tipoPendente = null;
+  document.getElementById('modal-tipo').style.display = 'none';
+  atualizarExibicaoTipo();
+  const label = tipoOperacao === 'durante' ? 'DURANTE O CARREGAMENTO' : 'APÓS O CARREGAMENTO';
+  toast('Tipo definido: ' + label);
+}
+
+function cancelarTipo() {
+  tipoPendente = null;
+  document.getElementById('modal-tipo').style.display = 'none';
+}
+
+function atualizarExibicaoTipo() {
+  const btnD  = document.getElementById('btn-tipo-durante');
+  const btnA  = document.getElementById('btn-tipo-apos');
+  const texto = document.getElementById('op-tipo-texto');
+  const status= document.getElementById('op-tipo-status');
+
+  if (!btnD || !btnA) return;
+
+  btnD.classList.toggle('ativo',   tipoOperacao === 'durante');
+  btnD.classList.toggle('inativo', tipoOperacao === 'apos');
+  btnA.classList.toggle('ativo',   tipoOperacao === 'apos');
+  btnA.classList.toggle('inativo', tipoOperacao === 'durante');
+
+  if (tipoOperacao === 'durante') {
+    texto.innerHTML = '🚛 <strong>DURANTE O CARREGAMENTO</strong> — tipo ativo';
+    status.className = 'op-tipo-status tipo-durante';
+  } else if (tipoOperacao === 'apos') {
+    texto.innerHTML = '📦 <strong>APÓS O CARREGAMENTO</strong> — tipo ativo';
+    status.className = 'op-tipo-status tipo-apos';
+  } else {
+    texto.innerHTML = '⚠ Nenhum tipo selecionado — escolha antes de iniciar uma tarefa';
+    status.className = 'op-tipo-status';
+  }
+}
+
+// ══════════════════════════════════════════════════════
 //  MODAL POP + RACI
 // ══════════════════════════════════════════════════════
 function abrirModalPOP() { document.getElementById('modal-pop').style.display = 'flex'; }
@@ -617,12 +682,19 @@ async function criarTarefa() {
 async function iniciar(id) {
   const t = S.tarefas.find(t => t.id === id);
   if (!t) return;
+  if (!tipoOperacao) {
+    toast('Selecione o tipo de operação antes de iniciar (Durante ou Após o Carregamento)', true);
+    // Scroll suave até o card de identificação
+    document.querySelector('.op-tipo-btns')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
   t.status = 'in_progress';
   t.iniciadoEm = new Date().toISOString();
   t.locData = null;
+  t.tipoOperacao = tipoOperacao === 'durante' ? 'Durante o Carregamento' : 'Após o Carregamento';
   startLocationTracking(id);
   if (fbDb) { await fbSaveTask(t); } else { save(); renderAll(); }
-  toast('Tarefa #' + id + ' INICIADA — GPS ativado');
+  toast('Tarefa #' + id + ' INICIADA — ' + t.tipoOperacao);
 }
 
 async function finalizar(id) {
@@ -769,7 +841,8 @@ async function downloadCSV() {
       'CRIADO EM',
       'INICIADO EM',
       'FINALIZADO EM',
-      'DURACAO DA OPERACAO'
+      'DURACAO DA OPERACAO',
+      'DURANTE / APÓS O CARREGAMENTO'
     ];
 
     const rows = filtered.map(r => [
@@ -781,7 +854,8 @@ async function downloadCSV() {
       fmtDateCSV(r.criadoEm),
       fmtDateCSV(r.iniciadoEm),
       fmtDateCSV(r.finalizadoEm),
-      fmtDurCSV(r.duracaoMin)
+      fmtDurCSV(r.duracaoMin),
+      r.tipoOperacao  ?? ''
     ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(SEP));
 
     const csvContent = [headers.map(h => '"'+h+'"').join(SEP), ...rows].join('\r\n');
@@ -887,6 +961,7 @@ function taskCardReadonly(t) {
       '<span>TAREFA <strong>#' + t.id + '</strong></span>' +
       '<span>CONFERENTE <strong>' + t.conferente + '</strong></span>' +
       '<span>OPERADOR <strong style="color:var(--blue)">' + t.operador + '</strong></span>' +
+      (t.tipoOperacao ? '<span>TIPO <strong style="color:var(--amber)">' + t.tipoOperacao + '</strong></span>' : '') +
       (t.iniciadoEm   ? '<span>INICIO <strong>' + fmtTime(t.iniciadoEm) + '</strong></span>' : '') +
       (t.finalizadoEm ? '<span>FIM <strong>' + fmtTime(t.finalizadoEm) + '</strong></span>' : '') +
       (t.status==='done' ? '<span>TOTAL <strong style="color:var(--green)">' + fmtMin(t.duracaoMin) + '</strong></span>' : '') +
@@ -936,6 +1011,7 @@ function taskCard(t, ctx) {
       '<span>TAREFA <strong>#' + t.id + '</strong></span>' +
       '<span>CONFERENTE <strong>' + t.conferente + '</strong></span>' +
       '<span>OPERADOR <strong style="color:var(--blue)">' + t.operador + '</strong></span>' +
+      (t.tipoOperacao ? '<span>TIPO <strong style="color:var(--amber)">' + t.tipoOperacao + '</strong></span>' : '') +
       (t.iniciadoEm   ? '<span>INICIO <strong>' + fmtTime(t.iniciadoEm) + '</strong></span>' : '') +
       (t.finalizadoEm ? '<span>FIM <strong>' + fmtTime(t.finalizadoEm) + '</strong></span>' : '') +
       (t.status==='done' ? '<span>TOTAL <strong style="color:var(--green)">' + fmtMin(t.duracaoMin) + '</strong></span>' : '') +
