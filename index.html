@@ -3,10 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PICKING — Reabastecimento</title>
+<title>ARMAZÉM FÁCIL — Sistema de Armazém</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+.dash-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.dash-kpi{padding:16px;border-radius:14px;background:var(--surface2);border:1px solid var(--border);text-align:center}
+.dash-kpi-val{font-size:36px;font-weight:900;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;line-height:1}
+.dash-kpi-label{font-size:11px;color:var(--text-dim);margin-top:6px;text-transform:uppercase;letter-spacing:1px}
+.dash-kpi-sub{font-size:11px;margin-top:4px;font-weight:600}
+</style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
@@ -14,7 +23,7 @@
 
 <!-- ── HEADER ──────────────────────────────────────── -->
 <div class="header">
-  <div class="logo">⬛ PICKING <span>/ REABASTECIMENTO</span></div>
+  <div class="logo">⬛ ARMAZÉM FÁCIL <span>/ SISTEMA INTEGRADO</span></div>
   <div class="header-right">
     <div class="fb-indicator fb-off" id="fb-indicator">🔴 OFFLINE</div>
     <div class="clock" id="clock">--:--:--</div>
@@ -250,8 +259,8 @@
 <div class="pane active" id="pane-menu">
   <div class="menu-screen">
     <div class="menu-header">
-      <div class="menu-title">⬛ PICKING</div>
-      <div class="menu-sub">Selecione o modo de acesso</div>
+      <div class="menu-title">⬛ ARMAZÉM FÁCIL</div>
+      <div class="menu-sub">Selecione o módulo de acesso</div>
     </div>
 
     <div class="menu-grid">
@@ -273,6 +282,46 @@
         <div class="menu-btn-lock" id="emp-lock-state">📋 Checklist necessário</div>
       </button>
 
+      <!-- DESPEJO TIMER -->
+      <button class="menu-btn" style="border-color:rgba(239,68,68,.4)" onclick="goPane('despejo')">
+        <div class="menu-btn-icon">🗑</div>
+        <div class="menu-btn-label" style="color:#ef4444">DESPEJO TIMER</div>
+        <div class="menu-btn-sub">Registrar produtividade de despejo</div>
+        <div class="menu-btn-lock" style="color:#ef4444;border-color:#7f1d1d;background:var(--red-dim)">⏱ Medir tempo</div>
+      </button>
+
+      <!-- REPACK TIMER -->
+      <button class="menu-btn" style="border-color:rgba(245,166,35,.4)" onclick="goPane('repack')">
+        <div class="menu-btn-icon">📦</div>
+        <div class="menu-btn-label" style="color:var(--amber)">REPACK TIMER</div>
+        <div class="menu-btn-sub">Registrar produtividade de repack</div>
+        <div class="menu-btn-lock" style="color:var(--amber);border-color:var(--amber-dim);background:var(--amber-dim)">⏱ Medir tempo</div>
+      </button>
+
+      <!-- ARMAZÉM FÁCIL -->
+      <button class="menu-btn" style="border-color:rgba(124,198,255,.4)" onclick="goPane('armazem')">
+        <div class="menu-btn-icon">🚛</div>
+        <div class="menu-btn-label" style="color:#7cc6ff">ARMAZÉM FÁCIL</div>
+        <div class="menu-btn-sub">Carregamento e descarregamento</div>
+        <div class="menu-btn-lock" style="color:#7cc6ff;border-color:#1a3a55;background:#0e1e2e">🪟 Janela 07:00–21:00</div>
+      </button>
+
+      <!-- CONTROLE DE QUEBRAS -->
+      <button class="menu-btn" style="border-color:rgba(239,68,68,.3)" onclick="goPane('quebras')">
+        <div class="menu-btn-icon">💥</div>
+        <div class="menu-btn-label" style="color:#fca5a5">QUEBRAS</div>
+        <div class="menu-btn-sub">Registro de avarias por área</div>
+        <div class="menu-btn-lock" style="color:#fca5a5;border-color:#7f1d1d;background:#2d0f0f">⚠ Controle de perdas</div>
+      </button>
+
+      <!-- DASHBOARD -->
+      <button class="menu-btn" style="border-color:rgba(99,102,241,.5)" onclick="requestDashTab()">
+        <div class="menu-btn-icon">📈</div>
+        <div class="menu-btn-label" style="color:#a5b4fc">DASHBOARD</div>
+        <div class="menu-btn-sub">KPIs de todos os setores</div>
+        <div class="menu-btn-lock" id="dash-lock-state" style="color:#a5b4fc;border-color:#3730a3;background:#1e1b4b">🔒 Senha necessária</div>
+      </button>
+
       <!-- RELATÓRIO DO DIA -->
       <button class="menu-btn report" onclick="goPane('relatorio')">
         <div class="menu-btn-icon">📊</div>
@@ -285,11 +334,11 @@
         </div>
       </button>
 
-      <!-- BAIXAR CSV -->
+      <!-- BAIXAR RELATÓRIOS -->
       <button class="menu-btn csv" onclick="goPane('reports')">
         <div class="menu-btn-icon">⬇</div>
-        <div class="menu-btn-label csv">BAIXAR CSV</div>
-        <div class="menu-btn-sub">Relatório por data do Firebase</div>
+        <div class="menu-btn-label csv">RELATÓRIOS</div>
+        <div class="menu-btn-sub">CSV picking · Excel despejo/repack/armazém/quebras</div>
         <div class="menu-btn-lock" style="color:#8b5cf6;border-color:#4c1d95">📅 Escolha a data</div>
       </button>
 
@@ -643,14 +692,33 @@
 
     <div class="pane-nav">
       <button class="btn btn-ghost btn-sm" onclick="goMenu()">← MENU</button>
-      <span class="pane-nav-title">⬇ BAIXAR RELATÓRIOS CSV</span>
+      <span class="pane-nav-title">⬇ RELATÓRIOS</span>
     </div>
 
-    <div class="card">
-      <div class="card-title">📅 Selecione a Data do Relatório</div>
+    <!-- Cards de Resumo -->
+    <div id="rel-cards-resumo" style="margin-bottom:4px">
+      <div style="font-size:12px;color:var(--text-dim);padding:8px 0">Abra esta aba para carregar o resumo.</div>
+    </div>
+
+    <!-- Fechar Turno -->
+    <div class="card" style="border-color:rgba(139,92,246,.4);margin-bottom:16px">
+      <div class="card-title" style="color:#a78bfa;font-size:16px">📥 FECHAR TURNO — EXCEL COMPLETO</div>
       <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">
-        Escolha um dia e baixe todos os registros de tarefas concluídas nessa data, 
-        buscados diretamente do Firebase. O arquivo CSV pode ser aberto no Excel ou Google Planilhas.
+        Gera um único arquivo <strong>.xlsx</strong> com 5 abas: <strong>Resumo · Despejo · Repack · Armazém · Quebras</strong>. Use ao fim de cada turno.
+      </p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button id="btn-fechar-turno" class="btn" style="background:#8b5cf6;color:#fff;font-weight:700;padding:12px 20px;font-size:14px" onclick="fecharTurno()">
+          📥 FECHAR TURNO — BAIXAR EXCEL COMPLETO
+        </button>
+        <span id="rel-fechar-status" style="font-size:12px;color:var(--text-dim)"></span>
+      </div>
+    </div>
+
+    <!-- CSV Picking Firebase -->
+    <div class="card">
+      <div class="card-title">📅 Picking / Reabastecimento — CSV por Data</div>
+      <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">
+        Busca registros de tarefas concluídas no Firebase para a data selecionada.
       </p>
       <div class="row2" style="align-items:flex-end;gap:12px">
         <div>
@@ -666,15 +734,558 @@
       <div id="csv-status" style="margin-top:12px"></div>
     </div>
 
-    <!-- Preview dos dados -->
     <div id="csv-preview"></div>
 
-    <!-- Dica de uso -->
+    <!-- Despejo Timer Export -->
+    <div class="card" style="margin-top:16px">
+      <div class="card-title" style="color:#ef4444">🗑 Despejo Timer — Exportar Excel</div>
+      <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">
+        Exporta todos os registros de produtividade de despejo salvos no navegador.
+      </p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-red" onclick="exportarDespejoExcel()">⬇ BAIXAR RELATÓRIO DESPEJO (.xlsx)</button>
+        <span id="despejo-export-status" style="font-size:12px;color:var(--text-dim)"></span>
+      </div>
+    </div>
+
+    <!-- Repack Timer Export -->
+    <div class="card" style="margin-top:16px">
+      <div class="card-title" style="color:var(--amber)">📦 Repack Timer — Exportar Excel</div>
+      <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">
+        Exporta todos os registros de produtividade de repack salvos no navegador.
+      </p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-amber" onclick="exportarRepackExcel()">⬇ BAIXAR RELATÓRIO REPACK (.xlsx)</button>
+        <span id="repack-export-status" style="font-size:12px;color:var(--text-dim)"></span>
+      </div>
+    </div>
+
+    <!-- Armazém Fácil Export -->
+    <div class="card" style="margin-top:16px">
+      <div class="card-title" style="color:#7cc6ff">🚛 Armazém Fácil — Exportar Excel</div>
+      <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">
+        Exporta todos os registros de carregamento e descarregamento salvos no navegador.
+      </p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn" style="background:#7cc6ff;color:#0b1220;font-weight:700" onclick="exportarArmazemExcel()">⬇ BAIXAR RELATÓRIO ARMAZÉM (.xlsx)</button>
+        <span id="armazem-export-status" style="font-size:12px;color:var(--text-dim)"></span>
+      </div>
+    </div>
+
+    <!-- Quebras Export -->
+    <div class="card" style="margin-top:16px">
+      <div class="card-title" style="color:#fca5a5">💥 Controle de Quebras — Exportar Excel</div>
+      <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">
+        Exporta todos os registros de avarias salvos no Firebase.
+      </p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-red" onclick="exportarQuebrasExcel()">⬇ BAIXAR RELATÓRIO QUEBRAS (.xlsx)</button>
+        <span id="quebras-export-status" style="font-size:12px;color:var(--text-dim)"></span>
+      </div>
+    </div>
+
     <div class="settings-note" style="margin-top:16px">
-      <strong>Colunas do arquivo CSV:</strong><br>
+      <strong>Picking CSV — Colunas:</strong><br>
       ID · Código · Descrição · Paletes · Conferente · Operador · Criado Em · Iniciado Em · Finalizado Em · Duração (min) · Duração / Palete
       <br><br>
       <strong>Dica:</strong> Para abrir corretamente no Excel, use <em>Dados → Obter dados externos → De arquivo de texto/CSV</em> e selecione delimitador vírgula.
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PANE — ARMAZÉM FÁCIL (Carregamento/Descarregamento)
+     ══════════════════════════════════════════════════ -->
+<div class="pane" id="pane-armazem">
+  <div class="wrap">
+    <div class="pane-nav">
+      <button class="btn btn-ghost btn-sm" onclick="goMenu()">← MENU</button>
+      <span class="pane-nav-title">🚛 ARMAZÉM FÁCIL — CARREGAMENTO / DESCARREGAMENTO</span>
+      <span id="armazem-nowInfo" style="margin-left:auto;font-size:12px;color:var(--text-dim);padding:6px 12px;border-radius:999px;background:var(--bg);border:1px dashed var(--border)">—</span>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📝 Formulário de Registro</div>
+      <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px">Janela válida: <strong style="color:#7cc6ff">07:00</strong> até <strong style="color:#7cc6ff">21:00</strong>. Observação obrigatória quando fora da janela.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:14px">
+
+        <div style="grid-column:span 4">
+          <div class="field-label">Operação *</div>
+          <select id="af-operacao" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+            <option value="" disabled selected>Selecione</option>
+            <option>Descarregamento</option>
+            <option>Carregamento</option>
+          </select>
+        </div>
+
+        <div style="grid-column:span 4">
+          <div class="field-label">Empilhador *</div>
+          <select id="af-empilhador" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+            <option value="" disabled selected>Selecione</option>
+            <option>Paulo Pereira</option>
+            <option>Marivaldo</option>
+            <option>Ronildo</option>
+            <option>Outros...</option>
+          </select>
+        </div>
+
+        <div style="grid-column:span 4">
+          <div class="field-label">Turno *</div>
+          <select id="af-turno" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+            <option value="" disabled selected>Selecione</option>
+            <option>Diurno</option>
+            <option>Noturno</option>
+          </select>
+        </div>
+
+        <div style="grid-column:span 5">
+          <div class="field-label">Placa do Veículo *</div>
+          <select id="af-placa" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+            <option value="" disabled selected>Selecione</option>
+            <option>QSK7D92</option><option>OXO0532</option><option>OXO0542</option>
+            <option>OXO0552</option><option>OXO0782</option><option>SLB4A26</option>
+            <option>NPR2601</option><option>SLB4A56</option><option>TOZ8B20</option>
+            <option>TOZ8B50</option><option>RLR8G79</option><option>RLU4H49</option>
+            <option>TOU7F79</option><option>RLW0C17</option><option>SLB3J76</option>
+            <option>RLU3F59</option><option>RLT5J54</option><option>RLT5J44</option>
+            <option>Outra...</option>
+          </select>
+          <input id="af-placaOutro" type="text" placeholder="Digite a placa" maxlength="8" style="display:none;width:100%;margin-top:6px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+        </div>
+
+        <div style="grid-column:span 3">
+          <div class="field-label">Tipo *</div>
+          <select id="af-tipo" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+            <option value="" disabled selected>Selecione</option>
+            <option value="rota">Rota</option>
+            <option value="puxada">Puxada</option>
+            <option value="recarga">Recarga</option>
+            <option value="terceiro">Terceiro</option>
+          </select>
+        </div>
+
+        <div style="grid-column:span 2">
+          <div class="field-label">Palhete *</div>
+          <input id="af-palhete" type="number" min="0" placeholder="Qtd" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+        </div>
+
+        <div style="grid-column:span 2">
+          <div class="field-label">Data</div>
+          <input id="af-data" type="date" readonly style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);opacity:.8">
+        </div>
+
+        <div style="grid-column:span 4">
+          <div class="field-label">Hora Início *</div>
+          <div style="display:flex;gap:8px">
+            <input id="af-inicio" type="time" style="flex:1;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+            <button class="btn btn-ghost btn-sm" id="af-btnInicio">Puxar hora</button>
+          </div>
+        </div>
+
+        <div style="grid-column:span 4">
+          <div class="field-label">Hora Final *</div>
+          <div style="display:flex;gap:8px">
+            <input id="af-fim" type="time" style="flex:1;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+            <button class="btn btn-ghost btn-sm" id="af-btnFim">Puxar hora</button>
+          </div>
+        </div>
+
+        <div style="grid-column:span 4">
+          <div class="field-label">Status (07:00 → 21:00)</div>
+          <div id="af-statusChip" style="padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg);font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">—</div>
+        </div>
+
+        <div style="grid-column:span 12">
+          <div class="field-label">Observação (obrigatória quando fora da janela)</div>
+          <textarea id="af-obs" placeholder="Descreva o motivo quando estiver fora da janela" style="width:100%;min-height:70px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);resize:vertical"></textarea>
+        </div>
+
+        <div style="grid-column:span 12">
+          <div class="btn-row">
+            <button class="btn btn-amber" id="af-btnSalvar">💾 SALVAR REGISTRO</button>
+            <button class="btn btn-ghost" id="af-btnClear">↺ LIMPAR FORM</button>
+            <button class="btn btn-red btn-sm" id="af-btnLimpar">🗑 APAGAR TUDO</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:700px">
+        <thead style="background:var(--surface2)">
+          <tr>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Operação</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Data</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Início</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Fim</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Status</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Empilhador</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Turno</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Placa</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Tipo</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Palhete</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Observação</th>
+          </tr>
+        </thead>
+        <tbody id="af-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PANE — CONTROLE DE QUEBRAS
+     ══════════════════════════════════════════════════ -->
+<div class="pane" id="pane-quebras">
+  <div class="wrap">
+    <div class="pane-nav">
+      <button class="btn btn-ghost btn-sm" onclick="goMenu()">← MENU</button>
+      <span class="pane-nav-title">💥 CONTROLE DE QUEBRAS — REGISTRO DE AVARIAS</span>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📝 Cadastro de Quebra</div>
+      <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:14px">
+
+        <!-- Produto autocomplete -->
+        <div style="grid-column:span 7;position:relative">
+          <div class="field-label">Produto</div>
+          <input id="qb-produtoInput" autocomplete="off" placeholder="Digite código ou nome do produto..."
+            style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+          <div id="qb-listaProdutos" style="position:absolute;top:100%;left:0;right:0;background:#0e1626;border:1px solid var(--border);border-radius:10px;z-index:50;max-height:220px;overflow-y:auto;display:none"></div>
+        </div>
+
+        <div style="grid-column:span 2">
+          <div class="field-label">Código</div>
+          <input id="qb-codigo" placeholder="Auto" readonly
+            style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);opacity:.8">
+        </div>
+
+        <div style="grid-column:span 3">
+          <div class="field-label">Quantidade *</div>
+          <input id="qb-quantidade" type="number" min="1" placeholder="Qtd"
+            style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+        </div>
+
+        <div style="grid-column:span 12">
+          <div class="field-label">Descrição</div>
+          <input id="qb-descricao" placeholder="Automático ou manual"
+            style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+        </div>
+
+        <div style="grid-column:span 4">
+          <div class="field-label">Área *</div>
+          <select id="qb-area" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+            <option value="">Selecione</option>
+            <option>ARMAZEM</option>
+            <option>ENTREGA</option>
+            <option>MERCADO</option>
+            <option>PUXADA</option>
+          </select>
+        </div>
+
+        <div style="grid-column:span 4">
+          <div class="field-label">Turno *</div>
+          <select id="qb-turno" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+            <option value="">Selecione</option>
+            <option>MANHÃ</option>
+            <option>NOITE</option>
+          </select>
+        </div>
+
+        <div style="grid-column:span 4">
+          <div class="field-label">Tipo de Quebra *</div>
+          <select id="qb-tipoQuebra" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+            <option value="">Selecione a área primeiro</option>
+          </select>
+        </div>
+
+        <div style="grid-column:span 12">
+          <button class="btn btn-amber" onclick="qbAdicionar()" style="max-width:220px">➕ ADICIONAR QUEBRA</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;overflow-x:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+        <span style="font-size:12px;color:var(--text-dim)">⚠ Dados ficam na memória — exporte antes de fechar o navegador</span>
+        <button class="btn btn-red btn-sm" onclick="qbLimparTabela()">🗑 Limpar tabela</button>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:700px">
+        <thead style="background:var(--surface2)">
+          <tr>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Cód Produto</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Descrição</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Qtd</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Turno</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Cód Quebra</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Área</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Motivo</th>
+            <th style="padding:10px 8px;text-align:right;border-bottom:1px solid var(--border)">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="qb-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PANE — DESPEJO TIMER
+     ══════════════════════════════════════════════════ -->
+<div class="pane" id="pane-despejo">
+  <div class="wrap">
+    <div class="pane-nav">
+      <button class="btn btn-ghost btn-sm" onclick="goMenu()">← MENU</button>
+      <span class="pane-nav-title">🗑 DESPEJO TIMER — PRODUTIVIDADE</span>
+      <div style="margin-left:auto;display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:var(--bg);border:1px dashed var(--border);font-size:12px;">
+        META UNIT.: <strong id="despejo-metaValue" style="color:var(--amber)">—:—:—</strong>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚙ Configurar Registro</div>
+      <div class="row2" style="gap:14px;margin-bottom:14px">
+        <div>
+          <div class="field-label">Embalagem</div>
+          <select id="despejo-embalagem" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)"></select>
+        </div>
+        <div>
+          <div class="field-label">Quantidade feita</div>
+          <input type="number" id="despejo-quantidade" min="1" value="1" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+        </div>
+      </div>
+      <div class="row2" style="gap:14px;margin-bottom:14px">
+        <div>
+          <div class="field-label">Hora inicial</div>
+          <input type="time" id="despejo-inicio" step="1" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+        </div>
+        <div>
+          <div class="field-label">Hora final</div>
+          <input type="time" id="despejo-fim" step="1" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+        </div>
+      </div>
+      <div class="row2" style="gap:14px;margin-bottom:16px">
+        <div>
+          <div class="field-label">Tempo total</div>
+          <input type="text" id="despejo-duracao" readonly value="00:00:00" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);opacity:.9">
+        </div>
+        <div>
+          <div class="field-label">Status vs Meta</div>
+          <div id="despejo-status" style="font-weight:700;padding:10px 0;font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">—</div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost btn-sm" id="despejo-btnInicio">⏱ Puxar hora inicial</button>
+        <button class="btn btn-ghost btn-sm" id="despejo-btnFim">⏱ Puxar hora final</button>
+        <button class="btn btn-amber" id="despejo-btnRegistrar" disabled>✅ REGISTRAR</button>
+        <button class="btn btn-red btn-sm" id="despejo-btnLimpar">🗑 LIMPAR TUDO</button>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead style="background:var(--surface2)">
+          <tr>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Data</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Embalagem</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Qtd</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Início</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Fim</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Tempo</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Meta Unit.</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Resultado</th>
+            <th style="padding:10px 8px;text-align:right;border-bottom:1px solid var(--border)">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="despejo-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PANE — REPACK TIMER
+     ══════════════════════════════════════════════════ -->
+<div class="pane" id="pane-repack">
+  <div class="wrap">
+    <div class="pane-nav">
+      <button class="btn btn-ghost btn-sm" onclick="goMenu()">← MENU</button>
+      <span class="pane-nav-title">📦 REPACK TIMER — PRODUTIVIDADE</span>
+      <div style="margin-left:auto;display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:var(--bg);border:1px dashed var(--border);font-size:12px;">
+        META UNIT.: <strong id="repack-metaValue" style="color:var(--amber)">—:—:—</strong>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚙ Configurar Registro</div>
+      <div class="row2" style="gap:14px;margin-bottom:14px">
+        <div>
+          <div class="field-label">Embalagem</div>
+          <select id="repack-embalagem" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)"></select>
+        </div>
+        <div>
+          <div class="field-label">Quantidade feita</div>
+          <input type="number" id="repack-quantidade" min="1" value="1" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+        </div>
+      </div>
+      <div class="row2" style="gap:14px;margin-bottom:14px">
+        <div>
+          <div class="field-label">Hora inicial</div>
+          <input type="time" id="repack-inicio" step="1" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+        </div>
+        <div>
+          <div class="field-label">Hora final</div>
+          <input type="time" id="repack-fim" step="1" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+        </div>
+      </div>
+      <div class="row2" style="gap:14px;margin-bottom:16px">
+        <div>
+          <div class="field-label">Tempo total</div>
+          <input type="text" id="repack-duracao" readonly value="00:00:00" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);color:var(--text);opacity:.9">
+        </div>
+        <div>
+          <div class="field-label">Status vs Meta</div>
+          <div id="repack-status" style="font-weight:700;padding:10px 0;font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">—</div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost btn-sm" id="repack-btnInicio">⏱ Puxar hora inicial</button>
+        <button class="btn btn-ghost btn-sm" id="repack-btnFim">⏱ Puxar hora final</button>
+        <button class="btn btn-amber" id="repack-btnRegistrar" disabled>✅ REGISTRAR</button>
+        <button class="btn btn-red btn-sm" id="repack-btnLimpar">🗑 LIMPAR TUDO</button>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead style="background:var(--surface2)">
+          <tr>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Data</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Embalagem</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Qtd</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Início</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Fim</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Tempo</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Meta Unit.</th>
+            <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Resultado</th>
+            <th style="padding:10px 8px;text-align:right;border-bottom:1px solid var(--border)">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="repack-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PANE — DASHBOARD KPIs
+     ══════════════════════════════════════════════════ -->
+<div class="pane" id="pane-dashboard">
+  <div class="wrap">
+    <div class="pane-nav">
+      <button class="btn btn-ghost btn-sm" onclick="goMenu()">← MENU</button>
+      <span class="pane-nav-title">📈 DASHBOARD — KPIs DO ARMAZÉM</span>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="date" id="dash-de" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12px">
+        <span style="font-size:12px;color:var(--text-dim)">até</span>
+        <input type="date" id="dash-ate" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12px">
+        <button class="btn btn-amber btn-sm" onclick="dashCarregar()">🔄 ATUALIZAR</button>
+      </div>
+    </div>
+
+    <div id="dash-loading" style="text-align:center;padding:40px;color:var(--text-dim);display:none">
+      ⏳ Carregando dados do Firebase...
+    </div>
+
+    <!-- ── PICKING / EMPILHADOR ─────────────────────── -->
+    <div style="margin-bottom:8px;padding:10px 0 4px">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text-dim)">📋 PICKING / EMPILHADOR</span>
+    </div>
+    <div class="dash-cards" id="dash-picking-cards"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
+      <div class="card" style="padding:16px">
+        <div class="card-title" style="font-size:12px;margin-bottom:12px">Tarefas por Operador</div>
+        <canvas id="dash-chart-operadores" height="180"></canvas>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="card-title" style="font-size:12px;margin-bottom:12px">Status das Tarefas</div>
+        <canvas id="dash-chart-picking-status" height="180"></canvas>
+      </div>
+    </div>
+
+    <!-- ── DESPEJO TIMER ────────────────────────────── -->
+    <div style="margin-bottom:8px;padding:10px 0 4px">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text-dim)">🗑 DESPEJO TIMER</span>
+    </div>
+    <div class="dash-cards" id="dash-despejo-cards"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
+      <div class="card" style="padding:16px">
+        <div class="card-title" style="font-size:12px;margin-bottom:12px">Meta Batida vs Não Batida</div>
+        <canvas id="dash-chart-despejo-meta" height="180"></canvas>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="card-title" style="font-size:12px;margin-bottom:12px">Registros por Embalagem</div>
+        <canvas id="dash-chart-despejo-emb" height="180"></canvas>
+      </div>
+    </div>
+
+    <!-- ── REPACK TIMER ─────────────────────────────── -->
+    <div style="margin-bottom:8px;padding:10px 0 4px">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text-dim)">📦 REPACK TIMER</span>
+    </div>
+    <div class="dash-cards" id="dash-repack-cards"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
+      <div class="card" style="padding:16px">
+        <div class="card-title" style="font-size:12px;margin-bottom:12px">Meta Batida vs Não Batida</div>
+        <canvas id="dash-chart-repack-meta" height="180"></canvas>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="card-title" style="font-size:12px;margin-bottom:12px">Registros por Embalagem</div>
+        <canvas id="dash-chart-repack-emb" height="180"></canvas>
+      </div>
+    </div>
+
+    <!-- ── ARMAZÉM FÁCIL ────────────────────────────── -->
+    <div style="margin-bottom:8px;padding:10px 0 4px">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text-dim)">🚛 ARMAZÉM FÁCIL</span>
+    </div>
+    <div class="dash-cards" id="dash-armazem-cards"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px">
+      <div class="card" style="padding:16px">
+        <div class="card-title" style="font-size:12px;margin-bottom:12px">OK vs NOK</div>
+        <canvas id="dash-chart-armazem-status" height="180"></canvas>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="card-title" style="font-size:12px;margin-bottom:12px">Por Tipo de Operação</div>
+        <canvas id="dash-chart-armazem-tipo" height="180"></canvas>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="card-title" style="font-size:12px;margin-bottom:12px">Por Empilhador</div>
+        <canvas id="dash-chart-armazem-emp" height="180"></canvas>
+      </div>
+    </div>
+
+    <!-- ── QUEBRAS ───────────────────────────────────── -->
+    <div style="margin-bottom:8px;padding:10px 0 4px">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text-dim)">💥 CONTROLE DE QUEBRAS</span>
+    </div>
+    <div class="dash-cards" id="dash-quebras-cards"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px">
+      <div class="card" style="padding:16px">
+        <div class="card-title" style="font-size:12px;margin-bottom:12px">Quebras por Área</div>
+        <canvas id="dash-chart-quebras-area" height="180"></canvas>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="card-title" style="font-size:12px;margin-bottom:12px">Top 5 Motivos</div>
+        <canvas id="dash-chart-quebras-motivo" height="180"></canvas>
+      </div>
+      <div class="card" style="padding:16px">
+        <div class="card-title" style="font-size:12px;margin-bottom:12px">Top 5 Produtos com Mais Quebras</div>
+        <canvas id="dash-chart-quebras-prod" height="180"></canvas>
+      </div>
     </div>
 
   </div>
@@ -684,5 +1295,915 @@
 <div id="toast"></div>
 
 <script src="app.js"></script>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  HELPER — pega fbDb do app.js (inicializado lá)
+// ══════════════════════════════════════════════════════
+function getDb() {
+  if (typeof fbDb !== 'undefined' && fbDb) return fbDb;
+  return null;
+}
+function dbOk() {
+  if (!getDb()) { alert('Firebase não conectado. Configure nas Configurações.'); return false; }
+  return true;
+}
+function pad2(n){ return String(n).padStart(2,'0'); }
+function toSec(hms){ const [h=0,m=0,s=0]=String(hms).split(':').map(Number); return h*3600+m*60+s; }
+function toHMS(sec){ sec=Math.max(0,Math.floor(sec)); return [Math.floor(sec/3600),Math.floor((sec%3600)/60),sec%60].map(n=>String(n).padStart(2,'0')).join(':'); }
+function nowHHMMSS(){ const n=new Date(); return [n.getHours(),n.getMinutes(),n.getSeconds()].map(x=>String(x).padStart(2,'0')).join(':'); }
+function nowHHMM(){ const n=new Date(); return [n.getHours(),n.getMinutes()].map(x=>String(x).padStart(2,'0')).join(':'); }
+function todayISO(){ const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+function todayBR(){ const [y,m,d]=todayISO().split('-'); return `${d}/${m}/${y}`; }
+
+// ══════════════════════════════════════════════════════
+//  DESPEJO TIMER
+// ══════════════════════════════════════════════════════
+// ── config Firebase hardcoded (armazemfacil-b2292) ──
+// O app.js já inicializa o Firebase via config salva no localStorage.
+// Aqui apenas garantimos que o config padrão esteja pré-carregado.
+(function preloadFirebaseConfig() {
+  const FB_KEY = 'pk_firebase_config';
+  if (!localStorage.getItem(FB_KEY)) {
+    localStorage.setItem(FB_KEY, JSON.stringify({
+      apiKey:            'AIzaSyA_ykhJGRklDbPuDNYooMlVvB2DeVzp2VE',
+      authDomain:        'armazemfacil-b2292.firebaseapp.com',
+      projectId:         'armazemfacil-b2292',
+      storageBucket:     'armazemfacil-b2292.appspot.com',
+      messagingSenderId: '688234941301',
+      appId:             '1:688234941301:web:153e2ad3f634379fe3213c',
+      measurementId:     'G-6HFDEKWVDB'
+    }));
+  }
+})();
+
+// ══════════════════════════════════════════════════════
+//  HELPER — salvar/buscar em coleção Firestore
+// ══════════════════════════════════════════════════════
+async function fbSave(colecao, dados) {
+  if (!dbOk()) return null;
+  try {
+    const ref = await getDb().collection(colecao).add({ ...dados, _criadoEm: new Date().toISOString() });
+    return ref.id;
+  } catch(e) { alert('Erro ao salvar: ' + e.message); return null; }
+}
+
+async function fbDelete(colecao, docId) {
+  if (!dbOk()) return;
+  try { await getDb().collection(colecao).doc(docId).delete(); } catch(e) {}
+}
+
+async function fbBuscarPorData(colecao, dataISO) {
+  if (!dbOk()) return [];
+  try {
+    const snap = await getDb().collection(colecao).get();
+    return snap.docs.map(d => ({ ...d.data(), _docId: d.id }))
+      .filter(r => (r.dataISO || '') === dataISO)
+      .sort((a,b) => (a._criadoEm||'').localeCompare(b._criadoEm||''));
+  } catch(e) { return []; }
+}
+
+async function fbBuscarTodos(colecao) {
+  if (!dbOk()) return [];
+  try {
+    const snap = await getDb().collection(colecao).orderBy('_criadoEm','asc').get();
+    return snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
+  } catch(e) { return []; }
+}
+
+// ══════════════════════════════════════════════════════
+//  HELPER — renderizar tabela genérica com listener FB
+// ══════════════════════════════════════════════════════
+function fbListen(colecao, renderFn) {
+  // Retorna unsubscribe. Chama renderFn com array de docs sempre que muda.
+  if (!getDb()) return () => {};
+  return getDb().collection(colecao)
+    .orderBy('_criadoEm', 'asc')
+    .onSnapshot(snap => {
+      renderFn(snap.docs.map(d => ({ ...d.data(), _docId: d.id })));
+    }, () => {});
+}
+
+const DESPEJO_EMBALAGENS = [
+  { nome: 'LATA 250', meta: '00:03:30' },
+  { nome: 'LATA 269', meta: '00:03:30' },
+  { nome: 'LATA 350', meta: '00:04:00' },
+  { nome: 'LATA 473', meta: '00:04:00' },
+  { nome: 'LONG NECK', meta: '00:05:00' },
+  { nome: 'PET 1L', meta: '00:04:30' },
+  { nome: 'PET 2L', meta: '00:04:00' },
+  // Adicione mais embalagens aqui:
+];
+
+(function initDespejo() {
+  const sel   = document.getElementById('despejo-embalagem');
+  const metaEl= document.getElementById('despejo-metaValue');
+  const qtdEl = document.getElementById('despejo-quantidade');
+  const iniEl = document.getElementById('despejo-inicio');
+  const fimEl = document.getElementById('despejo-fim');
+  const durEl = document.getElementById('despejo-duracao');
+  const stEl  = document.getElementById('despejo-status');
+  const btnReg= document.getElementById('despejo-btnRegistrar');
+  const tbody = document.getElementById('despejo-tbody');
+
+  DESPEJO_EMBALAGENS.forEach(e => {
+    const o = document.createElement('option');
+    o.value = e.nome; o.textContent = e.nome;
+    sel.appendChild(o);
+  });
+
+  function getMeta() { return DESPEJO_EMBALAGENS.find(e=>e.nome===sel.value); }
+
+  function recalc() {
+    const emb = getMeta();
+    metaEl.textContent = emb ? emb.meta : '—:—:—';
+    if (!iniEl.value || !fimEl.value) { durEl.value='00:00:00'; stEl.textContent='—'; stEl.style.color=''; btnReg.disabled=true; return; }
+    let ini=toSec(iniEl.value), fim=toSec(fimEl.value);
+    if(fim<ini) fim+=86400;
+    const diff=fim-ini;
+    durEl.value=toHMS(diff);
+    if(emb) {
+      const ok=diff<=toSec(emb.meta)*Number(qtdEl.value||1);
+      stEl.textContent=ok?'✅ BATEU A META':'❌ FORA DA META';
+      stEl.style.color=ok?'var(--green)':'var(--red)';
+    }
+    btnReg.disabled=false;
+  }
+
+  function render(docs) {
+    tbody.innerHTML = '';
+    docs.forEach(r => {
+      const ok = r.resultado === 'BATEU a meta';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="padding:10px 8px;border-bottom:1px solid var(--border)">${r.data||''}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid var(--border)">${r.embalagem||''}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid var(--border)">${r.quantidade||''}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid var(--border)">${r.inicio||''}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid var(--border)">${r.fim||''}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid var(--border)">${r.tempo||''}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid var(--border)">${r.meta||''}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid var(--border);color:${ok?'var(--green)':'var(--red)'}">${r.resultado||''}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid var(--border);text-align:right">
+          <button class="btn btn-ghost btn-sm" onclick="fbDelete('despejo','${r._docId}')">✕</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Listener em tempo real
+  setTimeout(() => fbListen('despejo', render), 1500);
+
+  async function registrar() {
+    if (!dbOk()) return;
+    const emb = getMeta();
+    const dados = {
+      dataISO: todayISO(),
+      data: todayBR(),
+      embalagem: sel.value,
+      quantidade: qtdEl.value,
+      inicio: iniEl.value,
+      fim: fimEl.value,
+      tempo: durEl.value,
+      meta: emb ? emb.meta : '—',
+      resultado: stEl.textContent.includes('BATEU') ? 'BATEU a meta' : 'Fora da Meta'
+    };
+    btnReg.disabled = true;
+    await fbSave('despejo', dados);
+    iniEl.value=''; fimEl.value=''; qtdEl.value=1; durEl.value='00:00:00'; stEl.textContent='—'; stEl.style.color='';
+  }
+
+  sel.addEventListener('change', recalc);
+  qtdEl.addEventListener('input', recalc);
+  iniEl.addEventListener('input', recalc);
+  fimEl.addEventListener('input', recalc);
+  btnReg.addEventListener('click', registrar);
+  document.getElementById('despejo-btnInicio').addEventListener('click', () => { iniEl.value=nowHHMMSS(); recalc(); });
+  document.getElementById('despejo-btnFim').addEventListener('click', () => { fimEl.value=nowHHMMSS(); recalc(); });
+  document.getElementById('despejo-btnLimpar').addEventListener('click', async () => {
+    if (!confirm('Apagar TODOS os registros de despejo do Firebase?')) return;
+    if (!dbOk()) return;
+    const snap = await getDb().collection('despejo').get();
+    const batch = getDb().batch();
+    snap.docs.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+  });
+
+  recalc();
+})();
+
+// ══════════════════════════════════════════════════════
+//  REPACK TIMER
+// ══════════════════════════════════════════════════════
+const REPACK_EMBALAGENS = [
+  { nome: 'LATA 250', meta: '00:04:30' },
+  { nome: 'LATA 269', meta: '00:04:30' },
+  { nome: 'LATA 350', meta: '00:05:30' },
+  { nome: 'LATA 473', meta: '00:05:30' },
+  { nome: 'LONG NECK', meta: '00:06:00' },
+  { nome: 'PET 1L', meta: '00:05:30' },
+  { nome: 'PET 2L', meta: '00:05:00' },
+  // Adicione mais embalagens aqui:
+];
+
+(function initRepack() {
+  const sel   = document.getElementById('repack-embalagem');
+  const metaEl= document.getElementById('repack-metaValue');
+  const qtdEl = document.getElementById('repack-quantidade');
+  const iniEl = document.getElementById('repack-inicio');
+  const fimEl = document.getElementById('repack-fim');
+  const durEl = document.getElementById('repack-duracao');
+  const stEl  = document.getElementById('repack-status');
+  const btnReg= document.getElementById('repack-btnRegistrar');
+  const tbody = document.getElementById('repack-tbody');
+
+  REPACK_EMBALAGENS.forEach(e => {
+    const o = document.createElement('option');
+    o.value = e.nome; o.textContent = e.nome;
+    sel.appendChild(o);
+  });
+
+  function getMeta() { return REPACK_EMBALAGENS.find(e=>e.nome===sel.value); }
+
+  function recalc() {
+    const emb = getMeta();
+    metaEl.textContent = emb ? emb.meta : '—:—:—';
+    if (!iniEl.value || !fimEl.value) { durEl.value='00:00:00'; stEl.textContent='—'; stEl.style.color=''; btnReg.disabled=true; return; }
+    let ini=toSec(iniEl.value), fim=toSec(fimEl.value);
+    if(fim<ini) fim+=86400;
+    const diff=fim-ini;
+    const qtd=Number(qtdEl.value||1);
+    durEl.value=toHMS(diff);
+    if(emb) {
+      const ok=(diff/qtd)<=toSec(emb.meta);
+      stEl.textContent=ok?'✅ BATEU A META':'❌ FORA DA META';
+      stEl.style.color=ok?'var(--green)':'var(--red)';
+    }
+    btnReg.disabled=false;
+  }
+
+  function render(docs) {
+    tbody.innerHTML = '';
+    docs.forEach(r => {
+      const ok = r.resultado === 'Bateu';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="padding:10px 8px;border-bottom:1px solid var(--border)">${r.data||''}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid var(--border)">${r.embalagem||''}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid var(--border)">${r.quantidade||''}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid var(--border)">${r.inicio||''}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid var(--border)">${r.fim||''}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid var(--border)">${r.duracao||''}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid var(--border)">${r.meta||''}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid var(--border);color:${ok?'var(--green)':'var(--red)'}">${r.resultado||''}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid var(--border);text-align:right">
+          <button class="btn btn-ghost btn-sm" onclick="fbDelete('repack','${r._docId}')">✕</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  setTimeout(() => fbListen('repack', render), 1500);
+
+  async function registrar() {
+    if (!dbOk()) return;
+    const emb=getMeta();
+    const qtd=Number(qtdEl.value||1);
+    const diff=toSec(durEl.value);
+    const ok=emb?((diff/qtd)<=toSec(emb.meta)):false;
+    const dados = {
+      dataISO: todayISO(),
+      data: todayBR(),
+      embalagem: sel.value,
+      quantidade: qtd,
+      inicio: iniEl.value,
+      fim: fimEl.value,
+      duracao: durEl.value,
+      meta: emb ? emb.meta : '—',
+      resultado: ok ? 'Bateu' : 'Não bateu'
+    };
+    btnReg.disabled = true;
+    await fbSave('repack', dados);
+    fimEl.value=''; qtdEl.value=1; durEl.value='00:00:00'; stEl.textContent='—'; stEl.style.color='';
+  }
+
+  sel.addEventListener('change', recalc);
+  qtdEl.addEventListener('input', recalc);
+  iniEl.addEventListener('input', recalc);
+  fimEl.addEventListener('input', recalc);
+  btnReg.addEventListener('click', registrar);
+  document.getElementById('repack-btnInicio').addEventListener('click', () => { iniEl.value=nowHHMMSS(); recalc(); });
+  document.getElementById('repack-btnFim').addEventListener('click', () => { fimEl.value=nowHHMMSS(); recalc(); });
+  document.getElementById('repack-btnLimpar').addEventListener('click', async () => {
+    if (!confirm('Apagar TODOS os registros de repack do Firebase?')) return;
+    if (!dbOk()) return;
+    const snap = await getDb().collection('repack').get();
+    const batch = getDb().batch();
+    snap.docs.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+  });
+
+  recalc();
+})();
+
+// ══════════════════════════════════════════════════════
+//  CONTROLE DE QUEBRAS — Firebase
+// ══════════════════════════════════════════════════════
+(function initQuebras() {
+
+  const QB_PRODUTOS = [
+    {codigo:347,descricao:"SUKITA PET 1L CAIXA C/12"},{codigo:371,descricao:"MALZBIER BRAHMA LONG NECK 355ML SIX-PACK BAND"},{codigo:503,descricao:"SUKITA PET 2L CAIXA C/6"},{codigo:504,descricao:"PEPSI COLA PET 2L CAIXA C/6"},{codigo:982,descricao:"SKOL 600ML"},{codigo:988,descricao:"BRAHMA CHOPP 600ML"},{codigo:1164,descricao:"SUKITA UVA LATA 350ML SH C/12 NPAL"},{codigo:1166,descricao:"SUKITA UVA PET 2L CAIXA C/6"},{codigo:1388,descricao:"SKOL GFA VD 1L 2,99"},{codigo:1695,descricao:"BRAHMA CHOPP GFA VD 1L COM TTC"},{codigo:1743,descricao:"ANTARCTICA PILSEN GFA VD 1L COM TTC"},{codigo:1745,descricao:"SKOL LT 269ML SH C15 NPAL"},{codigo:1898,descricao:"BRAHMA CHOPP LT 269ML SH C15 NPAL"},{codigo:2006,descricao:"ANTARCTICA SUBZERO 600ML"},{codigo:2008,descricao:"ANTARCTICA SUBZERO LATA 350ML SH C/12 NPAL"},{codigo:2319,descricao:"GUARANA CHP ANTARCTICA PET 1L CAIXA C/12"},{codigo:2320,descricao:"SODA LIMONADA ANTARCTICA PET 1L CAIXA C/12"},{codigo:2349,descricao:"GUARANA CHP ANTARCTICA PET 2L CAIXA C/6"},{codigo:2350,descricao:"SODA LIMONADA ANTARCTICA PET 2L CAIXA C/6"},{codigo:2353,descricao:"GUARANA CHP ANTARCTICA DIET PET 2L CAIXA C/6"},{codigo:2538,descricao:"ANTARCTICA PILSEN 600ML"},{codigo:2546,descricao:"ORIGINAL 600ML"},{codigo:2548,descricao:"BUDWEISER 600ML"},{codigo:2585,descricao:"GUARANA CHP ANTARCTICA GFA VD 1L"},{codigo:4141,descricao:"PATAGONIA AMB LAG NACIONAL LT SLEEK 350ML C 8"},{codigo:4293,descricao:"PEPSI BLACK PET 200ML SH C/12"},{codigo:4367,descricao:"INDAIA AGUA MINERAL S/GAS GFA PET 1,5L FD C/6"},{codigo:4409,descricao:"PEPSI TWIST PET 2L SHRINK C/6"},{codigo:6181,descricao:"AGUA MIN DIAS DAVILA S/GAS PET 500ML CAIXA C/"},{codigo:6183,descricao:"AGUA MIN DIAS DAVILA C/GAS PET 500ML CAIXA C/"},{codigo:6185,descricao:"AGUA MIN DIAS DAVILA S/GAS PET 1,5L CAIXA C/6"},{codigo:7325,descricao:"PEPSI COLA PET 1L CAIXA C/12"},{codigo:7945,descricao:"PEPSI COLA PET 2,5L CAIXA C/6"},{codigo:7947,descricao:"GUARANA CHP ANTARCTICA PET 2,5L CAIXA C/6"},{codigo:7977,descricao:"GATORADE UVA PET 500ML SIXPACK"},{codigo:7980,descricao:"GATORADE TANGERINA PET 500ML SIXPACK"},{codigo:7981,descricao:"GATORADE LARANJA PET 500ML SIXPACK"},{codigo:7982,descricao:"GATORADE LIMAO PET 500ML SIXPACK"},{codigo:7983,descricao:"GATORADE MORANGO-MARACUJA PET 500ML SIXPACK"},{codigo:7985,descricao:"GATORADE MARACUJA PET 500ML SIXPACK"},{codigo:8411,descricao:"GUARANA CHP ANTARCTICA PET 1,5 SHRINK C/6"},{codigo:8791,descricao:"H2OH LIMAO C/GAS PET 500ML CAIXA C/12"},{codigo:8793,descricao:"H2OH LIMAO C/GAS PET 1,5L CAIXA C/6"},{codigo:8919,descricao:"GUARANA CHP ANTARCTICA PET 600ML CX12 NPAL"},{codigo:9067,descricao:"ANTARCTICA PILSEN LATA 350ML SH C/12 NPAL"},{codigo:9068,descricao:"SKOL LATA 350ML SH C/12 NPAL"},{codigo:9069,descricao:"BRAHMA CHOPP LATA 350ML SH C/12 NPAL"},{codigo:9071,descricao:"CARACU LATA 350ML SH C/12 NPAL"},{codigo:9072,descricao:"BOHEMIA NOVA EMBALAGEM LATA 350ML SH C/12 NPA"},{codigo:9081,descricao:"MALZBIER BRAHMA LATA 350ML SH C/12 NPAL"},{codigo:9083,descricao:"SKOL LT 473ML SH C/12 NPAL"},{codigo:9084,descricao:"GUARANA CHP ANTARCTICA LATA 350ML SH C/12 NPA"},{codigo:9085,descricao:"GUARANA CHP ANTARCTICA DIET LATA 350ML SH C/1"},{codigo:9087,descricao:"SODA LIMONADA ANTARCTICA LATA 350ML SH C/12 N"},{codigo:9089,descricao:"SUKITA LATA 350ML SH C/12 NPAL"},{codigo:9091,descricao:"TONICA ANTARCTICA LATA 350ML SH C/12 NPAL"},{codigo:9092,descricao:"TONICA ANTARCTICA DIET LATA 350ML SH C/12 NPA"},{codigo:9093,descricao:"PEPSI TWIST LATA 350ML SH C/12 NPAL"},{codigo:9096,descricao:"PEPSI COLA LATA 350ML SH C/12 NPAL"},{codigo:9274,descricao:"PEPSI ZERO LATA 350ML SH C/12 NPAL"},{codigo:9276,descricao:"PEPSI ZERO PET 2L CAIXA C/6"},{codigo:9320,descricao:"BRAHMA CHOPP LT 473ML SH C/12 NPAL"},{codigo:33066,descricao:"YPE TIXAN LAVA ROUPAS PO PRIMAV SACHE 400G CX"},{codigo:33734,descricao:"BEATS RED MIX LT 269ML SH C/8"},{codigo:33738,descricao:"BEATS RED MIX LONG NECK 269ML SIX-PACK SH C/2"},{codigo:33820,descricao:"BRAHMA CHOPP LATA 350ML SH C/12 NPAL MULTIPAC"},{codigo:34027,descricao:"GUARANA CHP ANTARCTICA LATA 350ML SH C/12 NPA"},{codigo:34263,descricao:"CORONA CERO SUNBREW N LT SLEEK 350ML C 8 CX C"},{codigo:34296,descricao:"TRIDENT CANELA ENVELOPE 8G CX C/21"},{codigo:34298,descricao:"TRIDENT MORANGO ENVELOPE 8G CX C/21"},{codigo:34320,descricao:"GUARANA ANTARCTICA ZERO LATA 350ML SH C/12 NP"},{codigo:34410,descricao:"HALLS UVA VERDE ENVELOPE 28G CX C/21"},{codigo:34420,descricao:"RED BULL SUMMER MARACUJA E MELAO LATA 250ML F"},{codigo:34429,descricao:"RED BULL SUGAR FREE AMORA LATA 250ML FOUR PAC"},{codigo:34475,descricao:"ELEVE AGUA MIN S GAS GFA PET 510ML FD C/12"},{codigo:34479,descricao:"ELEVE AGUA MIN S GAS PET 1,5 SHRINK C/6"},{codigo:34527,descricao:"YPE AMACIANTE TRADICIONAL ACONCHEGO FRASCO PL"},{codigo:34529,descricao:"YPE TIXAN LAVA ROUPAS LIQ MACIEZ FRASCO PLAST"},{codigo:34608,descricao:"SKOL LATA 350ML SH C/12 NPAL MULTIPACK"},{codigo:34770,descricao:"RED BULL SUGAR FREE POMELO LATA 250ML FOUR PA"},{codigo:34890,descricao:"YPE ASSOLAN ESPONJA LA ACO CX PAPEL CART 1,6K"},{codigo:35003,descricao:"TRIDENT XFRESH 5S PRETO CEREJA ENVELOPE 8G CX"},{codigo:35134,descricao:"YPE SABAO BARRA NEUTRO PCT PLAST 800G"},{codigo:35136,descricao:"YPE SABAO BARRA MULTIATIVO PCT PLAST 800G"},{codigo:35331,descricao:"BUDWEISER GFA VD 1L"},{codigo:101490,descricao:"BARRIL CHOPP,50L"},{codigo:138165,descricao:"GARRAFEIRA PLAST,24 GFA 600ML,ANTARCTICA,,AZU"},{codigo:188005,descricao:"GARRAFEIRA PLAST,12 GFA 1L,AMBEV"},{codigo:188006,descricao:"GFA VIDRO 1L,AMBAR,RETORN."},{codigo:198214,descricao:"GFA VIDRO 330ML,AMBAR,TIPO S GP,RETORN"},{codigo:235894,descricao:"GFA VIDRO 1L,GCA 1L,RETORN."},{codigo:287241,descricao:"GFA VIDRO 300 ML,AMBAR,RETORNAVEL IMP"},{codigo:296156,descricao:"GARRAFEIRA PLAST,23 GFA 300ML,AZUL"},{codigo:786238,descricao:"GFA VIDRO 635ML,VERDE,TIPO A,RETORN."},{codigo:857678,descricao:"GFA VIDRO 965ML,RETORN.,TIPO A,TRANSP"},{codigo:857679,descricao:"GARRAFEIRA PLAST,12 GFA 965ML"},{codigo:899599,descricao:"GARRAFEIRA PLAST,24 GFA 600ML"}
+  ];
+
+  const QB_TIPOS = {
+    ARMAZEM:[{c:520,d:"INVERSÃO - ARMAZÉM"},{c:522,d:"ESTOURADA - ARMAZÉM"},{c:523,d:"ESTUFADO - ARMAZÉM"},{c:524,d:"FALTA NO PALETE - ARMAZÉM"},{c:525,d:"QUEBRADA - ARMAZÉM"},{c:526,d:"VAZAMENTO - ARMAZÉM"},{c:527,d:"IMPUREZA - ARMAZÉM"},{c:528,d:"FURTO - ARMAZÉM"},{c:529,d:"TROCA - ARMAZÉM"},{c:530,d:"CLIENTE - ARMAZÉM"},{c:531,d:"SEM GÁS - ARMAZÉM"},{c:532,d:"MAL CHEIO - ARMAZÉM"},{c:533,d:"PRODUTO VENCIDO - ARMAZÉM"},{c:534,d:"SEM TAMPA - ARMAZÉM"},{c:535,d:"MAL CHAPEADA - ARMAZÉM"},{c:536,d:"CONSUMO IMPRÓPRIO - ARMAZÉM"},{c:537,d:"QUEBRA PICKING - ARMAZÉM"},{c:538,d:"DIFERENÇA ESTOQUE - ARMAZÉM"},{c:539,d:"QUEBRA COM MOVIMENTAÇÃO - ARMAZÉM"},{c:540,d:"DIFERENÇA INVENTÁRIO - ARMAZÉM"},{c:541,d:"EVENTOS - ARMAZÉM"}],
+    ENTREGA:[{c:542,d:"CONSUMO IMPRÓPRIO - ENTREGA"},{c:543,d:"ACIDENTE DE TRABALHO - ENTREGA"},{c:544,d:"ESTOURADA - ENTREGA"},{c:545,d:"ESTUFADO - ENTREGA"},{c:546,d:"FALTA NO PALETE - ENTREGA"},{c:547,d:"QUEBRADA - ENTREGA"},{c:548,d:"VAZAMENTO - ENTREGA"},{c:549,d:"IMPUREZA - ENTREGA"},{c:550,d:"FURTO - ENTREGA"},{c:551,d:"CLIENTE - ENTREGA"},{c:552,d:"SEM GÁS - ENTREGA"},{c:553,d:"MAL CHEIO - ENTREGA"},{c:554,d:"VENCIDO - ENTREGA"},{c:555,d:"SEM TAMPA - ENTREGA"},{c:556,d:"CARGA TOMBADA - ENTREGA"},{c:557,d:"QUEBRA COM MOVIMENTAÇÃO - ENTREGA"},{c:558,d:"EVENTOS - ENTREGA"},{c:559,d:"MAL CHAPEADA - ENTREGA"},{c:560,d:"INVERSÃO - ENTREGA"}],
+    MERCADO:[{c:561,d:"ACIDENTE DE TRABALHO - MERCADO"},{c:562,d:"ESTOURADA - MERCADO"},{c:563,d:"ESTUFADO - MERCADO"},{c:564,d:"FALTA NO PALETE - MERCADO"},{c:565,d:"QUEBRADA - MERCADO"},{c:566,d:"VAZAMENTO - MERCADO"},{c:567,d:"IMPUREZA - MERCADO"},{c:568,d:"FURTO - MERCADO"},{c:569,d:"TROCA - MERCADO"},{c:570,d:"CLIENTE - MERCADO"},{c:571,d:"SEM GÁS - MERCADO"},{c:572,d:"MAL CHEIO - MERCADO"},{c:573,d:"VENCIDO - MERCADO"},{c:574,d:"SEM TAMPA - MERCADO"}],
+    PUXADA:[{c:575,d:"ESTUFADO - PUXADA"},{c:576,d:"FALTA NO PALETE - PUXADA"},{c:577,d:"QUEBRADA - PUXADA"},{c:578,d:"VAZAMENTO - PUXADA"},{c:579,d:"IMPUREZA - PUXADA"},{c:580,d:"FURTO - PUXADA"},{c:581,d:"TROCA - PUXADA"},{c:582,d:"CLIENTE - PUXADA"},{c:583,d:"SEM GÁS - PUXADA"},{c:584,d:"MAL CHEIO - PUXADA"},{c:585,d:"VENCIDO - PUXADA"},{c:586,d:"SEM TAMPA - PUXADA"},{c:587,d:"CARGA TOMBADA - PUXADA"},{c:588,d:"MAL CHAPEADA - PUXADA"},{c:589,d:"QUEBRA COM MOVIMENTAÇÃO - PUXADA"}]
+  };
+
+  const inputProd = document.getElementById('qb-produtoInput');
+  const listaProd = document.getElementById('qb-listaProdutos');
+  const inputCod  = document.getElementById('qb-codigo');
+  const inputDesc = document.getElementById('qb-descricao');
+  const inputQtd  = document.getElementById('qb-quantidade');
+  const selArea   = document.getElementById('qb-area');
+  const selTurno  = document.getElementById('qb-turno');
+  const selTipo   = document.getElementById('qb-tipoQuebra');
+  const tbody     = document.getElementById('qb-tbody');
+
+  inputProd.addEventListener('input', () => {
+    const v = inputProd.value.toLowerCase().trim();
+    inputDesc.value = inputProd.value; inputCod.value = '';
+    listaProd.innerHTML = '';
+    if (!v) { listaProd.style.display='none'; return; }
+    const matches = QB_PRODUTOS.filter(p => p.descricao.toLowerCase().includes(v) || String(p.codigo).includes(v)).slice(0,30);
+    if (!matches.length) { listaProd.style.display='none'; return; }
+    matches.forEach(p => {
+      const d = document.createElement('div');
+      d.textContent = `${p.codigo} — ${p.descricao}`;
+      d.style.cssText = 'padding:10px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)';
+      d.addEventListener('mouseenter', () => d.style.background='rgba(124,198,255,.1)');
+      d.addEventListener('mouseleave', () => d.style.background='');
+      d.addEventListener('click', () => {
+        inputProd.value = p.descricao; inputCod.value = p.codigo; inputDesc.value = p.descricao;
+        listaProd.innerHTML = ''; listaProd.style.display = 'none';
+      });
+      listaProd.appendChild(d);
+    });
+    listaProd.style.display = 'block';
+  });
+  document.addEventListener('click', e => { if (!inputProd.contains(e.target)) listaProd.style.display='none'; });
+
+  selArea.addEventListener('change', () => {
+    selTipo.innerHTML = '<option value="">Selecione</option>';
+    (QB_TIPOS[selArea.value]||[]).forEach(t => {
+      const o = document.createElement('option');
+      o.value = `${t.c}|${t.d}`; o.textContent = `${t.c} - ${t.d}`;
+      selTipo.appendChild(o);
+    });
+  });
+
+  function render(docs) {
+    tbody.innerHTML = '';
+    docs.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="padding:9px 8px;border-bottom:1px solid var(--border)">${r.codProduto||'—'}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid var(--border);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.descricao||''}">${r.descricao||''}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid var(--border)">${r.quantidade||''}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid var(--border)">${r.turno||''}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid var(--border)">${r.codQuebra||''}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid var(--border)">${r.area||''}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid var(--border);color:var(--text-dim)">${r.motivo||''}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid var(--border);text-align:right">
+          <button class="btn btn-ghost btn-sm" onclick="fbDelete('quebras','${r._docId}')">✕</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  setTimeout(() => fbListen('quebras', render), 1500);
+
+  window.qbAdicionar = async function() {
+    if (!inputDesc.value || !inputQtd.value || !selArea.value || !selTurno.value || !selTipo.value) {
+      alert('Preencha todos os campos obrigatórios.'); return;
+    }
+    if (!dbOk()) return;
+    const [codQ, motivo] = selTipo.value.split('|');
+    await fbSave('quebras', {
+      dataISO: todayISO(), data: todayBR(),
+      codProduto: inputCod.value || '—',
+      descricao: inputDesc.value,
+      quantidade: inputQtd.value,
+      turno: selTurno.value,
+      codQuebra: codQ,
+      area: selArea.value,
+      motivo
+    });
+    inputProd.value=''; inputCod.value=''; inputDesc.value=''; inputQtd.value='';
+    selArea.value=''; selTurno.value='';
+    selTipo.innerHTML='<option value="">Selecione a área primeiro</option>';
+    listaProd.style.display='none';
+    inputProd.focus();
+  };
+
+  window.qbLimparTabela = async function() {
+    if (!confirm('Apagar TODOS os registros de quebras do Firebase?')) return;
+    if (!dbOk()) return;
+    const snap = await getDb().collection('quebras').get();
+    const batch = getDb().batch();
+    snap.docs.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+  };
+})();
+
+// ══════════════════════════════════════════════════════
+//  ARMAZÉM FÁCIL — Firebase
+// ══════════════════════════════════════════════════════
+(function initArmazem() {
+  function pad(n) { return String(n).padStart(2,'0'); }
+  function fmtDate(dt) { return `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`; }
+
+  function isWithinWindow(h) {
+    if (!h) return false;
+    const [hh,mm] = h.split(':').map(Number);
+    return (hh*60+mm) >= 420 && (hh*60+mm) <= 1260;
+  }
+
+  function setDate() { document.getElementById('af-data').value = fmtDate(new Date()); }
+
+  function updateStatus() {
+    const ini = document.getElementById('af-inicio').value;
+    const fim = document.getElementById('af-fim').value;
+    const chip = document.getElementById('af-statusChip');
+    if (!ini || !fim) { chip.textContent='—'; chip.style.color=''; chip.style.borderColor=''; return; }
+    const ok = isWithinWindow(ini) && isWithinWindow(fim);
+    chip.textContent = ok ? '✅ OK (dentro da janela)' : '❌ NOK (fora da janela)';
+    chip.style.color = ok ? 'var(--green)' : 'var(--red)';
+    chip.style.borderColor = ok ? 'var(--green)' : 'var(--red)';
+  }
+
+  function render(docs) {
+    const tbody = document.getElementById('af-tbody');
+    tbody.innerHTML = '';
+    docs.forEach(r => {
+      const ok = r.status === 'OK';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="padding:9px 8px;border-bottom:1px solid var(--border)">${r.operacao||''}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid var(--border)">${r.data||''}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid var(--border)">${r.inicio||''}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid var(--border)">${r.fim||''}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid var(--border)">
+          <span style="padding:3px 10px;border-radius:999px;font-weight:700;font-size:11px;color:${ok?'var(--green)':'var(--red)'};border:1px solid ${ok?'var(--green)':'var(--red)'}">${r.status||''}</span>
+        </td>
+        <td style="padding:9px 8px;border-bottom:1px solid var(--border)">${r.empilhador||''}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid var(--border)">${r.turno||''}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid var(--border)">${r.placa||''}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid var(--border)">${r.tipo||''}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid var(--border)">${r.palhete||''}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid var(--border);color:var(--text-dim)">${r.obs||''}</td>
+        <td style="padding:9px 8px;border-bottom:1px solid var(--border);text-align:right">
+          <button class="btn btn-ghost btn-sm" onclick="fbDelete('armazem','${r._docId}')">✕</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  setTimeout(() => fbListen('armazem', render), 1500);
+
+  function clearForm() {
+    ['af-operacao','af-empilhador','af-turno','af-placa','af-tipo'].forEach(id => document.getElementById(id).value='');
+    ['af-palhete','af-inicio','af-fim','af-obs','af-placaOutro'].forEach(id => document.getElementById(id).value='');
+    document.getElementById('af-placaOutro').style.display='none';
+    document.getElementById('af-statusChip').textContent='—';
+    document.getElementById('af-statusChip').style.color='';
+    document.getElementById('af-statusChip').style.borderColor='';
+    setDate();
+  }
+
+  document.getElementById('af-inicio').addEventListener('change', updateStatus);
+  document.getElementById('af-fim').addEventListener('change', updateStatus);
+  document.getElementById('af-btnInicio').addEventListener('click', () => { document.getElementById('af-inicio').value=nowHHMM(); updateStatus(); });
+  document.getElementById('af-btnFim').addEventListener('click', () => { document.getElementById('af-fim').value=nowHHMM(); updateStatus(); });
+  document.getElementById('af-placa').addEventListener('change', () => {
+    document.getElementById('af-placaOutro').style.display = document.getElementById('af-placa').value === 'Outra...' ? 'block' : 'none';
+  });
+  document.getElementById('af-btnClear').addEventListener('click', clearForm);
+  document.getElementById('af-btnLimpar').addEventListener('click', async () => {
+    if (!confirm('Apagar TODOS os registros de armazém do Firebase?')) return;
+    if (!dbOk()) return;
+    const snap = await getDb().collection('armazem').get();
+    const batch = getDb().batch();
+    snap.docs.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+  });
+
+  document.getElementById('af-btnSalvar').addEventListener('click', async () => {
+    const operacao   = document.getElementById('af-operacao').value;
+    const empilhador = document.getElementById('af-empilhador').value;
+    const turno      = document.getElementById('af-turno').value;
+    let   placa      = document.getElementById('af-placa').value;
+    if (placa === 'Outra...') placa = document.getElementById('af-placaOutro').value.trim();
+    const tipo    = document.getElementById('af-tipo').value;
+    const palhete = document.getElementById('af-palhete').value;
+    const data    = document.getElementById('af-data').value;
+    const inicio  = document.getElementById('af-inicio').value;
+    const fim     = document.getElementById('af-fim').value;
+    const obs     = document.getElementById('af-obs').value.trim();
+    if (!operacao||!empilhador||!turno||!placa||!tipo||!palhete||!inicio||!fim) {
+      alert('Preencha todos os campos obrigatórios.'); return;
+    }
+    const status = (isWithinWindow(inicio) && isWithinWindow(fim)) ? 'OK' : 'NOK';
+    if (status === 'NOK' && !obs) { alert('Observação obrigatória quando fora da janela.'); return; }
+    if (!dbOk()) return;
+    await fbSave('armazem', { dataISO: todayISO(), data: todayBR(), operacao, inicio, fim, status, empilhador, turno, placa, tipo, palhete, obs });
+    clearForm();
+  });
+
+  function updateNowInfo() {
+    const n = new Date();
+    document.getElementById('armazem-nowInfo').textContent = `${pad(n.getHours())}:${pad(n.getMinutes())} (${fmtDate(n)})`;
+  }
+  updateNowInfo();
+  setInterval(updateNowInfo, 60000);
+  setDate();
+})();
+
+// ══════════════════════════════════════════════════════
+//  DASHBOARD — KPIs
+// ══════════════════════════════════════════════════════
+let dashUnlocked = false;
+const DASH_PASSWORD = '4321'; // mesma senha do Conferente
+const _dashCharts = {};
+
+function requestDashTab() {
+  if (dashUnlocked) { goPane('dashboard'); dashCarregar(); return; }
+  const pw = prompt('🔒 Senha para acessar o Dashboard:');
+  if (pw === null) return;
+  if (pw === DASH_PASSWORD) {
+    dashUnlocked = true;
+    document.getElementById('dash-lock-state').textContent = '📈 Acesso liberado';
+    goPane('dashboard');
+    dashCarregar();
+  } else {
+    alert('Senha incorreta.');
+  }
+}
+
+function dashSetDefaultDates() {
+  const de  = document.getElementById('dash-de');
+  const ate = document.getElementById('dash-ate');
+  if (!de.value) de.value  = '2024-01-01';
+  if (!ate.value) ate.value = todayISO();
+}
+
+function dashDentroFiltro(dataISO) {
+  const de  = document.getElementById('dash-de').value  || '2000-01-01';
+  const ate = document.getElementById('dash-ate').value || '2099-12-31';
+  return dataISO >= de && dataISO <= ate;
+}
+
+function dashKpi(containerId, kpis) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = kpis.map(k => `
+    <div class="dash-kpi">
+      <div class="dash-kpi-val" style="color:${k.cor||'var(--text)'}">${k.val}</div>
+      <div class="dash-kpi-label">${k.label}</div>
+      ${k.sub ? `<div class="dash-kpi-sub" style="color:${k.cor||'var(--text-dim)'}">${k.sub}</div>` : ''}
+    </div>`).join('');
+}
+
+function dashChart(id, type, labels, datasets, opts={}) {
+  if (_dashCharts[id]) { _dashCharts[id].destroy(); }
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  _dashCharts[id] = new Chart(ctx, {
+    type,
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: '#94a3b8', font: { size: 11 } } }
+      },
+      scales: type === 'bar' ? {
+        x: { ticks: { color: '#94a3b8', font:{size:10} }, grid: { color: 'rgba(148,163,184,.1)' } },
+        y: { ticks: { color: '#94a3b8', font:{size:10} }, grid: { color: 'rgba(148,163,184,.1)' } }
+      } : undefined,
+      ...opts
+    }
+  });
+}
+
+function contarPorChave(arr, chave) {
+  const m = {};
+  arr.forEach(r => { const v = r[chave]||'—'; m[v]=(m[v]||0)+1; });
+  return m;
+}
+
+function top5(obj) {
+  return Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,5);
+}
+
+const CHART_COLORS = ['#6366f1','#22c55e','#f59e0b','#ef4444','#7cc6ff','#a78bfa','#34d399','#fb923c'];
+
+async function dashCarregar() {
+  dashSetDefaultDates();
+  const loading = document.getElementById('dash-loading');
+  loading.style.display = 'block';
+
+  try {
+    // Busca paralela de todas as coleções
+    const [snapPicking, snapDespejo, snapRepack, snapArmazem, snapQuebras] = await Promise.all([
+      getDb() ? getDb().collection('registros').get() : Promise.resolve({docs:[]}),
+      getDb() ? getDb().collection('despejo').get()   : Promise.resolve({docs:[]}),
+      getDb() ? getDb().collection('repack').get()    : Promise.resolve({docs:[]}),
+      getDb() ? getDb().collection('armazem').get()   : Promise.resolve({docs:[]}),
+      getDb() ? getDb().collection('quebras').get()   : Promise.resolve({docs:[]}),
+    ]);
+
+    const picking  = snapPicking.docs.map(d=>d.data()).filter(r => {
+      const iso = r.finalizadoEm ? r.finalizadoEm.slice(0,10) : (r.criadoEm||'').slice(0,10);
+      return dashDentroFiltro(iso);
+    });
+    const despejo  = snapDespejo.docs.map(d=>d.data()).filter(r=>dashDentroFiltro(r.dataISO||''));
+    const repack   = snapRepack.docs.map(d=>d.data()).filter(r=>dashDentroFiltro(r.dataISO||''));
+    const armazem  = snapArmazem.docs.map(d=>d.data()).filter(r=>dashDentroFiltro(r.dataISO||''));
+    const quebras  = snapQuebras.docs.map(d=>d.data()).filter(r=>dashDentroFiltro(r.dataISO||''));
+
+    // ── PICKING KPIs ──────────────────────────────────
+    const pkTotal    = picking.length;
+    const pkConc     = picking.filter(r=>r.status==='concluido'||r.finalizadoEm).length;
+    const pkPend     = picking.filter(r=>!r.finalizadoEm).length;
+    const pkDurMins  = picking.filter(r=>r.duracaoMin).map(r=>r.duracaoMin);
+    const pkMedia    = pkDurMins.length ? (pkDurMins.reduce((a,b)=>a+b,0)/pkDurMins.length).toFixed(1) : '—';
+    const pkPaletes  = picking.reduce((s,r)=>s+(r.quantidade||0),0);
+
+    dashKpi('dash-picking-cards', [
+      {val: pkTotal,   label: 'Total Tarefas',       cor: '#a5b4fc'},
+      {val: pkConc,    label: 'Concluídas',           cor: '#22c55e'},
+      {val: pkPend,    label: 'Pendentes/Andamento',  cor: '#f59e0b'},
+      {val: pkPaletes, label: 'Paletes Movimentados', cor: '#7cc6ff'},
+      {val: pkMedia !== '—' ? pkMedia+'min' : '—', label: 'Tempo Médio/Tarefa', cor: '#a78bfa'},
+    ]);
+
+    const opMap = contarPorChave(picking.filter(r=>r.operador), 'operador');
+    const opTop = top5(opMap);
+    dashChart('dash-chart-operadores','bar',
+      opTop.map(e=>e[0]), [{
+        label:'Tarefas', data: opTop.map(e=>e[1]),
+        backgroundColor: CHART_COLORS, borderRadius: 6
+      }]
+    );
+
+    const pkStatusMap = {
+      'Concluída': picking.filter(r=>r.finalizadoEm).length,
+      'Em andamento': picking.filter(r=>r.iniciadoEm && !r.finalizadoEm).length,
+      'Pendente': picking.filter(r=>!r.iniciadoEm && !r.finalizadoEm).length,
+    };
+    dashChart('dash-chart-picking-status','doughnut',
+      Object.keys(pkStatusMap),
+      [{ data: Object.values(pkStatusMap), backgroundColor: ['#22c55e','#f59e0b','#94a3b8'], borderWidth: 0 }]
+    );
+
+    // ── DESPEJO KPIs ──────────────────────────────────
+    const dpTotal  = despejo.length;
+    const dpBateu  = despejo.filter(r=>r.resultado==='BATEU a meta'||r.resultado==='BATEU a meta').length;
+    const dpNao    = dpTotal - dpBateu;
+    const dpPct    = dpTotal ? Math.round(dpBateu/dpTotal*100) : 0;
+
+    dashKpi('dash-despejo-cards', [
+      {val: dpTotal, label: 'Total Registros',  cor: '#ef4444'},
+      {val: dpBateu, label: 'Bateu Meta',        cor: '#22c55e', sub: dpPct+'%'},
+      {val: dpNao,   label: 'Fora da Meta',      cor: '#ef4444'},
+      {val: dpPct+'%', label: '% Meta Atingida', cor: dpPct>=70?'#22c55e':'#ef4444'},
+    ]);
+
+    dashChart('dash-chart-despejo-meta','doughnut',
+      ['Bateu Meta','Fora da Meta'],
+      [{ data:[dpBateu,dpNao], backgroundColor:['#22c55e','#ef4444'], borderWidth:0 }]
+    );
+    const dpEmbMap = contarPorChave(despejo,'embalagem');
+    const dpEmbTop = top5(dpEmbMap);
+    dashChart('dash-chart-despejo-emb','bar',
+      dpEmbTop.map(e=>e[0]),
+      [{ label:'Registros', data:dpEmbTop.map(e=>e[1]), backgroundColor:CHART_COLORS, borderRadius:6 }]
+    );
+
+    // ── REPACK KPIs ───────────────────────────────────
+    const rpTotal  = repack.length;
+    const rpBateu  = repack.filter(r=>r.resultado==='Bateu').length;
+    const rpNao    = rpTotal - rpBateu;
+    const rpPct    = rpTotal ? Math.round(rpBateu/rpTotal*100) : 0;
+
+    dashKpi('dash-repack-cards', [
+      {val: rpTotal, label: 'Total Registros',  cor: '#f59e0b'},
+      {val: rpBateu, label: 'Bateu Meta',        cor: '#22c55e', sub: rpPct+'%'},
+      {val: rpNao,   label: 'Fora da Meta',      cor: '#ef4444'},
+      {val: rpPct+'%', label: '% Meta Atingida', cor: rpPct>=70?'#22c55e':'#ef4444'},
+    ]);
+
+    dashChart('dash-chart-repack-meta','doughnut',
+      ['Bateu Meta','Fora da Meta'],
+      [{ data:[rpBateu,rpNao], backgroundColor:['#22c55e','#ef4444'], borderWidth:0 }]
+    );
+    const rpEmbMap = contarPorChave(repack,'embalagem');
+    const rpEmbTop = top5(rpEmbMap);
+    dashChart('dash-chart-repack-emb','bar',
+      rpEmbTop.map(e=>e[0]),
+      [{ label:'Registros', data:rpEmbTop.map(e=>e[1]), backgroundColor:CHART_COLORS, borderRadius:6 }]
+    );
+
+    // ── ARMAZÉM KPIs ──────────────────────────────────
+    const azTotal  = armazem.length;
+    const azOk     = armazem.filter(r=>r.status==='OK').length;
+    const azNok    = azTotal - azOk;
+    const azPct    = azTotal ? Math.round(azOk/azTotal*100) : 0;
+    const azCarg   = armazem.filter(r=>r.operacao==='Carregamento').length;
+    const azDesc   = armazem.filter(r=>r.operacao==='Descarregamento').length;
+
+    dashKpi('dash-armazem-cards', [
+      {val: azTotal, label: 'Total Operações',     cor: '#7cc6ff'},
+      {val: azOk,    label: 'Dentro da Janela (OK)',cor: '#22c55e', sub: azPct+'%'},
+      {val: azNok,   label: 'Fora da Janela (NOK)', cor: '#ef4444'},
+      {val: azCarg,  label: 'Carregamentos',         cor: '#7cc6ff'},
+      {val: azDesc,  label: 'Descarregamentos',      cor: '#a78bfa'},
+    ]);
+
+    dashChart('dash-chart-armazem-status','doughnut',
+      ['OK','NOK'],
+      [{ data:[azOk,azNok], backgroundColor:['#22c55e','#ef4444'], borderWidth:0 }]
+    );
+    const azTipoMap = contarPorChave(armazem,'tipo');
+    const azTipoTop = top5(azTipoMap);
+    dashChart('dash-chart-armazem-tipo','doughnut',
+      azTipoTop.map(e=>e[0]),
+      [{ data:azTipoTop.map(e=>e[1]), backgroundColor:CHART_COLORS, borderWidth:0 }]
+    );
+    const azEmpMap = contarPorChave(armazem,'empilhador');
+    const azEmpTop = top5(azEmpMap);
+    dashChart('dash-chart-armazem-emp','bar',
+      azEmpTop.map(e=>e[0]),
+      [{ label:'Operações', data:azEmpTop.map(e=>e[1]), backgroundColor:CHART_COLORS, borderRadius:6 }]
+    );
+
+    // ── QUEBRAS KPIs ──────────────────────────────────
+    const qbTotal  = quebras.length;
+    const qbQtd    = quebras.reduce((s,r)=>s+(Number(r.quantidade)||0),0);
+    const qbAreas  = [...new Set(quebras.map(r=>r.area))].length;
+
+    dashKpi('dash-quebras-cards', [
+      {val: qbTotal, label: 'Total Registros',   cor: '#fca5a5'},
+      {val: qbQtd,   label: 'Unidades Quebradas', cor: '#ef4444'},
+      {val: qbAreas, label: 'Áreas Afetadas',     cor: '#f59e0b'},
+    ]);
+
+    const qbAreaMap = contarPorChave(quebras,'area');
+    dashChart('dash-chart-quebras-area','doughnut',
+      Object.keys(qbAreaMap),
+      [{ data:Object.values(qbAreaMap), backgroundColor:CHART_COLORS, borderWidth:0 }]
+    );
+
+    const qbMotMap = contarPorChave(quebras,'motivo');
+    const qbMotTop = top5(qbMotMap);
+    dashChart('dash-chart-quebras-motivo','bar',
+      qbMotTop.map(e=>e[0].length>22?e[0].slice(0,22)+'…':e[0]),
+      [{ label:'Qtd', data:qbMotTop.map(e=>e[1]), backgroundColor:['#ef4444','#f97316','#f59e0b','#fca5a5','#fb923c'], borderRadius:6 }]
+    );
+
+    const qbProdMap = {};
+    quebras.forEach(r => { const k=(r.descricao||r.codProduto||'—').slice(0,25); qbProdMap[k]=(qbProdMap[k]||0)+(Number(r.quantidade)||1); });
+    const qbProdTop = top5(qbProdMap);
+    dashChart('dash-chart-quebras-prod','bar',
+      qbProdTop.map(e=>e[0]),
+      [{ label:'Unidades', data:qbProdTop.map(e=>e[1]), backgroundColor:CHART_COLORS, borderRadius:6 }]
+    );
+
+  } catch(e) {
+    console.error('Dashboard erro:', e);
+    alert('Erro ao carregar dashboard: ' + e.message);
+  }
+
+  loading.style.display = 'none';
+}
+
+async function carregarResumoRelatorios() {
+  if (!getDb()) return;
+  const modulos = [
+    { id: 'despejo',  label: '🗑 Despejo',  cor: '#ef4444' },
+    { id: 'repack',   label: '📦 Repack',   cor: 'var(--amber)' },
+    { id: 'armazem',  label: '🚛 Armazém',  cor: '#7cc6ff' },
+    { id: 'quebras',  label: '💥 Quebras',  cor: '#fca5a5' },
+  ];
+  const container = document.getElementById('rel-cards-resumo');
+  if (!container) return;
+  container.innerHTML = '<div style="font-size:12px;color:var(--text-dim);padding:8px 0">Carregando resumo...</div>';
+
+  const hoje = todayISO();
+  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px">';
+  for (const m of modulos) {
+    try {
+      const snap = await getDb().collection(m.id).get();
+      const todos = snap.docs.map(d => d.data());
+      const total = todos.length;
+      const hoje_ = todos.filter(r => r.dataISO === hoje).length;
+      const cor = total > 0 ? m.cor : 'var(--text-dim)';
+      html += `<div style="padding:14px 16px;border-radius:14px;background:var(--surface2);border:1px solid var(--border)">
+        <div style="font-size:18px;font-weight:900;color:${cor};font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">${m.label}</div>
+        <div style="font-size:28px;font-weight:900;color:${cor};margin:4px 0">${total}</div>
+        <div style="font-size:11px;color:var(--text-dim)">total · <strong style="color:${cor}">${hoje_}</strong> hoje (${hoje})</div>
+      </div>`;
+    } catch { html += `<div style="padding:14px 16px;border-radius:14px;background:var(--surface2);border:1px solid var(--border)"><div style="color:var(--text-dim);font-size:12px">${m.label}<br>Erro ao carregar</div></div>`; }
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+async function fecharTurno() {
+  if (!dbOk()) return;
+  const btn = document.getElementById('btn-fechar-turno');
+  btn.disabled = true;
+  btn.textContent = '⏳ Gerando Excel...';
+  try {
+    const [snapD, snapR, snapA, snapQ] = await Promise.all([
+      getDb().collection('despejo').orderBy('_criadoEm','asc').get(),
+      getDb().collection('repack').orderBy('_criadoEm','asc').get(),
+      getDb().collection('armazem').orderBy('_criadoEm','asc').get(),
+      getDb().collection('quebras').orderBy('_criadoEm','asc').get(),
+    ]);
+
+    const wb = XLSX.utils.book_new();
+
+    // Aba Resumo
+    const hoje = todayBR();
+    const resumo = [
+      { Módulo:'Despejo', Total: snapD.size, Hoje: snapD.docs.filter(d=>d.data().data===hoje).length },
+      { Módulo:'Repack',  Total: snapR.size, Hoje: snapR.docs.filter(d=>d.data().data===hoje).length },
+      { Módulo:'Armazém', Total: snapA.size, Hoje: snapA.docs.filter(d=>d.data().data===hoje).length },
+      { Módulo:'Quebras', Total: snapQ.size, Hoje: snapQ.docs.filter(d=>d.data().data===hoje).length },
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumo), 'RESUMO');
+
+    // Aba Despejo
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+      snapD.docs.map(d => { const r=d.data(); return {'Data':r.data,'Embalagem':r.embalagem,'Qtd':r.quantidade,'Início':r.inicio,'Fim':r.fim,'Tempo':r.tempo,'Meta':r.meta,'Resultado':r.resultado}; })
+    ), 'DESPEJO');
+
+    // Aba Repack
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+      snapR.docs.map(d => { const r=d.data(); return {'Data':r.data,'Embalagem':r.embalagem,'Qtd':r.quantidade,'Início':r.inicio,'Fim':r.fim,'Tempo':r.duracao,'Meta':r.meta,'Resultado':r.resultado}; })
+    ), 'REPACK');
+
+    // Aba Armazém
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+      snapA.docs.map(d => { const r=d.data(); return {'Operação':r.operacao,'Data':r.data,'Início':r.inicio,'Fim':r.fim,'Status':r.status,'Empilhador':r.empilhador,'Turno':r.turno,'Placa':r.placa,'Tipo':r.tipo,'Palhete':r.palhete,'Obs':r.obs||''}; })
+    ), 'ARMAZÉM');
+
+    // Aba Quebras
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+      snapQ.docs.map(d => { const r=d.data(); return {'Data':r.data,'Cód Produto':r.codProduto,'Descrição':r.descricao,'Qtd':r.quantidade,'Turno':r.turno,'Cód Quebra':r.codQuebra,'Área':r.area,'Motivo':r.motivo}; })
+    ), 'QUEBRAS');
+
+    const dataFmt = todayISO();
+    XLSX.writeFile(wb, `relatorio_turno_${dataFmt}.xlsx`);
+    document.getElementById('rel-fechar-status').textContent = `✅ Arquivo gerado: relatorio_turno_${dataFmt}.xlsx`;
+  } catch(e) {
+    document.getElementById('rel-fechar-status').textContent = '❌ Erro: ' + e.message;
+  }
+  btn.disabled = false;
+  btn.textContent = '📥 FECHAR TURNO — BAIXAR EXCEL COMPLETO';
+}
+
+async function exportarModulo(colecao, nomeArq, mapFn) {
+  if (!dbOk()) return;
+  const statusId = colecao + '-export-status';
+  const statusEl = document.getElementById(statusId);
+  if (statusEl) statusEl.textContent = '⏳ Buscando...';
+  try {
+    const snap = await getDb().collection(colecao).orderBy('_criadoEm','asc').get();
+    if (!snap.size) { if(statusEl) statusEl.textContent='⚠ Nenhum registro.'; return; }
+    const ws = XLSX.utils.json_to_sheet(snap.docs.map(d => mapFn(d.data())));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, colecao.charAt(0).toUpperCase()+colecao.slice(1));
+    XLSX.writeFile(wb, nomeArq);
+    if(statusEl) statusEl.textContent = `✅ ${snap.size} registro(s) exportado(s).`;
+  } catch(e) { if(statusEl) statusEl.textContent='❌ Erro: '+e.message; }
+}
+
+function exportarDespejoExcel() {
+  exportarModulo('despejo','despejo_registros.xlsx', r=>({'Data':r.data,'Embalagem':r.embalagem,'Qtd':r.quantidade,'Início':r.inicio,'Fim':r.fim,'Tempo':r.tempo,'Meta':r.meta,'Resultado':r.resultado}));
+}
+function exportarRepackExcel() {
+  exportarModulo('repack','repack_registros.xlsx', r=>({'Data':r.data,'Embalagem':r.embalagem,'Qtd':r.quantidade,'Início':r.inicio,'Fim':r.fim,'Tempo':r.duracao,'Meta':r.meta,'Resultado':r.resultado}));
+}
+function exportarArmazemExcel() {
+  exportarModulo('armazem','armazem_registros.xlsx', r=>({'Operação':r.operacao,'Data':r.data,'Início':r.inicio,'Fim':r.fim,'Status':r.status,'Empilhador':r.empilhador,'Turno':r.turno,'Placa':r.placa,'Tipo':r.tipo,'Palhete':r.palhete,'Obs':r.obs||''}));
+}
+function exportarQuebrasExcel() {
+  exportarModulo('quebras','quebras_registros.xlsx', r=>({'Data':r.data,'Cód Produto':r.codProduto,'Descrição':r.descricao,'Qtd':r.quantidade,'Turno':r.turno,'Cód Quebra':r.codQuebra,'Área':r.area,'Motivo':r.motivo}));
+}
+</script>
 </body>
 </html>
