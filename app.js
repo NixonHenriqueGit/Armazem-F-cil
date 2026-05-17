@@ -599,7 +599,7 @@ function save() { localStorage.setItem('pk2_s', JSON.stringify({...S, namesVersi
 // ══════════════════════════════════════════════════════
 //  NAVEGACAO — PANES
 // ══════════════════════════════════════════════════════
-const ALL_PANES = ['menu','conf','emp','relatorio','reports'];
+const ALL_PANES = ['menu','conf','emp','relatorio','reports','despejo','repack','armazem','quebras','dashboard'];
 
 function goPane(name) {
   ALL_PANES.forEach(p => {
@@ -613,6 +613,7 @@ function goPane(name) {
       const t = new Date();
       di.value = t.toISOString().slice(0,10);
     }
+    if (typeof carregarResumoRelatorios === 'function') carregarResumoRelatorios();
   }
 }
 
