@@ -241,6 +241,40 @@ body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
 @media(max-width:600px){.row2{grid-template-columns:1fr}.row3{grid-template-columns:1fr}}
+
+/* ── Responsive form grid (replaces repeat(12,1fr)) ── */
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(12,1fr);
+  gap:12px;
+}
+/* Desktop spans */
+.fg-1{grid-column:span 1}
+.fg-2{grid-column:span 2}
+.fg-3{grid-column:span 3}
+.fg-4{grid-column:span 4}
+.fg-5{grid-column:span 5}
+.fg-6{grid-column:span 6}
+.fg-7{grid-column:span 7}
+.fg-8{grid-column:span 8}
+.fg-9{grid-column:span 9}
+.fg-10{grid-column:span 10}
+.fg-11{grid-column:span 11}
+.fg-12{grid-column:span 12}
+
+/* Tablet ≤ 700px — colapsa para 2 colunas */
+@media(max-width:700px){
+  .form-grid{grid-template-columns:1fr 1fr}
+  .fg-1,.fg-2,.fg-3,.fg-4,.fg-5,.fg-6,
+  .fg-7,.fg-8,.fg-9,.fg-10,.fg-11{grid-column:span 1}
+  .fg-12{grid-column:span 2}
+}
+/* Mobile ≤ 480px — colapsa para 1 coluna */
+@media(max-width:480px){
+  .form-grid{grid-template-columns:1fr;gap:10px}
+  .fg-1,.fg-2,.fg-3,.fg-4,.fg-5,.fg-6,
+  .fg-7,.fg-8,.fg-9,.fg-10,.fg-11,.fg-12{grid-column:span 1}
+}
 .add-row{display:flex;align-items:flex-end;gap:8px}
 .add-row>div{flex:1}
 
@@ -490,9 +524,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
 .modal-tipo-operador strong{color:var(--blue);font-weight:700}
 
 /* ── Fechar turno / CSV ── */
-.fb-test-result-ok{background:var(--green-dim);color:var(--green);border:1px solid #166534;border-radius:8px;padding:10px 14px;font-size:12px;margin-top:10px}
-.fb-test-result-err{background:var(--red-dim);color:var(--red);border:1px solid #7f1d1d;border-radius:8px;padding:10px 14px;font-size:12px;margin-top:10px}
-.fb-test-result-load{background:var(--blue-dim);color:var(--blue);border:1px solid #1e3a5f;border-radius:8px;padding:10px 14px;font-size:12px;margin-top:10px}
+.fb-test-result-ok,.fb-msg-ok{background:var(--green-dim);color:var(--green);border:1px solid #166534;border-radius:8px;padding:10px 14px;font-size:12px;margin-top:10px}
+.fb-test-result-err,.fb-msg-err{background:var(--red-dim);color:var(--red);border:1px solid #7f1d1d;border-radius:8px;padding:10px 14px;font-size:12px;margin-top:10px}
+.fb-test-result-load,.fb-msg-load{background:var(--blue-dim);color:var(--blue);border:1px solid #1e3a5f;border-radius:8px;padding:10px 14px;font-size:12px;margin-top:10px}
 
 /* ── Pane nav (legacy back button strip) ── */
 .pane-nav{display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)}
@@ -514,30 +548,6 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
      MOBILE HAMBURGER
      ═══════════════════════════════════════════════════ -->
 <button class="sidebar-mobile-toggle" onclick="openMobileSidebar()">☰</button>
-
-<!-- ═══════════════════════════════════════════════════
-     MODAL — CONTROLE (Dashboard — senha restrita)
-     ═══════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="modal-controle" style="display:none">
-  <div class="modal-box">
-    <div class="modal-icon">🛡️</div>
-    <div class="modal-title">ÁREA DE CONTROLE</div>
-    <div class="modal-sub">Insira a senha de Controle para acessar o painel</div>
-    <div style="position:relative;margin:20px 0 8px">
-      <input type="password" id="inp-controle-senha" class="modal-input" placeholder="••••••"
-             maxlength="20" onkeydown="if(event.key==='Enter')confirmarControleSenha()">
-      <span class="pwd-toggle" onclick="toggleControlePwd()">👁</span>
-    </div>
-    <div class="modal-error" id="controle-erro" style="display:none">❌ Senha incorreta. Tente novamente.</div>
-    <div class="btn-row" style="justify-content:center;margin-top:16px">
-      <button class="btn btn-amber" onclick="confirmarControleSenha()">🔓 ENTRAR</button>
-      <button class="btn btn-ghost" onclick="fecharModalControle()">CANCELAR</button>
-    </div>
-    <div style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:12px">
-      Acesso restrito ao supervisor / conferente senior
-    </div>
-  </div>
-</div>
 
 <!-- ═══════════════════════════════════════════════════
      MODAL — SENHA CONFERENTE
@@ -662,16 +672,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
 
     <nav class="sidebar-nav">
 
-      <!-- CONTROLE -->
-      <span class="nav-section-label">📊 PAINEL</span>
-      <button class="nav-item" data-pane="dashboard" onclick="requestControle()">
-        <span class="nav-icon">📊</span>
-        <span class="nav-label">CONTROLE</span>
-        <span class="nav-lock" id="controle-lock-state">🔒</span>
-      </button>
-
       <!-- OPERAÇÕES -->
-      <span class="nav-section-label" style="margin-top:8px">⚙ OPERAÇÕES</span>
+      <span class="nav-section-label">⚙ OPERAÇÕES</span>
 
       <button class="nav-item nav-repack" data-pane="repack" onclick="navGoPane('repack')">
         <span class="nav-icon">📦</span>
@@ -730,66 +732,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
   <main class="main-area" id="main-area">
 
     <!-- ══════════════════════════════════════════════════
-         PANE — CONTROLE (Dashboard KPIs)
-         ══════════════════════════════════════════════════ -->
-    <div class="pane active" id="pane-dashboard">
-      <div class="pane-topbar">
-        <div class="mobile-menu-gap"></div>
-        <span class="pane-topbar-title">📊 CONTROLE — KPIs DO ARMAZÉM</span>
-        <div class="pane-topbar-actions">
-          <input type="date" id="dash-de" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12px">
-          <span style="font-size:12px;color:var(--text-dim)">até</span>
-          <input type="date" id="dash-ate" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12px">
-          <button class="btn btn-amber btn-sm" onclick="dashCarregar()">🔄 ATUALIZAR</button>
-        </div>
-      </div>
-
-      <div class="wrap">
-        <div id="dash-loading" style="text-align:center;padding:40px;color:var(--text-dim);display:none">⏳ Carregando dados do Firebase...</div>
-
-        <div style="margin-bottom:8px;padding:10px 0 4px"><span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text-dim)">📋 PICKING / EMPILHADOR</span></div>
-        <div class="dash-cards" id="dash-picking-cards"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">Tarefas por Operador</div><canvas id="dash-chart-operadores" height="180"></canvas></div>
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">Status das Tarefas</div><canvas id="dash-chart-picking-status" height="180"></canvas></div>
-        </div>
-
-        <div style="margin-bottom:8px;padding:10px 0 4px"><span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text-dim)">🗑 DESPEJO TIMER</span></div>
-        <div class="dash-cards" id="dash-despejo-cards"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">Meta Batida vs Não Batida</div><canvas id="dash-chart-despejo-meta" height="180"></canvas></div>
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">Registros por Embalagem</div><canvas id="dash-chart-despejo-emb" height="180"></canvas></div>
-        </div>
-
-        <div style="margin-bottom:8px;padding:10px 0 4px"><span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text-dim)">📦 REPACK TIMER</span></div>
-        <div class="dash-cards" id="dash-repack-cards"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">Meta Batida vs Não Batida</div><canvas id="dash-chart-repack-meta" height="180"></canvas></div>
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">Registros por Embalagem</div><canvas id="dash-chart-repack-emb" height="180"></canvas></div>
-        </div>
-
-        <div style="margin-bottom:8px;padding:10px 0 4px"><span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text-dim)">🚛 ARMAZÉM FÁCIL</span></div>
-        <div class="dash-cards" id="dash-armazem-cards"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px">
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">OK vs NOK</div><canvas id="dash-chart-armazem-status" height="180"></canvas></div>
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">Por Tipo de Operação</div><canvas id="dash-chart-armazem-tipo" height="180"></canvas></div>
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">Por Empilhador</div><canvas id="dash-chart-armazem-emp" height="180"></canvas></div>
-        </div>
-
-        <div style="margin-bottom:8px;padding:10px 0 4px"><span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text-dim)">💥 CONTROLE DE QUEBRAS</span></div>
-        <div class="dash-cards" id="dash-quebras-cards"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px">
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">Quebras por Área</div><canvas id="dash-chart-quebras-area" height="180"></canvas></div>
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">Top 5 Motivos</div><canvas id="dash-chart-quebras-motivo" height="180"></canvas></div>
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">Top 5 Produtos com Mais Quebras</div><canvas id="dash-chart-quebras-prod" height="180"></canvas></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════
          PANE — REPACK TIMER
          ══════════════════════════════════════════════════ -->
-    <div class="pane" id="pane-repack">
+    <div class="pane active" id="pane-repack">
       <div class="pane-topbar">
         <div class="mobile-menu-gap"></div>
         <span class="pane-topbar-title">📦 REPACK TIMER — PRODUTIVIDADE</span>
@@ -909,19 +854,19 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
         <div class="card">
           <div class="card-title">📝 Formulário de Registro</div>
           <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px">Janela válida: <strong style="color:#7cc6ff">07:00</strong> até <strong style="color:#7cc6ff">21:00</strong>. Observação obrigatória quando fora da janela.</p>
-          <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:14px">
-            <div style="grid-column:span 4"><div class="field-label">Operação *</div><select id="af-operacao"><option value="" disabled selected>Selecione</option><option>Descarregamento</option><option>Carregamento</option></select></div>
-            <div style="grid-column:span 4"><div class="field-label">Empilhador *</div><select id="af-empilhador"><option value="" disabled selected>Selecione</option><option>Paulo Pereira</option><option>Marivaldo</option><option>Ronildo</option><option>Outros...</option></select></div>
-            <div style="grid-column:span 4"><div class="field-label">Turno *</div><select id="af-turno"><option value="" disabled selected>Selecione</option><option>Diurno</option><option>Noturno</option></select></div>
-            <div style="grid-column:span 5"><div class="field-label">Placa do Veículo *</div><select id="af-placa"><option value="" disabled selected>Selecione</option><option>QSK7D92</option><option>OXO0532</option><option>OXO0542</option><option>OXO0552</option><option>OXO0782</option><option>SLB4A26</option><option>NPR2601</option><option>SLB4A56</option><option>TOZ8B20</option><option>TOZ8B50</option><option>RLR8G79</option><option>RLU4H49</option><option>TOU7F79</option><option>RLW0C17</option><option>SLB3J76</option><option>RLU3F59</option><option>RLT5J54</option><option>RLT5J44</option><option>Outra...</option></select><input id="af-placaOutro" type="text" placeholder="Digite a placa" maxlength="8" style="display:none;margin-top:6px"></div>
-            <div style="grid-column:span 3"><div class="field-label">Tipo *</div><select id="af-tipo"><option value="" disabled selected>Selecione</option><option value="rota">Rota</option><option value="puxada">Puxada</option><option value="recarga">Recarga</option><option value="terceiro">Terceiro</option></select></div>
-            <div style="grid-column:span 2"><div class="field-label">Palhete *</div><input id="af-palhete" type="number" min="0" placeholder="Qtd"></div>
-            <div style="grid-column:span 2"><div class="field-label">Data</div><input id="af-data" type="date" readonly style="opacity:.8"></div>
-            <div style="grid-column:span 4"><div class="field-label">Hora Início *</div><div style="display:flex;gap:8px"><input id="af-inicio" type="time" style="flex:1"><button class="btn btn-ghost btn-sm" id="af-btnInicio">Puxar hora</button></div></div>
-            <div style="grid-column:span 4"><div class="field-label">Hora Final *</div><div style="display:flex;gap:8px"><input id="af-fim" type="time" style="flex:1"><button class="btn btn-ghost btn-sm" id="af-btnFim">Puxar hora</button></div></div>
-            <div style="grid-column:span 4"><div class="field-label">Status (07:00 → 21:00)</div><div id="af-statusChip" style="padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg);font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">—</div></div>
-            <div style="grid-column:span 12"><div class="field-label">Observação (obrigatória quando fora da janela)</div><textarea id="af-obs" placeholder="Descreva o motivo quando estiver fora da janela" style="min-height:70px;resize:vertical"></textarea></div>
-            <div style="grid-column:span 12"><div class="btn-row"><button class="btn btn-amber" id="af-btnSalvar">💾 SALVAR REGISTRO</button><button class="btn btn-ghost" id="af-btnClear">↺ LIMPAR FORM</button><button class="btn btn-red btn-sm" id="af-btnLimpar">🗑 APAGAR TUDO</button></div></div>
+          <div class="form-grid">
+            <div class="fg-4"><div class="field-label">Operação *</div><select id="af-operacao"><option value="" disabled selected>Selecione</option><option>Descarregamento</option><option>Carregamento</option></select></div>
+            <div class="fg-4"><div class="field-label">Empilhador *</div><select id="af-empilhador"><option value="" disabled selected>Selecione</option><option>Paulo Pereira</option><option>Marivaldo</option><option>Ronildo</option><option>Outros...</option></select></div>
+            <div class="fg-4"><div class="field-label">Turno *</div><select id="af-turno"><option value="" disabled selected>Selecione</option><option>Diurno</option><option>Noturno</option></select></div>
+            <div class="fg-6"><div class="field-label">Placa do Veículo *</div><select id="af-placa"><option value="" disabled selected>Selecione</option><option>QSK7D92</option><option>OXO0532</option><option>OXO0542</option><option>OXO0552</option><option>OXO0782</option><option>SLB4A26</option><option>NPR2601</option><option>SLB4A56</option><option>TOZ8B20</option><option>TOZ8B50</option><option>RLR8G79</option><option>RLU4H49</option><option>TOU7F79</option><option>RLW0C17</option><option>SLB3J76</option><option>RLU3F59</option><option>RLT5J54</option><option>RLT5J44</option><option>Outra...</option></select><input id="af-placaOutro" type="text" placeholder="Digite a placa" maxlength="8" style="display:none;margin-top:6px"></div>
+            <div class="fg-3"><div class="field-label">Tipo *</div><select id="af-tipo"><option value="" disabled selected>Selecione</option><option value="rota">Rota</option><option value="puxada">Puxada</option><option value="recarga">Recarga</option><option value="terceiro">Terceiro</option></select></div>
+            <div class="fg-2"><div class="field-label">Palhete *</div><input id="af-palhete" type="number" min="0" placeholder="Qtd"></div>
+            <div class="fg-1"><div class="field-label">Data</div><input id="af-data" type="date" readonly style="opacity:.8"></div>
+            <div class="fg-4"><div class="field-label">Hora Início *</div><div style="display:flex;gap:6px"><input id="af-inicio" type="time" style="flex:1;min-width:0"><button class="btn btn-ghost btn-sm" id="af-btnInicio" style="white-space:nowrap;flex-shrink:0">⏱ Agora</button></div></div>
+            <div class="fg-4"><div class="field-label">Hora Final *</div><div style="display:flex;gap:6px"><input id="af-fim" type="time" style="flex:1;min-width:0"><button class="btn btn-ghost btn-sm" id="af-btnFim" style="white-space:nowrap;flex-shrink:0">⏱ Agora</button></div></div>
+            <div class="fg-4"><div class="field-label">Status (07:00 → 21:00)</div><div id="af-statusChip" style="padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg);font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">—</div></div>
+            <div class="fg-12"><div class="field-label">Observação (obrigatória quando fora da janela)</div><textarea id="af-obs" placeholder="Descreva o motivo quando estiver fora da janela" style="min-height:70px;resize:vertical"></textarea></div>
+            <div class="fg-12"><div class="btn-row"><button class="btn btn-amber" id="af-btnSalvar">💾 SALVAR REGISTRO</button><button class="btn btn-ghost" id="af-btnClear">↺ LIMPAR FORM</button><button class="btn btn-red btn-sm" id="af-btnLimpar">🗑 APAGAR TUDO</button></div></div>
           </div>
         </div>
         <div style="margin-top:16px;overflow-x:auto">
@@ -958,15 +903,15 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
       <div class="wrap">
         <div class="card">
           <div class="card-title">📝 Cadastro de Quebra</div>
-          <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:14px">
-            <div style="grid-column:span 7;position:relative"><div class="field-label">Produto</div><input id="qb-produtoInput" autocomplete="off" placeholder="Digite código ou nome do produto..."><div id="qb-listaProdutos" style="position:absolute;top:100%;left:0;right:0;background:#0e1626;border:1px solid var(--border);border-radius:10px;z-index:50;max-height:220px;overflow-y:auto;display:none"></div></div>
-            <div style="grid-column:span 2"><div class="field-label">Código</div><input id="qb-codigo" placeholder="Auto" readonly style="opacity:.8"></div>
-            <div style="grid-column:span 3"><div class="field-label">Quantidade *</div><input id="qb-quantidade" type="number" min="1" placeholder="Qtd"></div>
-            <div style="grid-column:span 12"><div class="field-label">Descrição</div><input id="qb-descricao" placeholder="Automático ou manual"></div>
-            <div style="grid-column:span 4"><div class="field-label">Área *</div><select id="qb-area"><option value="">Selecione</option><option>ARMAZEM</option><option>ENTREGA</option><option>MERCADO</option><option>PUXADA</option></select></div>
-            <div style="grid-column:span 4"><div class="field-label">Turno *</div><select id="qb-turno"><option value="">Selecione</option><option>MANHÃ</option><option>NOITE</option></select></div>
-            <div style="grid-column:span 4"><div class="field-label">Tipo de Quebra *</div><select id="qb-tipoQuebra"><option value="">Selecione a área primeiro</option></select></div>
-            <div style="grid-column:span 12"><button class="btn btn-amber" onclick="qbAdicionar()" style="max-width:220px">➕ ADICIONAR QUEBRA</button></div>
+          <div class="form-grid">
+            <div class="fg-8" style="position:relative"><div class="field-label">Produto</div><input id="qb-produtoInput" autocomplete="off" placeholder="Digite código ou nome do produto..."><div id="qb-listaProdutos" style="position:absolute;top:100%;left:0;right:0;background:#0e1626;border:1px solid var(--border);border-radius:10px;z-index:50;max-height:220px;overflow-y:auto;display:none"></div></div>
+            <div class="fg-2"><div class="field-label">Código</div><input id="qb-codigo" placeholder="Auto" readonly style="opacity:.8"></div>
+            <div class="fg-2"><div class="field-label">Quantidade *</div><input id="qb-quantidade" type="number" min="1" placeholder="Qtd"></div>
+            <div class="fg-12"><div class="field-label">Descrição</div><input id="qb-descricao" placeholder="Automático ou manual"></div>
+            <div class="fg-4"><div class="field-label">Área *</div><select id="qb-area"><option value="">Selecione</option><option>ARMAZEM</option><option>ENTREGA</option><option>MERCADO</option><option>PUXADA</option></select></div>
+            <div class="fg-4"><div class="field-label">Turno *</div><select id="qb-turno"><option value="">Selecione</option><option>MANHÃ</option><option>NOITE</option></select></div>
+            <div class="fg-4"><div class="field-label">Tipo de Quebra *</div><select id="qb-tipoQuebra"><option value="">Selecione a área primeiro</option></select></div>
+            <div class="fg-12"><button class="btn btn-amber" onclick="qbAdicionar()" style="max-width:220px">➕ ADICIONAR QUEBRA</button></div>
           </div>
         </div>
         <div style="margin-top:16px;overflow-x:auto">
@@ -1202,9 +1147,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
 
 <div id="toast"></div>
 
-<!-- Div fantasma para compatibilidade com app.js (que faz goPane('menu')) -->
+<!-- Divs fantasmas para compatibilidade com app.js (ALL_PANES lista 'menu', 'reports', 'dashboard') -->
 <div id="pane-menu" style="display:none"></div>
 <div id="pane-reports" style="display:none"></div>
+<div id="pane-dashboard" style="display:none"></div>
 
 <script>
 // PATCH ANTECIPADO — sobrescreve goPane ANTES do app.js rodar
@@ -1242,7 +1188,7 @@ function closeMobileSidebar() {
   document.getElementById('sidebar-overlay').classList.remove('show');
 }
 
-const _PANE_ALIAS = { menu:'repack', reports:'csv', relatorio:'relatorio' };
+const _PANE_ALIAS = { menu:'repack', reports:'csv' };
 
 function navGoPane(id) {
   const target = _PANE_ALIAS[id] || id;
@@ -1257,56 +1203,10 @@ function navGoPane(id) {
   if (target === 'relatorio' && typeof renderRelatorioDia === 'function') renderRelatorioDia();
 }
 
-// Expose globally so early patch (before app.js) works
+// Expose globally — garante que qualquer chamada goPane() use navGoPane()
 window.navGoPane = navGoPane;
-window.goPane    = navGoPane;
-window.goMenu    = function() {};
-
-// ══════════════════════════════════════════════════════
-//  CONTROLE MODAL (Dashboard — senha restrita)
-// ══════════════════════════════════════════════════════
-const CONTROLE_PASSWORD = '1234';
-let controleUnlocked = false;
-
-function requestControle() {
-  if (controleUnlocked) {
-    navGoPane('dashboard');
-    dashCarregar();
-    return;
-  }
-  document.getElementById('modal-controle').style.display = 'flex';
-  setTimeout(() => document.getElementById('inp-controle-senha').focus(), 50);
-}
-
-function confirmarControleSenha() {
-  const val = document.getElementById('inp-controle-senha').value;
-  if (val === CONTROLE_PASSWORD) {
-    controleUnlocked = true;
-    document.getElementById('modal-controle').style.display = 'none';
-    document.getElementById('inp-controle-senha').value = '';
-    document.getElementById('controle-erro').style.display = 'none';
-    const lockEl = document.getElementById('controle-lock-state');
-    if (lockEl) { lockEl.textContent = '🔓'; lockEl.classList.add('unlocked'); }
-    navGoPane('dashboard');
-    dashCarregar();
-  } else {
-    const inp = document.getElementById('inp-controle-senha');
-    inp.classList.add('shake');
-    document.getElementById('controle-erro').style.display = 'block';
-    setTimeout(() => inp.classList.remove('shake'), 400);
-  }
-}
-
-function fecharModalControle() {
-  document.getElementById('modal-controle').style.display = 'none';
-  document.getElementById('inp-controle-senha').value = '';
-  document.getElementById('controle-erro').style.display = 'none';
-}
-
-function toggleControlePwd() {
-  const inp = document.getElementById('inp-controle-senha');
-  inp.type = inp.type === 'password' ? 'text' : 'password';
-}
+window.goPane    = navGoPane;   // sobrescreve o do app.js
+window.goMenu    = function() {}; // no-op
 
 // ══════════════════════════════════════════════════════
 //  HELPERS (from original inline script)
@@ -1896,27 +1796,43 @@ function top5(map) {
 
 async function dashCarregar() {
   const loading = document.getElementById('dash-loading');
-  if (loading) loading.style.display = 'block';
+
+  // Firebase não conectado — aviso amigável
+  if (!getDb()) {
+    if (loading) {
+      loading.style.display = 'block';
+      loading.innerHTML = `<div style="text-align:center;padding:40px">
+        <div style="font-size:36px;margin-bottom:12px">🔥</div>
+        <div style="color:var(--amber);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:16px;letter-spacing:2px;margin-bottom:8px">FIREBASE NÃO CONECTADO</div>
+        <div style="color:var(--text-dim);font-size:12px;line-height:1.7">Configure o Firebase na aba <strong style="color:var(--amber)">Conferente</strong> e aguarde o indicador ficar <strong style="color:var(--green)">🟢 ONLINE</strong>.<br>Depois clique em <strong>🔄 ATUALIZAR</strong>.</div>
+      </div>`;
+    }
+    return;
+  }
+
+  if (loading) { loading.style.display = 'block'; loading.innerHTML = '⏳ Carregando dados do Firebase...'; }
+
   try {
-    const de  = document.getElementById('dash-de').value;
-    const ate = document.getElementById('dash-ate').value;
+    const de  = (document.getElementById('dash-de')  || {}).value || '';
+    const ate = (document.getElementById('dash-ate') || {}).value || '';
 
     const filtrarData = (arr) => {
       if (!de && !ate) return arr;
       return arr.filter(r => {
         const d = r.dataISO || r.data || '';
-        if (de && d < de) return false;
-        if (ate && d > ate) return false;
+        const dIso = d.includes('/') ? d.split('/').reverse().join('-') : d;
+        if (de && dIso < de) return false;
+        if (ate && dIso > ate) return false;
         return true;
       });
     };
 
     const [snapT, snapD, snapR, snapA, snapQ] = await Promise.all([
-      getDb() ? getDb().collection('tarefas').get() : Promise.resolve({docs:[]}),
-      getDb() ? getDb().collection('despejo').get() : Promise.resolve({docs:[]}),
-      getDb() ? getDb().collection('repack').get() : Promise.resolve({docs:[]}),
-      getDb() ? getDb().collection('armazem').get() : Promise.resolve({docs:[]}),
-      getDb() ? getDb().collection('quebras').get() : Promise.resolve({docs:[]}),
+      getDb().collection('tarefas').get().catch(()=>({docs:[]})),
+      getDb().collection('despejo').get().catch(()=>({docs:[]})),
+      getDb().collection('repack').get().catch(()=>({docs:[]})),
+      getDb().collection('armazem').get().catch(()=>({docs:[]})),
+      getDb().collection('quebras').get().catch(()=>({docs:[]})),
     ]);
 
     const tarefas = filtrarData(snapT.docs.map(d=>d.data()));
@@ -2018,6 +1934,11 @@ async function dashCarregar() {
 
   } catch(e) {
     console.error('Dashboard erro:', e);
+    if (loading) {
+      loading.style.display = 'block';
+      loading.innerHTML = `<div style="color:var(--red);padding:20px;text-align:center;font-size:13px">❌ Erro ao carregar: ${e.message}<br><br><button class="btn btn-ghost btn-sm" onclick="dashCarregar()">↺ Tentar novamente</button></div>`;
+    }
+    return;
   }
   if (loading) loading.style.display = 'none';
 }
@@ -2110,14 +2031,15 @@ function toggleSec(id) {
 //  SETTINGS TOGGLE
 // ══════════════════════════════════════════════════════
 function toggleSettings() {
-  const body   = document.getElementById('settings-body');
-  const status = document.getElementById('settings-toggle-status');
+  const body  = document.getElementById('settings-body');
+  const arrow = document.getElementById('settings-toggle-status');
   if (!body) return;
-  const isVisible = body.style.display !== 'none';
-  body.style.display = isVisible ? 'none' : 'block';
-  if (status) status.textContent = isVisible ? '▾' : '▴';
+  body.classList.toggle('open');
+  const isOpen = body.classList.contains('open');
+  if (arrow) arrow.textContent = isOpen ? '▴' : '▾';
+  body.style.display = isOpen ? 'block' : 'none';
 }
-// Start collapsed
+// Inicializa fechado
 const _sb = document.getElementById('settings-body');
 if (_sb) _sb.style.display = 'none';
 
@@ -2250,47 +2172,23 @@ window.clearLocal = function() {
 };
 
 // ══════════════════════════════════════════════════════
-//  CLOCK
+//  CLOCK — app.js já gerencia o relógio via initClock()
+//  Apenas garantimos que o elemento #clock existe na sidebar
 // ══════════════════════════════════════════════════════
-function updateClock() {
-  const el = document.getElementById('clock');
-  if (!el) return;
-  const n = new Date();
-  el.textContent = [n.getHours(),n.getMinutes(),n.getSeconds()].map(x=>String(x).padStart(2,'0')).join(':');
-}
-updateClock(); setInterval(updateClock, 1000);
-
-// ══════════════════════════════════════════════════════
-//  MENU BADGE — pending tasks count on emp nav item
-// ══════════════════════════════════════════════════════
-function updateMenuCounts() {
-  if (typeof S === 'undefined') return;
-  const pending = S.tarefas.filter(t=>t.status==='pending').length;
-  // Update lock state badge on emp nav
-  const empLock = document.getElementById('emp-lock-state');
-  if (empLock && pending > 0) {
-    empLock.textContent = pending + ' pend.';
-    empLock.style.background = 'rgba(239,68,68,.15)';
-    empLock.style.color = 'var(--red)';
-    empLock.style.borderColor = 'rgba(239,68,68,.3)';
-  }
-}
+// (sem redeclarar — app.js cuida disso)
 
 // ══════════════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════════════
 (function init() {
-  const today = todayISO();
-  const de  = document.getElementById('dash-de');
-  const ate = document.getElementById('dash-ate');
-  if (de)  de.value  = today;
-  if (ate) ate.value = today;
-
-  // Landing page = Repack (Controle requer senha)
+  // Landing page = Repack
   navGoPane('repack');
 
-  // Manter goPane e goMenu sempre apontando para navGoPane
-  setInterval(() => { window.goPane = navGoPane; window.goMenu = function(){}; }, 500);
+  setTimeout(() => {
+    window.goPane = navGoPane;
+    window.goMenu = function() {};
+    if (typeof renderAll === 'function') renderAll();
+  }, 100);
 })();
 </script>
 </body>
