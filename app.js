@@ -1,2297 +1,1329 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ARMAZÉM FÁCIL — Sistema Integrado</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
-<style>
-/* ════════════════════════════════════════════════════
-   ROOT TOKENS
-   ════════════════════════════════════════════════════ */
-:root {
-  --bg:#0a0c10; --surface:#11151c; --surface2:#181e27;
-  --border:#222d3a; --border2:#1a2433;
-  --amber:#f5a623; --amber-dim:#1e1400; --amber-glow:rgba(245,166,35,.12);
-  --green:#22c55e; --green-dim:#0a1f10;
-  --red:#ef4444; --red-dim:#1e0a0a;
-  --blue:#3b82f6; --blue-dim:#0a1322;
-  --cyan:#06b6d4; --cyan-dim:#021215;
-  --purple:#8b5cf6; --purple-dim:#130d20;
-  --pink:#ec4899;
-  --text:#dde4ee; --text-dim:#6a7d92; --text-muted:#2e3e50;
-  --sidebar-w:220px;
-  --header-h:0px;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden}
-body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif}
-
-/* ════════════════════════════════════════════════════
-   APP LAYOUT — SIDEBAR + MAIN
-   ════════════════════════════════════════════════════ */
-.app-layout{display:flex;height:100vh;overflow:hidden}
-
-/* ════════════════════════════════════════════════════
-   SIDEBAR
-   ════════════════════════════════════════════════════ */
-.sidebar{
-  width:var(--sidebar-w);min-width:var(--sidebar-w);
-  background:var(--surface);
-  border-right:1px solid var(--border);
-  display:flex;flex-direction:column;
-  height:100vh;
-  position:relative;
-  z-index:50;
-  transition:width .25s ease, min-width .25s ease;
-}
-.sidebar.collapsed{width:60px;min-width:60px}
-.sidebar.collapsed .nav-label,
-.sidebar.collapsed .nav-lock,
-.sidebar.collapsed .sidebar-brand-text,
-.sidebar.collapsed .sidebar-footer-text{display:none}
-.sidebar.collapsed .sidebar-logo{padding:16px 0;justify-content:center}
-.sidebar.collapsed .nav-item{padding:14px 0;justify-content:center;gap:0}
-.sidebar.collapsed .sidebar-footer{padding:10px 0;align-items:center}
-
-/* ── Logo area ── */
-.sidebar-logo{
-  padding:18px 16px 14px;
-  border-bottom:1px solid var(--border);
-  display:flex;align-items:center;gap:10px;
-  position:relative;
-}
-.sidebar-logo-mark{
-  width:36px;height:36px;border-radius:8px;
-  background:linear-gradient(135deg,var(--amber),#d4780a);
-  display:flex;align-items:center;justify-content:center;
-  font-size:17px;flex-shrink:0;
-  box-shadow:0 0 16px rgba(245,166,35,.3);
-}
-.sidebar-brand-text{}
-.sidebar-brand-name{
-  font-family:'Barlow Condensed',sans-serif;font-weight:900;
-  font-size:15px;letter-spacing:2px;color:var(--amber);line-height:1;
-}
-.sidebar-brand-sub{font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-top:2px}
-
-.sidebar-collapse-btn{
-  position:absolute;right:-12px;top:50%;transform:translateY(-50%);
-  width:24px;height:24px;border-radius:50%;
-  background:var(--surface2);border:1px solid var(--border);
-  color:var(--text-dim);font-size:10px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  transition:all .2s;z-index:10;
-}
-.sidebar-collapse-btn:hover{background:var(--border);color:var(--amber)}
-
-/* ── Nav ── */
-.sidebar-nav{
-  flex:1;overflow-y:auto;overflow-x:hidden;
-  padding:10px 8px;
-  display:flex;flex-direction:column;gap:2px;
-}
-.sidebar-nav::-webkit-scrollbar{width:3px}
-.sidebar-nav::-webkit-scrollbar-track{background:transparent}
-.sidebar-nav::-webkit-scrollbar-thumb{background:var(--border)}
-
-.nav-section-label{
-  font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;
-  letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);
-  padding:10px 10px 4px;
-}
-.nav-item{
-  display:flex;align-items:center;gap:10px;
-  padding:10px 10px;border-radius:10px;
-  border:none;background:transparent;
-  color:var(--text-dim);cursor:pointer;
-  transition:all .15s;width:100%;text-align:left;
-  position:relative;overflow:hidden;
-}
-.nav-item:hover{background:var(--surface2);color:var(--text)}
-.nav-item.active{
-  background:var(--amber-glow);
-  color:var(--amber);
-  border:1px solid rgba(245,166,35,.15);
-}
-.nav-item.active::before{
-  content:'';position:absolute;left:0;top:20%;bottom:20%;
-  width:3px;border-radius:0 2px 2px 0;background:var(--amber);
-}
-.nav-item.nav-emp.active{background:rgba(59,130,246,.08);color:var(--blue);border-color:rgba(59,130,246,.15)}
-.nav-item.nav-emp.active::before{background:var(--blue)}
-.nav-item.nav-despejo.active{background:rgba(239,68,68,.08);color:var(--red);border-color:rgba(239,68,68,.15)}
-.nav-item.nav-despejo.active::before{background:var(--red)}
-.nav-item.nav-armazem.active{background:rgba(6,182,212,.08);color:var(--cyan);border-color:rgba(6,182,212,.15)}
-.nav-item.nav-armazem.active::before{background:var(--cyan)}
-.nav-item.nav-quebras.active{background:rgba(239,68,68,.08);color:#fca5a5;border-color:rgba(239,68,68,.15)}
-.nav-item.nav-quebras.active::before{background:#fca5a5}
-.nav-item.nav-repack.active{background:var(--amber-glow);color:var(--amber);border-color:rgba(245,166,35,.15)}
-.nav-item.nav-repack.active::before{background:var(--amber)}
-.nav-item.nav-relatorio.active{background:rgba(34,197,94,.08);color:var(--green);border-color:rgba(34,197,94,.15)}
-.nav-item.nav-relatorio.active::before{background:var(--green)}
-
-.nav-icon{font-size:18px;min-width:24px;text-align:center;line-height:1}
-.nav-label{
-  font-family:'Barlow Condensed',sans-serif;font-weight:700;
-  font-size:13px;letter-spacing:1.5px;text-transform:uppercase;flex:1;white-space:nowrap;
-}
-.nav-lock{
-  font-size:9px;padding:2px 6px;border-radius:10px;
-  background:rgba(255,255,255,.05);color:var(--text-muted);
-  border:1px solid var(--border);font-family:'Barlow',sans-serif;
-  font-weight:600;letter-spacing:.5px;white-space:nowrap;
-}
-.nav-lock.unlocked{background:rgba(34,197,94,.1);color:var(--green);border-color:rgba(34,197,94,.3)}
-.nav-badge{
-  background:var(--red);color:#fff;
-  font-size:9px;font-weight:700;min-width:16px;height:16px;
-  border-radius:8px;display:inline-flex;align-items:center;
-  justify-content:center;padding:0 4px;
-}
-
-/* ── Sidebar Footer ── */
-.sidebar-footer{
-  padding:12px;border-top:1px solid var(--border);
-  display:flex;flex-direction:column;gap:8px;
-}
-.sidebar-footer-text{}
-.clock-sidebar{
-  font-family:'Share Tech Mono',monospace;font-size:14px;
-  color:var(--amber);letter-spacing:2px;text-align:center;
-}
-.fb-indicator{
-  display:inline-flex;align-items:center;justify-content:center;gap:5px;
-  font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;
-  letter-spacing:1px;padding:5px 10px;border-radius:20px;
-  border:1px solid transparent;transition:all .4s;width:100%;
-}
-.fb-off{background:var(--surface2);color:var(--text-muted);border-color:var(--border)}
-.fb-connecting{background:var(--blue-dim);color:var(--blue);border-color:#1e3a5f;animation:fbpulse 1.2s ease-in-out infinite}
-.fb-online{background:var(--green-dim);color:var(--green);border-color:#166534}
-.fb-error{background:var(--red-dim);color:var(--red);border-color:#7f1d1d}
-@keyframes fbpulse{0%,100%{opacity:1}50%{opacity:.4}}
-
-/* Mobile hamburger */
-.sidebar-mobile-toggle{
-  display:none;position:fixed;top:12px;left:12px;z-index:200;
-  width:40px;height:40px;border-radius:10px;
-  background:var(--surface);border:1px solid var(--border);
-  color:var(--amber);font-size:18px;cursor:pointer;
-  align-items:center;justify-content:center;
-}
-@media(max-width:768px){
-  .sidebar{position:fixed;left:-240px;z-index:150;transition:left .25s ease;height:100vh}
-  .sidebar.mobile-open{left:0}
-  .sidebar-mobile-toggle{display:flex}
-  .main-area{margin-left:0!important}
-  .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:140;display:none}
-  .sidebar-overlay.show{display:block}
-}
-
-/* ════════════════════════════════════════════════════
-   MAIN AREA
-   ════════════════════════════════════════════════════ */
-.main-area{
-  flex:1;overflow-y:auto;overflow-x:hidden;
-  height:100vh;
-  background:var(--bg);
-  position:relative;
-}
-.main-area::-webkit-scrollbar{width:5px}
-.main-area::-webkit-scrollbar-track{background:transparent}
-.main-area::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-
-/* ── Panes ── */
-.pane{display:none}.pane.active{display:block}
-.wrap{max-width:960px;margin:0 auto;padding:24px 20px}
-
-/* ── Pane header strip ── */
-.pane-topbar{
-  background:var(--surface);
-  border-bottom:1px solid var(--border);
-  padding:0 20px;height:52px;
-  display:flex;align-items:center;gap:12px;
-  position:sticky;top:0;z-index:30;
-}
-.mobile-menu-gap{width:48px;display:none}
-@media(max-width:768px){.mobile-menu-gap{display:block}}
-.pane-topbar-title{
-  font-family:'Barlow Condensed',sans-serif;font-weight:900;
-  font-size:14px;letter-spacing:2px;text-transform:uppercase;
-  color:var(--text-dim);
-}
-.pane-topbar-actions{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-
-/* ════════════════════════════════════════════════════
-   SHARED COMPONENT STYLES (from original)
-   ════════════════════════════════════════════════════ */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px}
-.card-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--amber);margin-bottom:14px}
-.field-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:5px}
-.sh{display:flex;align-items:center;gap:10px;margin:18px 0 12px}
-.sh h2{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);white-space:nowrap}
-.line{flex:1;height:1px;background:var(--border)}
-.sep{height:1px;background:var(--border);margin:18px 0}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
-@media(max-width:600px){.row2{grid-template-columns:1fr}.row3{grid-template-columns:1fr}}
-.add-row{display:flex;align-items:flex-end;gap:8px}
-.add-row>div{flex:1}
-
-input,select,textarea{
-  width:100%;padding:10px 12px;border-radius:10px;
-  border:1px solid var(--border);background:var(--bg);
-  color:var(--text);font-family:'Barlow',sans-serif;font-size:14px;
-  transition:border-color .2s;
-}
-input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
-
-/* ── Buttons ── */
-.btn{
-  font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;
-  letter-spacing:1.5px;text-transform:uppercase;
-  padding:10px 18px;border-radius:10px;border:none;cursor:pointer;
-  transition:all .15s;display:inline-flex;align-items:center;gap:6px;
-  white-space:nowrap;
-}
-.btn-amber{background:var(--amber);color:#0a0c10}
-.btn-amber:hover{background:#fbbf24;box-shadow:0 0 18px rgba(245,166,35,.25)}
-.btn-green{background:var(--green);color:#0a0c10}
-.btn-green:hover{background:#4ade80}
-.btn-red{background:var(--red);color:#fff}
-.btn-red:hover{background:#f87171}
-.btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border)}
-.btn-ghost:hover{background:var(--surface2);color:var(--text)}
-.btn-pop{background:var(--surface2);color:var(--blue);border:1px solid rgba(59,130,246,.3)}
-.btn-pop:hover{background:var(--blue-dim);color:#93c5fd}
-.btn-start{background:var(--green);color:#0a0c10}
-.btn-start:hover{background:#4ade80}
-.btn-finish{background:var(--amber);color:#0a0c10}
-.btn-finish:hover{background:#fbbf24}
-.btn-sm{padding:7px 12px;font-size:11px}
-.btn[disabled]{opacity:.4;cursor:not-allowed}
-.btn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
-
-/* ── Badges ── */
-.bdg{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;padding:3px 10px;border-radius:20px;display:inline-flex;align-items:center}
-.bdg-amber{background:var(--amber-dim);color:var(--amber);border:1px solid #5a3b00}
-.bdg-blue{background:var(--blue-dim);color:var(--blue);border:1px solid #1e3a5f}
-.bdg-green{background:var(--green-dim);color:var(--green);border:1px solid #166534}
-.bdg-red{background:var(--red-dim);color:var(--red);border:1px solid #7f1d1d}
-
-/* ── Task cards ── */
-.tc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;border-left:4px solid var(--border)}
-.tc.pending{border-left-color:var(--amber)}
-.tc.in_progress{border-left-color:var(--blue)}
-.tc.done{border-left-color:var(--green)}
-.tc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px}
-.tc-code{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text-muted);margin-bottom:3px}
-.tc-desc{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:.5px;color:var(--text)}
-.tc-qty-val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:26px;color:var(--amber);line-height:1;text-align:right}
-.tc-qty-lbl{font-size:9px;color:var(--text-muted);letter-spacing:1.5px;text-align:right}
-.tc-meta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:11px;color:var(--text-dim);margin-bottom:10px}
-.tc-meta span strong{color:var(--text)}
-
-/* ── Sections ── */
-.sec-head{
-  display:flex;align-items:center;gap:10px;
-  padding:12px 16px;border-radius:10px;
-  background:var(--surface);border:1px solid var(--border);
-  cursor:pointer;margin-bottom:6px;
-  transition:background .15s;
-}
-.sec-head:hover{background:var(--surface2)}
-.sec-head h2{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);flex:1;margin:0}
-.sec-cnt{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:18px;color:var(--amber);min-width:28px;text-align:center}
-.sec-cnt.zero{color:var(--text-muted)}
-.sec-arrow{color:var(--text-muted);font-size:12px;transition:transform .2s}
-.sec-body{overflow:hidden;transition:max-height .3s ease}
-.sec-body.closed{max-height:0}
-.sec-body.open{max-height:999999px}
-
-/* ── Product list ── */
-.prod-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;max-height:200px;overflow-y:auto}
-.prod-item{
-  display:flex;align-items:center;gap:10px;
-  padding:9px 12px;border-radius:8px;
-  background:var(--surface2);border:1px solid var(--border);
-  cursor:pointer;transition:all .15s;
-}
-.prod-item:hover{border-color:var(--amber);background:var(--amber-dim)}
-.prod-item.selected{border-color:var(--amber);background:var(--amber-dim)}
-.prod-code{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--amber);min-width:60px}
-.prod-name{font-size:12px;color:var(--text);flex:1;line-height:1.3}
-.prod-empty{font-size:12px;color:var(--text-muted);padding:8px;text-align:center}
-
-/* ── Toast ── */
-#toast{
-  position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);
-  padding:12px 24px;border-radius:999px;background:var(--green);color:#0a0c10;
-  font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;
-  z-index:9999;opacity:0;transition:all .3s ease;white-space:nowrap;
-}
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-/* ── Settings ── */
-.settings-toggle{
-  width:100%;background:var(--surface);border:1px solid var(--border);
-  border-radius:10px;padding:12px 16px;
-  display:flex;justify-content:space-between;align-items:center;
-  cursor:pointer;margin-bottom:8px;
-  font-family:'Barlow Condensed',sans-serif;font-weight:700;
-  font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--amber);
-  transition:background .15s;
-}
-.settings-toggle:hover{background:var(--surface2)}
-.settings-body{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px}
-.settings-note{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:11px;color:var(--text-dim);line-height:1.7;margin-top:12px}
-.settings-note a{color:var(--blue)}
-.settings-note code{background:rgba(255,255,255,.06);padding:1px 6px;border-radius:4px;font-family:'Share Tech Mono',monospace;font-size:11px}
-
-/* ── Loc summary ── */
-.loc-summary{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
-.loc-chip{font-size:11px;padding:4px 10px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);color:var(--text-dim)}
-.loc-chip.idle{color:var(--amber)}
-.loc-chip.link{color:var(--blue);text-decoration:none}
-.loc-tracking-live{font-size:11px;color:var(--blue);padding:6px 10px;border-radius:6px;background:var(--blue-dim);border:1px solid #1e3a5f;margin:6px 0}
-
-/* ── Menu FB status ── */
-.menu-fb-status{display:none;align-items:center;gap:6px;font-size:11px;color:var(--green);font-family:'Barlow Condensed',sans-serif;letter-spacing:1px}
-.menu-fb-status.show{display:flex}
-
-/* ── Relatório ── */
-.rel-summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px}
-@media(max-width:480px){.rel-summary{grid-template-columns:1fr}}
-.rel-sum-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 12px;text-align:center;border-top:3px solid}
-.rel-sum-card.pend{border-top-color:var(--amber)}
-.rel-sum-card.prog{border-top-color:var(--blue)}
-.rel-sum-card.done{border-top-color:var(--green)}
-.rel-sum-num{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:42px;line-height:1;margin-bottom:6px}
-.rel-sum-card.pend .rel-sum-num{color:var(--amber)}
-.rel-sum-card.prog .rel-sum-num{color:var(--blue)}
-.rel-sum-card.done .rel-sum-num{color:var(--green)}
-.rel-sum-lbl{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim)}
-
-/* ── Dashboard KPI cards ── */
-.dash-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
-.dash-kpi{padding:16px;border-radius:14px;background:var(--surface2);border:1px solid var(--border);text-align:center}
-.dash-kpi-val{font-size:36px;font-weight:900;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;line-height:1}
-.dash-kpi-label{font-size:11px;color:var(--text-dim);margin-top:6px;text-transform:uppercase;letter-spacing:1px}
-.dash-kpi-sub{font-size:11px;margin-top:4px;font-weight:600}
-
-/* ════════════════════════════════════════════════════
-   MODALS
-   ════════════════════════════════════════════════════ */
-.modal-overlay{
-  position:fixed;inset:0;background:rgba(0,0,0,.75);
-  display:none;align-items:center;justify-content:center;z-index:500;
-  backdrop-filter:blur(4px);
-}
-.modal-overlay[style*="flex"]{display:flex!important}
-.modal-box{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:18px;padding:32px 28px;
-  max-width:440px;width:90%;
-  box-shadow:0 20px 60px rgba(0,0,0,.5);
-  animation:modalIn .25s ease;
-}
-.modal-box-lg{max-width:600px}
-.modal-box-xl{max-width:820px;max-height:90vh;overflow-y:auto}
-@keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
-.modal-icon{font-size:42px;text-align:center;margin-bottom:10px;line-height:1}
-.modal-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;letter-spacing:3px;text-transform:uppercase;color:var(--amber);text-align:center;margin-bottom:6px}
-.modal-sub{font-size:12px;color:var(--text-dim);text-align:center;margin-bottom:4px;line-height:1.5}
-.modal-input{
-  background:var(--surface2);border:2px solid var(--border);border-radius:8px;
-  color:var(--text);font-family:'Share Tech Mono',monospace;font-size:22px;
-  padding:12px 46px 12px 16px;letter-spacing:6px;text-align:center;
-  transition:border-color .2s;width:100%
-}
-.modal-input:focus{border-color:var(--amber);outline:none}
-.modal-input.shake{animation:shake .4s ease}
-@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
-.pwd-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:18px;opacity:.5;transition:opacity .2s;user-select:none}
-.pwd-toggle:hover{opacity:1}
-.modal-error{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;color:var(--red);background:var(--red-dim);border:1px solid #7f1d1d;border-radius:6px;padding:8px 12px;text-align:center;margin-top:4px}
-
-/* ── Checklist ── */
-.checklist-grid{display:flex;flex-direction:column;gap:6px;margin:20px 0 14px}
-.chk-section-label{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);padding:2px 0 0 4px}
-.chk-item{display:flex;align-items:center;gap:12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 13px;cursor:pointer;transition:all .15s;border-left:3px solid transparent}
-.chk-item:hover{border-color:var(--amber);background:#1a1e24}
-.chk-item:has(.chk-box:checked){background:#0a1f10;border-color:var(--green);border-left-color:var(--green)}
-.chk-box{display:none}
-.chk-content{flex:1}
-.chk-title{font-size:13px;font-weight:600;color:var(--text);line-height:1.3}
-.chk-desc{font-size:11px;color:var(--text-dim);margin-top:2px;line-height:1.4}
-.chk-status{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:16px;min-width:24px;text-align:center;transition:all .2s}
-.chk-pend{color:var(--text-muted)}
-.chk-item:has(.chk-box:checked) .chk-status{color:var(--green)}
-.chk-item:has(.chk-box:checked) .chk-status::before{content:'✓'}
-.chk-item:not(:has(.chk-box:checked)) .chk-status::before{content:'✗'}
-.chk-progress-bar{height:6px;background:var(--surface2);border-radius:3px;border:1px solid var(--border);overflow:hidden;margin-top:6px}
-.chk-progress-fill{height:100%;background:var(--green);border-radius:3px;transition:width .3s ease}
-.chk-progress-label{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;color:var(--text-dim);text-align:right;margin-top:5px}
-
-/* ── POP ── */
-.pop-section{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px 18px;margin-bottom:14px}
-.pop-section-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:12px;letter-spacing:2.5px;text-transform:uppercase;color:var(--amber);margin-bottom:12px}
-.pop-text{font-size:13px;color:var(--text);line-height:1.7}
-.pop-text strong{color:var(--amber)}
-.pop-steps{display:flex;flex-direction:column;gap:10px}
-.pop-step{display:flex;gap:14px;align-items:flex-start}
-.pop-step-num{font-family:'Share Tech Mono',monospace;font-size:18px;font-weight:700;color:var(--amber);min-width:32px;background:var(--amber-dim);border:1px solid #5a3b00;border-radius:6px;text-align:center;padding:6px 0;line-height:1}
-.pop-step-body{flex:1;padding-top:4px}
-.pop-step-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text);margin-bottom:4px}
-.pop-step-desc{font-size:12px;color:var(--text-dim);line-height:1.6;margin-bottom:5px}
-.pop-step-desc strong{color:var(--amber)}
-.pop-step-resp{font-size:10px;color:var(--text-muted);letter-spacing:.5px}
-.pop-role-conf{font-family:'Barlow Condensed',sans-serif;font-weight:900;background:var(--amber-dim);color:var(--amber);border:1px solid #5a3b00;border-radius:4px;padding:1px 7px;font-size:11px}
-.pop-role-emp{font-family:'Barlow Condensed',sans-serif;font-weight:900;background:var(--blue-dim);color:var(--blue);border:1px solid #1e3a5f;border-radius:4px;padding:1px 7px;font-size:11px}
-.raci-table{width:100%;border-collapse:collapse;font-size:12px}
-.raci-table th{text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);padding:8px 10px;border-bottom:1px solid var(--border)}
-.raci-table th:first-child{text-align:left}
-.raci-table td{padding:9px 10px;border-bottom:1px solid var(--border);color:var(--text);font-size:12px}
-.raci-table tr:last-child td{border-bottom:none}
-.raci-table tr:hover td{background:rgba(255,255,255,.02)}
-.raci-r,.raci-a,.raci-c,.raci-i{text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:14px;letter-spacing:1px}
-.raci-r{color:var(--green)}.raci-a{color:var(--amber)}.raci-c{color:var(--blue)}.raci-i{color:var(--text-muted)}
-.raci-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--text-dim)}
-.pop-safety-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-@media(max-width:640px){.pop-safety-grid{grid-template-columns:1fr 1fr}}
-@media(max-width:420px){.pop-safety-grid{grid-template-columns:1fr}}
-.pop-safety-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px 13px}
-.pop-safety-icon{font-size:22px;margin-bottom:6px}
-.pop-safety-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text);margin-bottom:6px}
-.pop-safety-desc{font-size:11px;color:var(--text-dim);line-height:1.5;margin-bottom:8px}
-.pop-safety-medida{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--green);margin-bottom:3px}
-.pop-safety-med-txt{font-size:10px;color:var(--text-dim);border-top:1px solid var(--border);padding-top:6px;line-height:1.4}
-
-/* ── Tipo Operação ── */
-.op-tipo-section{margin-top:18px;padding-top:16px;border-top:1px solid var(--border)}
-.op-tipo-btns{display:flex;gap:12px;margin-bottom:12px}
-.btn-tipo{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;border-radius:10px;border:2px solid var(--border);background:var(--surface);cursor:pointer;transition:all .18s ease;color:var(--text-dim)}
-.btn-tipo:hover{border-color:var(--amber);background:rgba(251,191,36,.07);color:var(--text)}
-.btn-tipo.ativo{border-color:var(--amber);background:rgba(251,191,36,.13);color:var(--amber);box-shadow:0 0 0 3px rgba(251,191,36,.18)}
-.btn-tipo.inativo{opacity:.42;filter:grayscale(.5)}
-.btn-tipo-icon{font-size:28px;line-height:1}
-.btn-tipo-label{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.8px;text-align:center;text-transform:uppercase;line-height:1.3}
-.op-tipo-status{padding:9px 13px;border-radius:7px;background:rgba(255,255,255,.04);border:1px solid var(--border);font-size:11px;color:var(--text-dim);letter-spacing:.3px;transition:all .2s}
-.op-tipo-status.tipo-durante{background:rgba(59,130,246,.10);border-color:rgba(59,130,246,.4);color:#93c5fd}
-.op-tipo-status.tipo-apos{background:rgba(34,197,94,.10);border-color:rgba(34,197,94,.4);color:#86efac}
-.modal-tipo-desc{font-size:13px;color:var(--text-dim);line-height:1.65;margin:12px 0 4px;text-align:center}
-.modal-tipo-operador{font-size:12px;color:var(--text-muted);margin-top:10px;padding:8px 14px;background:rgba(255,255,255,.05);border-radius:6px;text-align:center;letter-spacing:.4px}
-.modal-tipo-operador strong{color:var(--blue);font-weight:700}
-
-/* ── Fechar turno / CSV ── */
-.fb-test-result-ok{background:var(--green-dim);color:var(--green);border:1px solid #166534;border-radius:8px;padding:10px 14px;font-size:12px;margin-top:10px}
-.fb-test-result-err{background:var(--red-dim);color:var(--red);border:1px solid #7f1d1d;border-radius:8px;padding:10px 14px;font-size:12px;margin-top:10px}
-.fb-test-result-load{background:var(--blue-dim);color:var(--blue);border:1px solid #1e3a5f;border-radius:8px;padding:10px 14px;font-size:12px;margin-top:10px}
-
-/* ── Pane nav (legacy back button strip) ── */
-.pane-nav{display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)}
-.pane-nav-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:14px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim)}
-
-/* ── Empty states ── */
-.empty{text-align:center;padding:32px;color:var(--text-muted)}
-.empty .ico{font-size:32px;margin-bottom:8px}
-</style>
-</head>
-<body>
-
-<!-- ═══════════════════════════════════════════════════
-     MOBILE SIDEBAR OVERLAY
-     ═══════════════════════════════════════════════════ -->
-<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeMobileSidebar()"></div>
-
-<!-- ═══════════════════════════════════════════════════
-     MOBILE HAMBURGER
-     ═══════════════════════════════════════════════════ -->
-<button class="sidebar-mobile-toggle" onclick="openMobileSidebar()">☰</button>
-
-<!-- ═══════════════════════════════════════════════════
-     MODAL — CONTROLE (Dashboard — senha restrita)
-     ═══════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="modal-controle" style="display:none">
-  <div class="modal-box">
-    <div class="modal-icon">🛡️</div>
-    <div class="modal-title">ÁREA DE CONTROLE</div>
-    <div class="modal-sub">Insira a senha de Controle para acessar o painel</div>
-    <div style="position:relative;margin:20px 0 8px">
-      <input type="password" id="inp-controle-senha" class="modal-input" placeholder="••••••"
-             maxlength="20" onkeydown="if(event.key==='Enter')confirmarControleSenha()">
-      <span class="pwd-toggle" onclick="toggleControlePwd()">👁</span>
-    </div>
-    <div class="modal-error" id="controle-erro" style="display:none">❌ Senha incorreta. Tente novamente.</div>
-    <div class="btn-row" style="justify-content:center;margin-top:16px">
-      <button class="btn btn-amber" onclick="confirmarControleSenha()">🔓 ENTRAR</button>
-      <button class="btn btn-ghost" onclick="fecharModalControle()">CANCELAR</button>
-    </div>
-    <div style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:12px">
-      Acesso restrito ao supervisor / conferente senior
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════
-     MODAL — SENHA CONFERENTE
-     ═══════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="modal-senha" style="display:none">
-  <div class="modal-box">
-    <div class="modal-icon">🔐</div>
-    <div class="modal-title">ACESSO RESTRITO</div>
-    <div class="modal-sub">Insira a senha do Conferente para continuar</div>
-    <div style="position:relative;margin:20px 0 8px">
-      <input type="password" id="inp-senha" class="modal-input" placeholder="••••••"
-             maxlength="20" onkeydown="if(event.key==='Enter')confirmarSenha()">
-      <span class="pwd-toggle" onclick="togglePwdView()">👁</span>
-    </div>
-    <div class="modal-error" id="senha-erro" style="display:none">❌ Senha incorreta. Tente novamente.</div>
-    <div class="btn-row" style="justify-content:center;margin-top:16px">
-      <button class="btn btn-amber" onclick="confirmarSenha()">🔓 ENTRAR</button>
-      <button class="btn btn-ghost" onclick="fecharModalSenha()">CANCELAR</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════
-     MODAL — CHECKLIST EMPILHADOR
-     ═══════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="modal-checklist" style="display:none">
-  <div class="modal-box modal-box-lg">
-    <div class="modal-icon">✅</div>
-    <div class="modal-title">CHECKLIST PRÉ-OPERAÇÃO</div>
-    <div class="modal-sub">Confirme cada item antes de iniciar suas atividades no turno</div>
-    <div class="checklist-grid" id="checklist-items">
-      <div class="chk-section-label">🚷 SEPARAÇÃO EMPILHADEIRA × PEDESTRE</div>
-      <label class="chk-item"><input type="checkbox" class="chk-box" onchange="avaliarChecklist()"><div class="chk-content"><div class="chk-title">Corredor de operação sinalizado / isolado</div><div class="chk-desc">Cones ou fitas nas extremidades do corredor onde vai operar</div></div><div class="chk-status chk-pend">✗</div></label>
-      <label class="chk-item"><input type="checkbox" class="chk-box" onchange="avaliarChecklist()"><div class="chk-content"><div class="chk-title">Rotas de pedestre verificadas e livres</div><div class="chk-desc">Confirmar que pedestres estão fora da área de movimentação</div></div><div class="chk-status chk-pend">✗</div></label>
-      <label class="chk-item"><input type="checkbox" class="chk-box" onchange="avaliarChecklist()"><div class="chk-content"><div class="chk-title">Comunicação com a equipe realizada</div><div class="chk-desc">Informar ao time o corredor/área de atuação no turno</div></div><div class="chk-status chk-pend">✗</div></label>
-      <div class="chk-section-label" style="margin-top:12px">📦 ÁREA DE TRABALHO</div>
-      <label class="chk-item"><input type="checkbox" class="chk-box" onchange="avaliarChecklist()"><div class="chk-content"><div class="chk-title">Piso livre de obstáculos e resíduos</div><div class="chk-desc">Paletes quebrados, plásticos e caixas devem ser removidos</div></div><div class="chk-status chk-pend">✗</div></label>
-      <label class="chk-item"><input type="checkbox" class="chk-box" onchange="avaliarChecklist()"><div class="chk-content"><div class="chk-title">Iluminação da área adequada</div><div class="chk-desc">Mínimo de visibilidade para operação segura</div></div><div class="chk-status chk-pend">✗</div></label>
-    </div>
-    <div class="chk-progress-bar"><div class="chk-progress-fill" id="chk-fill" style="width:0%"></div></div>
-    <div class="chk-progress-label" id="chk-label">0 / 5 itens confirmados</div>
-    <div class="btn-row" style="justify-content:center;margin-top:18px">
-      <button class="btn btn-amber" id="btn-chk-ok" onclick="confirmarChecklist()" disabled>✅ CONFIRMAR E INICIAR</button>
-      <button class="btn btn-ghost" onclick="fecharModalChecklist()">DEPOIS</button>
-    </div>
-    <div style="font-size:10px;color:var(--text-muted);margin-top:10px;text-align:center">Todos os itens devem ser marcados para liberar o acesso</div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════
-     MODAL — POP + RACI
-     ═══════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="modal-pop" style="display:none" onclick="fecharPOP(event)">
-  <div class="modal-box modal-box-xl">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">
-      <div><div class="modal-title" style="text-align:left;margin-bottom:4px">📋 POP — REABASTECIMENTO / RESSUPRIMETO</div><div class="modal-sub" style="text-align:left">Procedimento Operacional Padrão · Versão 1.0</div></div>
-      <button class="btn btn-ghost btn-sm" onclick="fecharModalPOP()" style="flex-shrink:0;margin-left:16px">✕ FECHAR</button>
-    </div>
-    <div class="pop-section"><div class="pop-section-title">🎯 OBJETIVO</div><p class="pop-text">Definir as etapas, responsabilidades e medidas de segurança para a operação de reabastecimento e ressuprimeto de produtos no armazém, garantindo eficiência operacional e <strong>eliminação de conflitos entre empilhadeiras e pedestres</strong>.</p></div>
-    <div class="pop-section"><div class="pop-section-title">⚙ ETAPAS DO PROCESSO</div><div class="pop-steps">
-      <div class="pop-step"><div class="pop-step-num">01</div><div class="pop-step-body"><div class="pop-step-title">IDENTIFICAÇÃO DA NECESSIDADE</div><div class="pop-step-desc">O Conferente identifica produto com nível baixo no picking e cria a tarefa no sistema. <strong>Nenhuma movimentação deve ocorrer sem tarefa criada.</strong></div><div class="pop-step-resp">Responsável: <span class="pop-role-conf">CONFERENTE</span></div></div></div>
-      <div class="pop-step"><div class="pop-step-num">02</div><div class="pop-step-body"><div class="pop-step-title">CHECKLIST PRÉ-OPERAÇÃO</div><div class="pop-step-desc">O Empilhador realiza o checklist completo antes de iniciar o turno. <strong>O sistema bloqueia o acesso até todos os itens serem confirmados.</strong></div><div class="pop-step-resp">Responsável: <span class="pop-role-emp">EMPILHADOR</span></div></div></div>
-      <div class="pop-step"><div class="pop-step-num">03</div><div class="pop-step-body"><div class="pop-step-title">ISOLAMENTO DO CORREDOR</div><div class="pop-step-desc">Antes de iniciar o deslocamento, o operador isola com cones ou fitas as duas extremidades do corredor. Em cruzamentos, buzinar ao aproximar-se.</div><div class="pop-step-resp">Responsável: <span class="pop-role-emp">EMPILHADOR</span></div></div></div>
-      <div class="pop-step"><div class="pop-step-num">04</div><div class="pop-step-body"><div class="pop-step-title">RETIRADA DO PALETE NO PULMÃO</div><div class="pop-step-desc">Localizar o palete pela descrição e código informados. Velocidade máxima: <strong>6 km/h</strong> em corredores. Garfos a no máximo 15 cm do chão durante o deslocamento.</div><div class="pop-step-resp">Responsável: <span class="pop-role-emp">EMPILHADOR</span></div></div></div>
-      <div class="pop-step"><div class="pop-step-num">05</div><div class="pop-step-body"><div class="pop-step-title">ABASTECIMENTO DO PICKING</div><div class="pop-step-desc">Transportar o palete até o endereço de picking indicado. Confirmar que não há pedestres na rota. Posicionar o palete sem bloquear corredores de emergência.</div><div class="pop-step-resp">Responsável: <span class="pop-role-emp">EMPILHADOR</span> · Apoio: <span class="pop-role-conf">CONFERENTE</span></div></div></div>
-      <div class="pop-step"><div class="pop-step-num">06</div><div class="pop-step-body"><div class="pop-step-title">FINALIZAÇÃO E REGISTRO</div><div class="pop-step-desc">O Empilhador finaliza a tarefa no sistema. O Conferente valida a conclusão visualmente. O sistema registra automaticamente no Firebase para rastreabilidade.</div><div class="pop-step-resp">Responsável: <span class="pop-role-emp">EMPILHADOR</span> · Validação: <span class="pop-role-conf">CONFERENTE</span></div></div></div>
-    </div></div>
-    <div class="pop-section"><div class="pop-section-title">📊 MATRIZ RACI</div><div style="overflow-x:auto"><table class="raci-table"><thead><tr><th>Atividade</th><th>Conferente</th><th>Empilhador</th><th>Supervisor</th><th>Seg. Trabalho</th></tr></thead><tbody>
-      <tr><td>Criar tarefa no sistema</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-a">A</td><td class="raci-i">I</td></tr>
-      <tr><td>Realizar checklist de segurança</td><td class="raci-i">I</td><td class="raci-r">R</td><td class="raci-a">A</td><td class="raci-c">C</td></tr>
-      <tr><td>Isolar corredor de operação</td><td class="raci-c">C</td><td class="raci-r">R</td><td class="raci-a">A</td><td class="raci-c">C</td></tr>
-      <tr><td>Operar empilhadeira / movimentar palete</td><td class="raci-i">I</td><td class="raci-r">R</td><td class="raci-a">A</td><td class="raci-i">I</td></tr>
-      <tr><td>Finalizar e registrar tarefa</td><td class="raci-c">C</td><td class="raci-r">R</td><td class="raci-a">A</td><td class="raci-i">I</td></tr>
-      <tr><td>Validar conclusão e produto correto</td><td class="raci-r">R</td><td class="raci-i">I</td><td class="raci-a">A</td><td class="raci-i">I</td></tr>
-    </tbody></table></div>
-    <div class="raci-legend"><span><strong class="raci-r">R</strong> = Responsável</span><span><strong class="raci-a">A</strong> = Aprovador</span><span><strong class="raci-c">C</strong> = Consultado</span><span><strong class="raci-i">I</strong> = Informado</span></div></div>
-    <div class="pop-section"><div class="pop-section-title">🦺 MEDIDAS DE SEGURANÇA</div><div class="pop-safety-grid">
-      <div class="pop-safety-card"><div class="pop-safety-icon">🚧</div><div class="pop-safety-title">SEPARAÇÃO FÍSICA</div><div class="pop-safety-desc">Corredores exclusivos para empilhadeiras sinalizados no piso com faixas amarelas.</div><div class="pop-safety-medida">📏 MEDIDA</div><div class="pop-safety-med-txt">Faixas no piso + cones durante operação</div></div>
-      <div class="pop-safety-card"><div class="pop-safety-icon">🔔</div><div class="pop-safety-title">ALERTAS SONOROS</div><div class="pop-safety-desc">Alarme de ré obrigatório. Buzina em todos os cruzamentos cegos.</div><div class="pop-safety-medida">📏 MEDIDA</div><div class="pop-safety-med-txt">Checklist diário + manutenção preventiva</div></div>
-      <div class="pop-safety-card"><div class="pop-safety-icon">💡</div><div class="pop-safety-title">SINALIZAÇÃO VISUAL</div><div class="pop-safety-desc">Luz giratória ativa durante toda a operação. Espelhos convexos em cruzamentos.</div><div class="pop-safety-medida">📏 MEDIDA</div><div class="pop-safety-med-txt">Strobo + espelhos + faixas de atenção</div></div>
-      <div class="pop-safety-card"><div class="pop-safety-icon">📋</div><div class="pop-safety-title">CONTROLE DIGITAL</div><div class="pop-safety-desc">Nenhuma movimentação autorizada sem tarefa criada pelo Conferente.</div><div class="pop-safety-medida">📏 MEDIDA</div><div class="pop-safety-med-txt">Registro 100% digital — rastreabilidade total</div></div>
-      <div class="pop-safety-card"><div class="pop-safety-icon">🎓</div><div class="pop-safety-title">TREINAMENTO</div><div class="pop-safety-desc">Operadores habilitados com CNH categoria específica. Reciclagem semestral.</div><div class="pop-safety-medida">📏 MEDIDA</div><div class="pop-safety-med-txt">Registro de treinamentos + avaliação prática</div></div>
-      <div class="pop-safety-card"><div class="pop-safety-icon">🚨</div><div class="pop-safety-title">RESPOSTA A INCIDENTES</div><div class="pop-safety-desc">Em caso de quase-acidente, parar imediatamente e acionar supervisor.</div><div class="pop-safety-medida">📏 MEDIDA</div><div class="pop-safety-med-txt">Comunicação imediata + análise de causa raiz</div></div>
-    </div></div>
-    <div style="text-align:center;margin-top:8px"><button class="btn btn-amber" onclick="fecharModalPOP()">✔ ENTENDIDO — FECHAR</button></div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════
-     MODAL — TIPO DE OPERAÇÃO (pane empilhador)
-     ═══════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="modal-tipo" style="display:none">
-  <div class="modal-box">
-    <div class="modal-icon" id="modal-tipo-icon">🚛</div>
-    <div class="modal-title" id="modal-tipo-title">DURANTE O CARREGAMENTO</div>
-    <div class="modal-sub" style="margin-bottom:6px">Confirme o tipo de operação que será realizada</div>
-    <div class="modal-tipo-desc" id="modal-tipo-desc">As tarefas realizadas serão registradas como <strong>reabastecimento durante o processo de carregamento</strong>.</div>
-    <div class="modal-tipo-operador" id="modal-tipo-operador"></div>
-    <div class="btn-row" style="justify-content:center;margin-top:20px;gap:12px">
-      <button class="btn btn-amber" onclick="confirmarTipo()">✅ CONFIRMAR</button>
-      <button class="btn btn-ghost" onclick="cancelarTipo()">CANCELAR</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════
-     APP LAYOUT
-     ═══════════════════════════════════════════════════ -->
-<div class="app-layout">
-
-  <!-- ── SIDEBAR ─────────────────────────────────────── -->
-  <aside class="sidebar" id="sidebar">
-
-    <div class="sidebar-logo">
-      <div class="sidebar-logo-mark">⬛</div>
-      <div class="sidebar-brand-text">
-        <div class="sidebar-brand-name">ARMAZÉM</div>
-        <div class="sidebar-brand-sub">FÁCIL / SISTEMA</div>
-      </div>
-      <button class="sidebar-collapse-btn" id="collapse-btn" onclick="toggleSidebar()" title="Recolher menu">‹</button>
-    </div>
-
-    <nav class="sidebar-nav">
-
-      <!-- CONTROLE -->
-      <span class="nav-section-label">📊 PAINEL</span>
-      <button class="nav-item" data-pane="dashboard" onclick="requestControle()">
-        <span class="nav-icon">📊</span>
-        <span class="nav-label">CONTROLE</span>
-        <span class="nav-lock" id="controle-lock-state">🔒</span>
-      </button>
-
-      <!-- OPERAÇÕES -->
-      <span class="nav-section-label" style="margin-top:8px">⚙ OPERAÇÕES</span>
-
-      <button class="nav-item nav-repack" data-pane="repack" onclick="navGoPane('repack')">
-        <span class="nav-icon">📦</span>
-        <span class="nav-label">REPACK</span>
-      </button>
-
-      <button class="nav-item nav-despejo" data-pane="despejo" onclick="navGoPane('despejo')">
-        <span class="nav-icon">🗑</span>
-        <span class="nav-label">DESPEJO</span>
-      </button>
-
-      <button class="nav-item nav-armazem" data-pane="armazem" onclick="navGoPane('armazem')">
-        <span class="nav-icon">🚛</span>
-        <span class="nav-label">ARMAZÉM FÁCIL</span>
-      </button>
-
-      <button class="nav-item nav-quebras" data-pane="quebras" onclick="navGoPane('quebras')">
-        <span class="nav-icon">💥</span>
-        <span class="nav-label">QUEBRAS</span>
-      </button>
-
-      <button class="nav-item nav-emp" data-pane="emp" onclick="requestEmpTab()">
-        <span class="nav-icon">🚜</span>
-        <span class="nav-label">EMPILHADOR</span>
-        <span class="nav-lock" id="emp-lock-state">📋</span>
-      </button>
-
-      <!-- GESTÃO -->
-      <span class="nav-section-label" style="margin-top:8px">📋 GESTÃO</span>
-
-      <button class="nav-item" data-pane="conf" onclick="requestConfTab()">
-        <span class="nav-icon">📋</span>
-        <span class="nav-label">CONFERENTE</span>
-        <span class="nav-lock" id="conf-lock-state">🔒</span>
-      </button>
-
-      <button class="nav-item nav-relatorio" data-pane="relatorio" onclick="navGoPane('relatorio');renderRelatorioDia()">
-        <span class="nav-icon">📈</span>
-        <span class="nav-label">RELATÓRIO</span>
-      </button>
-
-      <button class="nav-item" data-pane="csv" onclick="navGoPane('csv')">
-        <span class="nav-icon">⬇</span>
-        <span class="nav-label">EXPORTAR</span>
-      </button>
-
-    </nav>
-
-    <div class="sidebar-footer">
-      <div class="clock-sidebar sidebar-footer-text" id="clock">--:--:--</div>
-      <div class="fb-indicator fb-off" id="fb-indicator">🔴 OFFLINE</div>
-    </div>
-  </aside>
-
-  <!-- ── MAIN CONTENT ─────────────────────────────────── -->
-  <main class="main-area" id="main-area">
-
-    <!-- ══════════════════════════════════════════════════
-         PANE — CONTROLE (Dashboard KPIs)
-         ══════════════════════════════════════════════════ -->
-    <div class="pane active" id="pane-dashboard">
-      <div class="pane-topbar">
-        <div class="mobile-menu-gap"></div>
-        <span class="pane-topbar-title">📊 CONTROLE — KPIs DO ARMAZÉM</span>
-        <div class="pane-topbar-actions">
-          <input type="date" id="dash-de" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12px">
-          <span style="font-size:12px;color:var(--text-dim)">até</span>
-          <input type="date" id="dash-ate" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12px">
-          <button class="btn btn-amber btn-sm" onclick="dashCarregar()">🔄 ATUALIZAR</button>
-        </div>
-      </div>
-
-      <div class="wrap">
-        <div id="dash-loading" style="text-align:center;padding:40px;color:var(--text-dim);display:none">⏳ Carregando dados do Firebase...</div>
-
-        <div style="margin-bottom:8px;padding:10px 0 4px"><span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text-dim)">📋 PICKING / EMPILHADOR</span></div>
-        <div class="dash-cards" id="dash-picking-cards"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">Tarefas por Operador</div><canvas id="dash-chart-operadores" height="180"></canvas></div>
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">Status das Tarefas</div><canvas id="dash-chart-picking-status" height="180"></canvas></div>
-        </div>
-
-        <div style="margin-bottom:8px;padding:10px 0 4px"><span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text-dim)">🗑 DESPEJO TIMER</span></div>
-        <div class="dash-cards" id="dash-despejo-cards"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">Meta Batida vs Não Batida</div><canvas id="dash-chart-despejo-meta" height="180"></canvas></div>
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">Registros por Embalagem</div><canvas id="dash-chart-despejo-emb" height="180"></canvas></div>
-        </div>
-
-        <div style="margin-bottom:8px;padding:10px 0 4px"><span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text-dim)">📦 REPACK TIMER</span></div>
-        <div class="dash-cards" id="dash-repack-cards"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">Meta Batida vs Não Batida</div><canvas id="dash-chart-repack-meta" height="180"></canvas></div>
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">Registros por Embalagem</div><canvas id="dash-chart-repack-emb" height="180"></canvas></div>
-        </div>
-
-        <div style="margin-bottom:8px;padding:10px 0 4px"><span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text-dim)">🚛 ARMAZÉM FÁCIL</span></div>
-        <div class="dash-cards" id="dash-armazem-cards"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px">
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">OK vs NOK</div><canvas id="dash-chart-armazem-status" height="180"></canvas></div>
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">Por Tipo de Operação</div><canvas id="dash-chart-armazem-tipo" height="180"></canvas></div>
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">Por Empilhador</div><canvas id="dash-chart-armazem-emp" height="180"></canvas></div>
-        </div>
-
-        <div style="margin-bottom:8px;padding:10px 0 4px"><span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text-dim)">💥 CONTROLE DE QUEBRAS</span></div>
-        <div class="dash-cards" id="dash-quebras-cards"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px">
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">Quebras por Área</div><canvas id="dash-chart-quebras-area" height="180"></canvas></div>
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">Top 5 Motivos</div><canvas id="dash-chart-quebras-motivo" height="180"></canvas></div>
-          <div class="card" style="padding:16px"><div class="card-title" style="font-size:12px;margin-bottom:12px">Top 5 Produtos com Mais Quebras</div><canvas id="dash-chart-quebras-prod" height="180"></canvas></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════
-         PANE — REPACK TIMER
-         ══════════════════════════════════════════════════ -->
-    <div class="pane" id="pane-repack">
-      <div class="pane-topbar">
-        <div class="mobile-menu-gap"></div>
-        <span class="pane-topbar-title">📦 REPACK TIMER — PRODUTIVIDADE</span>
-        <div class="pane-topbar-actions">
-          META UNIT.: <strong id="repack-metaValue" style="color:var(--amber);font-family:'Share Tech Mono',monospace">—:—:—</strong>
-        </div>
-      </div>
-      <div class="wrap">
-        <div class="card">
-          <div class="card-title">⚙ Configurar Registro</div>
-          <div class="row2" style="gap:14px;margin-bottom:14px">
-            <div><div class="field-label">Embalagem</div><select id="repack-embalagem"></select></div>
-            <div><div class="field-label">Quantidade feita</div><input type="number" id="repack-quantidade" min="1" value="1"></div>
-          </div>
-          <div class="row2" style="gap:14px;margin-bottom:14px">
-            <div><div class="field-label">Hora inicial</div><input type="time" id="repack-inicio" step="1"></div>
-            <div><div class="field-label">Hora final</div><input type="time" id="repack-fim" step="1"></div>
-          </div>
-          <div class="row2" style="gap:14px;margin-bottom:16px">
-            <div><div class="field-label">Tempo total</div><input type="text" id="repack-duracao" readonly value="00:00:00" style="opacity:.9"></div>
-            <div><div class="field-label">Status vs Meta</div><div id="repack-status" style="font-weight:700;padding:10px 0;font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">—</div></div>
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-ghost btn-sm" id="repack-btnInicio">⏱ Puxar hora inicial</button>
-            <button class="btn btn-ghost btn-sm" id="repack-btnFim">⏱ Puxar hora final</button>
-            <button class="btn btn-amber" id="repack-btnRegistrar" disabled>✅ REGISTRAR</button>
-            <button class="btn btn-red btn-sm" id="repack-btnLimpar">🗑 LIMPAR TUDO</button>
-          </div>
-        </div>
-        <div style="margin-top:16px;overflow-x:auto">
-          <table style="width:100%;border-collapse:collapse;font-size:13px">
-            <thead style="background:var(--surface2)">
-              <tr>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Data</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Embalagem</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Qtd</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Início</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Fim</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Tempo</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Meta Unit.</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Resultado</th>
-                <th style="padding:10px 8px;text-align:right;border-bottom:1px solid var(--border)">Ação</th>
-              </tr>
-            </thead>
-            <tbody id="repack-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════
-         PANE — DESPEJO TIMER
-         ══════════════════════════════════════════════════ -->
-    <div class="pane" id="pane-despejo">
-      <div class="pane-topbar">
-        <div class="mobile-menu-gap"></div>
-        <span class="pane-topbar-title">🗑 DESPEJO TIMER — PRODUTIVIDADE</span>
-        <div class="pane-topbar-actions">
-          META UNIT.: <strong id="despejo-metaValue" style="color:var(--amber);font-family:'Share Tech Mono',monospace">—:—:—</strong>
-        </div>
-      </div>
-      <div class="wrap">
-        <div class="card">
-          <div class="card-title">⚙ Configurar Registro</div>
-          <div class="row2" style="gap:14px;margin-bottom:14px">
-            <div><div class="field-label">Embalagem</div><select id="despejo-embalagem"></select></div>
-            <div><div class="field-label">Quantidade feita</div><input type="number" id="despejo-quantidade" min="1" value="1"></div>
-          </div>
-          <div class="row2" style="gap:14px;margin-bottom:14px">
-            <div><div class="field-label">Hora inicial</div><input type="time" id="despejo-inicio" step="1"></div>
-            <div><div class="field-label">Hora final</div><input type="time" id="despejo-fim" step="1"></div>
-          </div>
-          <div class="row2" style="gap:14px;margin-bottom:16px">
-            <div><div class="field-label">Tempo total</div><input type="text" id="despejo-duracao" readonly value="00:00:00" style="opacity:.9"></div>
-            <div><div class="field-label">Status vs Meta</div><div id="despejo-status" style="font-weight:700;padding:10px 0;font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">—</div></div>
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-ghost btn-sm" id="despejo-btnInicio">⏱ Puxar hora inicial</button>
-            <button class="btn btn-ghost btn-sm" id="despejo-btnFim">⏱ Puxar hora final</button>
-            <button class="btn btn-amber" id="despejo-btnRegistrar" disabled>✅ REGISTRAR</button>
-            <button class="btn btn-red btn-sm" id="despejo-btnLimpar">🗑 LIMPAR TUDO</button>
-          </div>
-        </div>
-        <div style="margin-top:16px;overflow-x:auto">
-          <table style="width:100%;border-collapse:collapse;font-size:13px">
-            <thead style="background:var(--surface2)">
-              <tr>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Data</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Embalagem</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Qtd</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Início</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Fim</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Tempo</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Meta Unit.</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Resultado</th>
-                <th style="padding:10px 8px;text-align:right;border-bottom:1px solid var(--border)">Ação</th>
-              </tr>
-            </thead>
-            <tbody id="despejo-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════
-         PANE — ARMAZÉM FÁCIL
-         ══════════════════════════════════════════════════ -->
-    <div class="pane" id="pane-armazem">
-      <div class="pane-topbar">
-        <div class="mobile-menu-gap"></div>
-        <span class="pane-topbar-title">🚛 ARMAZÉM FÁCIL — CARREGAMENTO / DESCARREGAMENTO</span>
-        <div class="pane-topbar-actions">
-          <span id="armazem-nowInfo" style="font-size:12px;color:var(--text-dim);padding:6px 12px;border-radius:999px;background:var(--bg);border:1px dashed var(--border)">—</span>
-        </div>
-      </div>
-      <div class="wrap">
-        <div class="card">
-          <div class="card-title">📝 Formulário de Registro</div>
-          <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px">Janela válida: <strong style="color:#7cc6ff">07:00</strong> até <strong style="color:#7cc6ff">21:00</strong>. Observação obrigatória quando fora da janela.</p>
-          <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:14px">
-            <div style="grid-column:span 4"><div class="field-label">Operação *</div><select id="af-operacao"><option value="" disabled selected>Selecione</option><option>Descarregamento</option><option>Carregamento</option></select></div>
-            <div style="grid-column:span 4"><div class="field-label">Empilhador *</div><select id="af-empilhador"><option value="" disabled selected>Selecione</option><option>Paulo Pereira</option><option>Marivaldo</option><option>Ronildo</option><option>Outros...</option></select></div>
-            <div style="grid-column:span 4"><div class="field-label">Turno *</div><select id="af-turno"><option value="" disabled selected>Selecione</option><option>Diurno</option><option>Noturno</option></select></div>
-            <div style="grid-column:span 5"><div class="field-label">Placa do Veículo *</div><select id="af-placa"><option value="" disabled selected>Selecione</option><option>QSK7D92</option><option>OXO0532</option><option>OXO0542</option><option>OXO0552</option><option>OXO0782</option><option>SLB4A26</option><option>NPR2601</option><option>SLB4A56</option><option>TOZ8B20</option><option>TOZ8B50</option><option>RLR8G79</option><option>RLU4H49</option><option>TOU7F79</option><option>RLW0C17</option><option>SLB3J76</option><option>RLU3F59</option><option>RLT5J54</option><option>RLT5J44</option><option>Outra...</option></select><input id="af-placaOutro" type="text" placeholder="Digite a placa" maxlength="8" style="display:none;margin-top:6px"></div>
-            <div style="grid-column:span 3"><div class="field-label">Tipo *</div><select id="af-tipo"><option value="" disabled selected>Selecione</option><option value="rota">Rota</option><option value="puxada">Puxada</option><option value="recarga">Recarga</option><option value="terceiro">Terceiro</option></select></div>
-            <div style="grid-column:span 2"><div class="field-label">Palhete *</div><input id="af-palhete" type="number" min="0" placeholder="Qtd"></div>
-            <div style="grid-column:span 2"><div class="field-label">Data</div><input id="af-data" type="date" readonly style="opacity:.8"></div>
-            <div style="grid-column:span 4"><div class="field-label">Hora Início *</div><div style="display:flex;gap:8px"><input id="af-inicio" type="time" style="flex:1"><button class="btn btn-ghost btn-sm" id="af-btnInicio">Puxar hora</button></div></div>
-            <div style="grid-column:span 4"><div class="field-label">Hora Final *</div><div style="display:flex;gap:8px"><input id="af-fim" type="time" style="flex:1"><button class="btn btn-ghost btn-sm" id="af-btnFim">Puxar hora</button></div></div>
-            <div style="grid-column:span 4"><div class="field-label">Status (07:00 → 21:00)</div><div id="af-statusChip" style="padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg);font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">—</div></div>
-            <div style="grid-column:span 12"><div class="field-label">Observação (obrigatória quando fora da janela)</div><textarea id="af-obs" placeholder="Descreva o motivo quando estiver fora da janela" style="min-height:70px;resize:vertical"></textarea></div>
-            <div style="grid-column:span 12"><div class="btn-row"><button class="btn btn-amber" id="af-btnSalvar">💾 SALVAR REGISTRO</button><button class="btn btn-ghost" id="af-btnClear">↺ LIMPAR FORM</button><button class="btn btn-red btn-sm" id="af-btnLimpar">🗑 APAGAR TUDO</button></div></div>
-          </div>
-        </div>
-        <div style="margin-top:16px;overflow-x:auto">
-          <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:700px">
-            <thead style="background:var(--surface2)">
-              <tr>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Operação</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Data</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Início</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Fim</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Status</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Empilhador</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Turno</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Placa</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Tipo</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Palhete</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Observação</th>
-              </tr>
-            </thead>
-            <tbody id="af-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════
-         PANE — CONTROLE DE QUEBRAS
-         ══════════════════════════════════════════════════ -->
-    <div class="pane" id="pane-quebras">
-      <div class="pane-topbar">
-        <div class="mobile-menu-gap"></div>
-        <span class="pane-topbar-title">💥 CONTROLE DE QUEBRAS — REGISTRO DE AVARIAS</span>
-      </div>
-      <div class="wrap">
-        <div class="card">
-          <div class="card-title">📝 Cadastro de Quebra</div>
-          <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:14px">
-            <div style="grid-column:span 7;position:relative"><div class="field-label">Produto</div><input id="qb-produtoInput" autocomplete="off" placeholder="Digite código ou nome do produto..."><div id="qb-listaProdutos" style="position:absolute;top:100%;left:0;right:0;background:#0e1626;border:1px solid var(--border);border-radius:10px;z-index:50;max-height:220px;overflow-y:auto;display:none"></div></div>
-            <div style="grid-column:span 2"><div class="field-label">Código</div><input id="qb-codigo" placeholder="Auto" readonly style="opacity:.8"></div>
-            <div style="grid-column:span 3"><div class="field-label">Quantidade *</div><input id="qb-quantidade" type="number" min="1" placeholder="Qtd"></div>
-            <div style="grid-column:span 12"><div class="field-label">Descrição</div><input id="qb-descricao" placeholder="Automático ou manual"></div>
-            <div style="grid-column:span 4"><div class="field-label">Área *</div><select id="qb-area"><option value="">Selecione</option><option>ARMAZEM</option><option>ENTREGA</option><option>MERCADO</option><option>PUXADA</option></select></div>
-            <div style="grid-column:span 4"><div class="field-label">Turno *</div><select id="qb-turno"><option value="">Selecione</option><option>MANHÃ</option><option>NOITE</option></select></div>
-            <div style="grid-column:span 4"><div class="field-label">Tipo de Quebra *</div><select id="qb-tipoQuebra"><option value="">Selecione a área primeiro</option></select></div>
-            <div style="grid-column:span 12"><button class="btn btn-amber" onclick="qbAdicionar()" style="max-width:220px">➕ ADICIONAR QUEBRA</button></div>
-          </div>
-        </div>
-        <div style="margin-top:16px;overflow-x:auto">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
-            <span style="font-size:12px;color:var(--text-dim)">⚠ Dados ficam na memória — exporte antes de fechar o navegador</span>
-            <button class="btn btn-red btn-sm" onclick="qbLimparTabela()">🗑 Limpar tabela</button>
-          </div>
-          <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:700px">
-            <thead style="background:var(--surface2)">
-              <tr>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Cód Produto</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Descrição</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Qtd</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Turno</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Cód Quebra</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Área</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Motivo</th>
-                <th style="padding:10px 8px;text-align:right;border-bottom:1px solid var(--border)">Ação</th>
-              </tr>
-            </thead>
-            <tbody id="qb-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════
-         PANE — EMPILHADOR
-         ══════════════════════════════════════════════════ -->
-    <div class="pane" id="pane-emp">
-      <div class="pane-topbar">
-        <div class="mobile-menu-gap"></div>
-        <span class="pane-topbar-title">🚜 EMPILHADOR</span>
-        <div class="pane-topbar-actions">
-          <button class="btn btn-pop btn-sm" onclick="abrirModalPOP()">📋 VER POP + RACI</button>
-        </div>
-      </div>
-      <div class="wrap">
-        <div class="card">
-          <div class="card-title">👷 Identificação do Operador</div>
-          <div class="row2">
-            <div><div class="field-label">Seu Nome</div><select id="sel-op" onchange="renderEmp()"><option value="">— Selecionar —</option></select></div>
-            <div class="add-row"><div><div class="field-label">Novo operador</div><input type="text" id="inp-new-op" placeholder="Nome completo"></div><button class="btn btn-ghost btn-sm" onclick="addOp()">+ ADD</button></div>
-          </div>
-          <div class="op-tipo-section">
-            <div class="field-label" style="margin-bottom:10px">TIPO DE OPERAÇÃO</div>
-            <div class="op-tipo-btns">
-              <button class="btn-tipo" id="btn-tipo-durante" onclick="selecionarTipo('durante')"><span class="btn-tipo-icon">🚛</span><span class="btn-tipo-label">DURANTE O<br>CARREGAMENTO</span></button>
-              <button class="btn-tipo" id="btn-tipo-apos" onclick="selecionarTipo('apos')"><span class="btn-tipo-icon">📦</span><span class="btn-tipo-label">APÓS O<br>CARREGAMENTO</span></button>
-            </div>
-            <div class="op-tipo-status" id="op-tipo-status"><span id="op-tipo-texto">⚠ Nenhum tipo selecionado — escolha antes de iniciar uma tarefa</span></div>
-          </div>
-        </div>
-        <div style="margin-top:20px">
-          <div class="sec-head open" id="sec-emp-pending-head" onclick="toggleSec('emp-pending')"><h2>Minhas Tarefas Pendentes</h2><span class="sec-cnt zero" id="cnt-emp-pending">0</span><span class="sec-arrow">▼</span></div>
-          <div class="sec-body open" id="sec-emp-pending-body"><div id="emp-pending"></div></div>
-        </div>
-        <div style="margin-top:6px">
-          <div class="sec-head open" id="sec-emp-progress-head" onclick="toggleSec('emp-progress')"><h2>Em Andamento</h2><span class="sec-cnt zero" id="cnt-emp-progress">0</span><span class="sec-arrow">▼</span></div>
-          <div class="sec-body open" id="sec-emp-progress-body"><div id="emp-progress"></div></div>
-        </div>
-        <div style="margin-top:6px">
-          <div class="sec-head open" id="sec-emp-done-head" onclick="toggleSec('emp-done')"><h2>Minhas Concluídas</h2><span class="sec-cnt zero" id="cnt-emp-done">0</span><span class="sec-arrow">▼</span></div>
-          <div class="sec-body open" id="sec-emp-done-body"><div id="emp-done"></div></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════
-         PANE — CONFERENTE
-         ══════════════════════════════════════════════════ -->
-    <div class="pane" id="pane-conf">
-      <div class="pane-topbar">
-        <div class="mobile-menu-gap"></div>
-        <span class="pane-topbar-title">📋 CONFERENTE</span>
-        <div class="pane-topbar-actions">
-          <div class="menu-fb-status" id="menu-fb-status">🔥 Firebase Online</div>
-        </div>
-      </div>
-      <div class="wrap">
-        <button class="settings-toggle" id="settings-toggle-btn" onclick="toggleSettings()">
-          <span>🔥 CONFIGURAÇÃO FIREBASE</span><span id="settings-toggle-status">▾</span>
-        </button>
-        <div class="settings-body" id="settings-body">
-          <div class="card-title">Conexão com Firebase — tarefas finalizadas são salvas automaticamente</div>
-          <div style="margin-bottom:12px"><div class="field-label">API Key</div><input type="text" id="fb-apiKey" placeholder="AIzaSyXXXXXXXXXXXXXXXXXXXXXXXX" autocomplete="off"></div>
-          <div class="row2" style="margin-bottom:12px"><div><div class="field-label">Auth Domain</div><input type="text" id="fb-authDomain" placeholder="meuprojeto.firebaseapp.com"></div><div><div class="field-label">Project ID</div><input type="text" id="fb-projectId" placeholder="meuprojeto"></div></div>
-          <div class="row2" style="margin-bottom:12px"><div><div class="field-label">Storage Bucket</div><input type="text" id="fb-storageBucket" placeholder="meuprojeto.appspot.com"></div><div><div class="field-label">Messaging Sender ID</div><input type="text" id="fb-messagingSenderId" placeholder="123456789012"></div></div>
-          <div class="row2" style="margin-bottom:16px"><div><div class="field-label">App ID</div><input type="text" id="fb-appId" placeholder="1:123456789:web:abc123"></div><div><div class="field-label">Measurement ID <span style="color:var(--text-muted);font-size:9px">(opcional)</span></div><input type="text" id="fb-measurementId" placeholder="G-XXXXXXXXXX"></div></div>
-          <div class="btn-row"><button class="btn btn-amber" onclick="saveFbConfig()">💾 SALVAR</button><button class="btn btn-ghost" onclick="testFbConnection()">🔗 TESTAR CONEXÃO</button><button class="btn btn-red btn-sm" onclick="clearFbConfig()" style="margin-left:auto">✕ LIMPAR</button></div>
-          <div id="fb-test-result"></div>
-          <div class="settings-note"><strong>Como configurar:</strong><br>1. Acesse <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a><br>2. Clique em <strong>Configurações ⚙ → Geral</strong><br>3. Role até <strong>"Seus apps"</strong> → clique em <strong>&lt;/&gt;</strong> (Web)<br>4. Copie os valores e cole nos campos acima → <strong>Salvar</strong><br>5. No Firestore → <strong>Regras</strong>, publique: <code>allow read, write: if true;</code></div>
-        </div>
-        <div class="card">
-          <div class="card-title">👤 Identificação</div>
-          <div class="row2">
-            <div><div class="field-label">Conferente</div><select id="sel-conf"><option value="">— Selecionar —</option></select></div>
-            <div class="add-row"><div><div class="field-label">Novo conferente</div><input type="text" id="inp-new-conf" placeholder="Nome completo"></div><button class="btn btn-ghost btn-sm" onclick="addConf()">+ ADD</button></div>
-          </div>
-        </div>
-        <div class="sh"><h2>Nova Tarefa</h2><div class="line"></div></div>
-        <div class="card">
-          <div class="card-title">🔍 Buscar Produto por Código ou Descrição</div>
-          <input type="text" id="inp-search" placeholder="Digite código ou parte do nome..." oninput="filterProds()" style="margin-bottom:10px">
-          <div class="prod-list" id="prod-list"></div>
-          <div class="row3">
-            <div><div class="field-label">Quantidade de Paletes</div><input type="number" id="inp-qty" min="1" max="999" value="1"></div>
-            <div><div class="field-label">Atribuir ao Operador</div><select id="sel-op-assign"><option value="">— Selecionar —</option></select></div>
-            <div style="display:flex;align-items:flex-end"><button class="btn btn-amber" style="width:100%" onclick="criarTarefa()">➕ CRIAR TAREFA</button></div>
-          </div>
-        </div>
-        <div style="margin-top:20px">
-          <div class="sec-head open" id="sec-conf-open-head" onclick="toggleSec('conf-open')"><h2>Tarefas Abertas</h2><span class="sec-cnt zero" id="cnt-conf-open">0</span><span class="sec-arrow">▼</span></div>
-          <div class="sec-body open" id="sec-conf-open-body"><div id="conf-open"></div></div>
-        </div>
-        <div style="margin-top:6px">
-          <div class="sec-head open" id="sec-conf-done-head" onclick="toggleSec('conf-done')"><h2>Concluídas Hoje</h2><span class="sec-cnt zero" id="cnt-conf-done">0</span><span class="sec-arrow">▼</span></div>
-          <div class="sec-body open" id="sec-conf-done-body"><div id="conf-done"></div></div>
-        </div>
-        <div class="sep"></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px">
-          <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase">📥 Relatório do Firebase</span>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-ghost btn-sm" onclick="pullReport()">⬇ PUXAR DADOS DO DIA</button>
-            <button class="btn btn-red btn-sm" onclick="clearLocal()">🗑 LIMPAR LOCAL</button>
-          </div>
-        </div>
-        <div id="report-area"></div>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════
-         PANE — RELATÓRIO DO DIA
-         ══════════════════════════════════════════════════ -->
-    <div class="pane" id="pane-relatorio">
-      <div class="pane-topbar">
-        <div class="mobile-menu-gap"></div>
-        <span class="pane-topbar-title">📈 RELATÓRIO DO DIA</span>
-        <div class="pane-topbar-actions">
-          <button class="btn btn-ghost btn-sm" onclick="renderRelatorioDia()">↺ ATUALIZAR</button>
-        </div>
-      </div>
-      <div class="wrap">
-        <div class="rel-summary" id="rel-summary">
-          <div class="rel-sum-card pend"><div class="rel-sum-num" id="rel-num-pend">—</div><div class="rel-sum-lbl">PENDENTES</div></div>
-          <div class="rel-sum-card prog"><div class="rel-sum-num" id="rel-num-prog">—</div><div class="rel-sum-lbl">EM ANDAMENTO</div></div>
-          <div class="rel-sum-card done"><div class="rel-sum-num" id="rel-num-done">—</div><div class="rel-sum-lbl">CONCLUÍDAS HOJE</div></div>
-        </div>
-        <div style="margin-top:16px">
-          <div class="sec-head open" id="sec-rel-pend-head" onclick="toggleSec('rel-pend')"><h2>⏳ Pendentes de Execução</h2><span class="sec-cnt zero" id="cnt-rel-pend">0</span><span class="sec-arrow">▼</span></div>
-          <div class="sec-body open" id="sec-rel-pend-body"><div id="rel-pend"></div></div>
-        </div>
-        <div style="margin-top:6px">
-          <div class="sec-head open" id="sec-rel-prog-head" onclick="toggleSec('rel-prog')"><h2>🚜 Em Andamento</h2><span class="sec-cnt zero" id="cnt-rel-prog">0</span><span class="sec-arrow">▼</span></div>
-          <div class="sec-body open" id="sec-rel-prog-body"><div id="rel-prog"></div></div>
-        </div>
-        <div style="margin-top:6px">
-          <div class="sec-head open" id="sec-rel-done-head" onclick="toggleSec('rel-done')"><h2>✅ Concluídas Hoje</h2><span class="sec-cnt zero" id="cnt-rel-done">0</span><span class="sec-arrow">▼</span></div>
-          <div class="sec-body open" id="sec-rel-done-body"><div id="rel-done"></div></div>
-        </div>
-        <div class="sep"></div>
-        <div id="rel-cards-resumo"></div>
-        <div class="card" style="margin-top:16px">
-          <div class="card-title">📥 FECHAR TURNO</div>
-          <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Gera um relatório Excel completo com todos os registros do turno atual de todos os módulos.</p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <button class="btn btn-amber" id="btn-fechar-turno" onclick="fecharTurno()">📥 FECHAR TURNO — BAIXAR EXCEL COMPLETO</button>
-            <span id="rel-fechar-status" style="font-size:12px;color:var(--text-dim)"></span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════
-         PANE — EXPORTAR (CSV/Excel)
-         ══════════════════════════════════════════════════ -->
-    <div class="pane" id="pane-csv">
-      <div class="pane-topbar">
-        <div class="mobile-menu-gap"></div>
-        <span class="pane-topbar-title">⬇ EXPORTAR DADOS</span>
-      </div>
-      <div class="wrap">
-        <div class="card">
-          <div class="card-title">📄 Picking — Exportar CSV</div>
-          <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Exporta as tarefas de picking/reabastecimento salvas localmente.</p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <button class="btn btn-ghost" onclick="exportCSV()">⬇ BAIXAR CSV PICKING</button>
-            <span id="csv-status" style="font-size:12px;color:var(--text-dim)"></span>
-          </div>
-          <div id="csv-preview"></div>
-        </div>
-        <div class="card" style="margin-top:16px">
-          <div class="card-title" style="color:#ef4444">🗑 Despejo Timer — Exportar Excel</div>
-          <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Exporta todos os registros de produtividade de despejo salvos no Firebase.</p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <button class="btn btn-red" onclick="exportarDespejoExcel()">⬇ BAIXAR RELATÓRIO DESPEJO (.xlsx)</button>
-            <span id="despejo-export-status" style="font-size:12px;color:var(--text-dim)"></span>
-          </div>
-        </div>
-        <div class="card" style="margin-top:16px">
-          <div class="card-title" style="color:var(--amber)">📦 Repack Timer — Exportar Excel</div>
-          <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Exporta todos os registros de produtividade de repack salvos no Firebase.</p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <button class="btn btn-amber" onclick="exportarRepackExcel()">⬇ BAIXAR RELATÓRIO REPACK (.xlsx)</button>
-            <span id="repack-export-status" style="font-size:12px;color:var(--text-dim)"></span>
-          </div>
-        </div>
-        <div class="card" style="margin-top:16px">
-          <div class="card-title" style="color:#7cc6ff">🚛 Armazém Fácil — Exportar Excel</div>
-          <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Exporta todos os registros de carregamento e descarregamento salvos no Firebase.</p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <button class="btn" style="background:#7cc6ff;color:#0b1220;font-weight:700" onclick="exportarArmazemExcel()">⬇ BAIXAR RELATÓRIO ARMAZÉM (.xlsx)</button>
-            <span id="armazem-export-status" style="font-size:12px;color:var(--text-dim)"></span>
-          </div>
-        </div>
-        <div class="card" style="margin-top:16px">
-          <div class="card-title" style="color:#fca5a5">💥 Controle de Quebras — Exportar Excel</div>
-          <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Exporta todos os registros de avarias salvos no Firebase.</p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <button class="btn btn-red" onclick="exportarQuebrasExcel()">⬇ BAIXAR RELATÓRIO QUEBRAS (.xlsx)</button>
-            <span id="quebras-export-status" style="font-size:12px;color:var(--text-dim)"></span>
-          </div>
-        </div>
-        <div class="settings-note" style="margin-top:16px">
-          <strong>Picking CSV — Colunas:</strong><br>ID · Código · Descrição · Paletes · Conferente · Operador · Criado Em · Iniciado Em · Finalizado Em · Duração (min) · Duração / Palete<br><br>
-          <strong>Dica:</strong> Para abrir corretamente no Excel, use <em>Dados → Obter dados externos → De arquivo de texto/CSV</em> e selecione delimitador vírgula.
-        </div>
-      </div>
-    </div>
-
-  </main><!-- /main-area -->
-</div><!-- /app-layout -->
-
-<div id="toast"></div>
-
-<!-- Div fantasma para compatibilidade com app.js (que faz goPane('menu')) -->
-<div id="pane-menu" style="display:none"></div>
-<div id="pane-reports" style="display:none"></div>
-
-<script>
-// PATCH ANTECIPADO — sobrescreve goPane ANTES do app.js rodar
-// Isso evita erros de null ao tentar acessar pane-menu
-window.goPane = function(name) {
-  // Aguarda navGoPane estar disponível
-  if (typeof navGoPane === 'function') { navGoPane(name); return; }
-  // Fallback silencioso durante inicialização
-};
-window.goMenu = function() {};
-</script>
-
-<script src="app.js"></script>
-
-<script>
 // ══════════════════════════════════════════════════════
-//  SIDEBAR NAVIGATION SYSTEM
+//  PICKING / REABASTECIMENTO — ARMAZEMFACIL
+//  app.js — lógica completa + sincronização em tempo real
 // ══════════════════════════════════════════════════════
 
-let sidebarCollapsed = false;
+const CONF_PASSWORD = '4321';
 
-function toggleSidebar() {
-  sidebarCollapsed = !sidebarCollapsed;
-  document.getElementById('sidebar').classList.toggle('collapsed', sidebarCollapsed);
-  document.getElementById('collapse-btn').textContent = sidebarCollapsed ? '›' : '‹';
-}
-
-function openMobileSidebar() {
-  document.getElementById('sidebar').classList.add('mobile-open');
-  document.getElementById('sidebar-overlay').classList.add('show');
-}
-
-function closeMobileSidebar() {
-  document.getElementById('sidebar').classList.remove('mobile-open');
-  document.getElementById('sidebar-overlay').classList.remove('show');
-}
-
-const _PANE_ALIAS = { menu:'repack', reports:'csv', relatorio:'relatorio' };
-
-function navGoPane(id) {
-  const target = _PANE_ALIAS[id] || id;
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  const navItem = document.querySelector('.nav-item[data-pane="' + target + '"]');
-  if (navItem) navItem.classList.add('active');
-  document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
-  const pane = document.getElementById('pane-' + target);
-  if (pane) pane.classList.add('active');
-  document.getElementById('main-area').scrollTop = 0;
-  closeMobileSidebar();
-  if (target === 'relatorio' && typeof renderRelatorioDia === 'function') renderRelatorioDia();
-}
-
-// Expose globally so early patch (before app.js) works
-window.navGoPane = navGoPane;
-window.goPane    = navGoPane;
-window.goMenu    = function() {};
+let confUnlocked  = false;
+let checklistDone = false;
+let tipoOperacao  = null;   // 'durante' | 'apos'
+let tipoPendente  = null;   // guarda qual foi clicado enquanto modal está aberto
 
 // ══════════════════════════════════════════════════════
-//  CONTROLE MODAL (Dashboard — senha restrita)
+//  RASTREAMENTO DE LOCALIZACAO
 // ══════════════════════════════════════════════════════
-const CONTROLE_PASSWORD = '1234';
-let controleUnlocked = false;
+const LOC_SPEED_IDLE   = 0.4;   // m/s abaixo disso = parado (~1.4 km/h)
+const LOC_IDLE_CONFIRM = 20;    // segundos parado para confirmar idle
 
-function requestControle() {
-  if (controleUnlocked) {
-    navGoPane('dashboard');
-    dashCarregar();
-    return;
-  }
-  document.getElementById('modal-controle').style.display = 'flex';
-  setTimeout(() => document.getElementById('inp-controle-senha').focus(), 50);
-}
-
-function confirmarControleSenha() {
-  const val = document.getElementById('inp-controle-senha').value;
-  if (val === CONTROLE_PASSWORD) {
-    controleUnlocked = true;
-    document.getElementById('modal-controle').style.display = 'none';
-    document.getElementById('inp-controle-senha').value = '';
-    document.getElementById('controle-erro').style.display = 'none';
-    const lockEl = document.getElementById('controle-lock-state');
-    if (lockEl) { lockEl.textContent = '🔓'; lockEl.classList.add('unlocked'); }
-    navGoPane('dashboard');
-    dashCarregar();
-  } else {
-    const inp = document.getElementById('inp-controle-senha');
-    inp.classList.add('shake');
-    document.getElementById('controle-erro').style.display = 'block';
-    setTimeout(() => inp.classList.remove('shake'), 400);
-  }
-}
-
-function fecharModalControle() {
-  document.getElementById('modal-controle').style.display = 'none';
-  document.getElementById('inp-controle-senha').value = '';
-  document.getElementById('controle-erro').style.display = 'none';
-}
-
-function toggleControlePwd() {
-  const inp = document.getElementById('inp-controle-senha');
-  inp.type = inp.type === 'password' ? 'text' : 'password';
-}
-
-// ══════════════════════════════════════════════════════
-//  HELPERS (from original inline script)
-// ══════════════════════════════════════════════════════
-function getDb() {
-  if (typeof fbDb !== 'undefined' && fbDb) return fbDb;
-  return null;
-}
-function dbOk() {
-  if (!getDb()) { alert('Firebase não conectado. Configure nas Configurações.'); return false; }
-  return true;
-}
-function pad2(n){ return String(n).padStart(2,'0'); }
-function toSec(hms){ const [h=0,m=0,s=0]=String(hms).split(':').map(Number); return h*3600+m*60+s; }
-function toHMS(sec){ sec=Math.max(0,Math.floor(sec)); return [Math.floor(sec/3600),Math.floor((sec%3600)/60),sec%60].map(n=>String(n).padStart(2,'0')).join(':'); }
-function nowHHMMSS(){ const n=new Date(); return [n.getHours(),n.getMinutes(),n.getSeconds()].map(x=>String(x).padStart(2,'0')).join(':'); }
-function nowHHMM(){ const n=new Date(); return [n.getHours(),n.getMinutes()].map(x=>String(x).padStart(2,'0')).join(':'); }
-function todayISO(){ const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
-function todayBR(){ const [y,m,d]=todayISO().split('-'); return `${d}/${m}/${y}`; }
-
-// ── Firebase config preload ───────────────────────────
-(function preloadFirebaseConfig() {
-  const FB_KEY = 'pk_firebase_config';
-  if (!localStorage.getItem(FB_KEY)) {
-    localStorage.setItem(FB_KEY, JSON.stringify({
-      apiKey:            'AIzaSyA_ykhJGRklDbPuDNYooMlVvB2DeVzp2VE',
-      authDomain:        'armazemfacil-b2292.firebaseapp.com',
-      projectId:         'armazemfacil-b2292',
-      storageBucket:     'armazemfacil-b2292.appspot.com',
-      messagingSenderId: '688234941301',
-      appId:             '1:688234941301:web:153e2ad3f634379fe3213c',
-      measurementId:     'G-6HFDEKWVDB'
-    }));
-  }
-})();
-
-// ── Firebase save/listen helpers ─────────────────────
-async function fbSave(colecao, dados) {
-  if (!dbOk()) return null;
-  try {
-    const ref = await getDb().collection(colecao).add({ ...dados, _criadoEm: new Date().toISOString() });
-    return ref.id;
-  } catch(e) { alert('Erro ao salvar: ' + e.message); return null; }
-}
-async function fbDelete(colecao, docId) {
-  if (!dbOk()) return;
-  try { await getDb().collection(colecao).doc(docId).delete(); } catch(e) {}
-}
-async function fbBuscarPorData(colecao, dataISO) {
-  if (!dbOk()) return [];
-  try {
-    const snap = await getDb().collection(colecao).get();
-    return snap.docs.map(d => ({ ...d.data(), _docId: d.id }))
-      .filter(r => (r.dataISO || '') === dataISO)
-      .sort((a,b) => (a._criadoEm||'').localeCompare(b._criadoEm||''));
-  } catch(e) { return []; }
-}
-async function fbBuscarTodos(colecao) {
-  if (!dbOk()) return [];
-  try {
-    const snap = await getDb().collection(colecao).orderBy('_criadoEm','asc').get();
-    return snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
-  } catch(e) { return []; }
-}
-function fbListen(colecao, renderFn) {
-  if (!getDb()) return () => {};
-  return getDb().collection(colecao).orderBy('_criadoEm','asc')
-    .onSnapshot(snap => { renderFn(snap.docs.map(d => ({ ...d.data(), _docId: d.id }))); }, () => {});
-}
-
-// ══════════════════════════════════════════════════════
-//  DESPEJO TIMER
-// ══════════════════════════════════════════════════════
-const DESPEJO_EMBALAGENS = [
-  { nome: 'LATA 250', meta: '00:03:30' },
-  { nome: 'LATA 269', meta: '00:03:30' },
-  { nome: 'LATA 350', meta: '00:04:00' },
-  { nome: 'LATA 473', meta: '00:04:00' },
-  { nome: 'LONG NECK', meta: '00:05:00' },
-  { nome: 'PET 1L', meta: '00:04:30' },
-  { nome: 'PET 2L', meta: '00:04:00' },
-];
-
-(function initDespejo() {
-  const sel   = document.getElementById('despejo-embalagem');
-  const metaEl= document.getElementById('despejo-metaValue');
-  if (!sel) return;
-  DESPEJO_EMBALAGENS.forEach(e => {
-    const opt = document.createElement('option');
-    opt.value = e.nome; opt.textContent = e.nome + ' (meta: ' + e.meta + ')'; sel.appendChild(opt);
-  });
-  function updateMeta() {
-    const emb = DESPEJO_EMBALAGENS.find(e => e.nome === sel.value);
-    metaEl.textContent = emb ? emb.meta : '—:—:—';
-  }
-  sel.addEventListener('change', () => { updateMeta(); calcDespejo(); });
-
-  const btnIni = document.getElementById('despejo-btnInicio');
-  const btnFim = document.getElementById('despejo-btnFim');
-  const inpIni = document.getElementById('despejo-inicio');
-  const inpFim = document.getElementById('despejo-fim');
-  const inpDur = document.getElementById('despejo-duracao');
-  const inpQtd = document.getElementById('despejo-quantidade');
-  const btnReg = document.getElementById('despejo-btnRegistrar');
-  const statusEl = document.getElementById('despejo-status');
-  const tbody = document.getElementById('despejo-tbody');
-  const btnLimpar = document.getElementById('despejo-btnLimpar');
-
-  if (btnIni) btnIni.addEventListener('click', () => { inpIni.value = nowHHMMSS(); calcDespejo(); });
-  if (btnFim) btnFim.addEventListener('click', () => { inpFim.value = nowHHMMSS(); calcDespejo(); });
-
-  function calcDespejo() {
-    if (!inpIni.value || !inpFim.value) { inpDur.value='00:00:00'; statusEl.textContent='—'; if(btnReg) btnReg.disabled=true; return; }
-    const tot = toSec(inpFim.value) - toSec(inpIni.value);
-    if (tot <= 0) { inpDur.value='00:00:00'; statusEl.textContent='—'; if(btnReg) btnReg.disabled=true; return; }
-    inpDur.value = toHMS(tot);
-    const emb = DESPEJO_EMBALAGENS.find(e => e.nome === sel.value);
-    if (emb && inpQtd.value > 0) {
-      const metaSec = toSec(emb.meta);
-      const totalMeta = metaSec * Number(inpQtd.value);
-      const ok = tot <= totalMeta;
-      statusEl.textContent = ok ? '✅ META BATIDA' : '❌ ACIMA DA META';
-      statusEl.style.color = ok ? 'var(--green)' : 'var(--red)';
-    }
-    if (btnReg) btnReg.disabled = false;
-  }
-  if (inpIni) inpIni.addEventListener('change', calcDespejo);
-  if (inpFim) inpFim.addEventListener('change', calcDespejo);
-  if (inpQtd) inpQtd.addEventListener('input', calcDespejo);
-
-  let despejoRows = [];
-  function renderDespejo() {
-    if (!tbody) return;
-    tbody.innerHTML = despejoRows.length ? '' : '<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--text-muted)">Nenhum registro ainda</td></tr>';
-    despejoRows.forEach((r,i) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td style="padding:8px">${r.data}</td><td style="padding:8px">${r.embalagem}</td><td style="padding:8px">${r.quantidade}</td><td style="padding:8px">${r.inicio}</td><td style="padding:8px">${r.fim}</td><td style="padding:8px;font-family:'Share Tech Mono',monospace">${r.tempo}</td><td style="padding:8px;font-family:'Share Tech Mono',monospace">${r.meta}</td><td style="padding:8px;font-weight:700;color:${r.resultado.includes('✅')?'var(--green)':'var(--red)'}">${r.resultado}</td><td style="padding:8px;text-align:right"><button class="btn btn-red btn-sm" onclick="despejoExcluir(${i})">✕</button></td>`;
-      tbody.appendChild(tr);
-    });
-  }
-
-  if (btnReg) btnReg.addEventListener('click', async () => {
-    const emb = DESPEJO_EMBALAGENS.find(e => e.nome === sel.value);
-    if (!emb) { alert('Selecione uma embalagem'); return; }
-    const row = {
-      data: todayBR(), dataISO: todayISO(),
-      embalagem: sel.value, quantidade: Number(inpQtd.value),
-      inicio: inpIni.value, fim: inpFim.value,
-      tempo: inpDur.value, meta: emb.meta,
-      resultado: statusEl.textContent
-    };
-    const docId = await fbSave('despejo', row);
-    if (docId) { row._docId = docId; despejoRows.push(row); renderDespejo(); toast('Registro despejo salvo!'); }
-    inpIni.value=''; inpFim.value=''; inpDur.value='00:00:00'; statusEl.textContent='—'; btnReg.disabled=true;
-  });
-
-  window.despejoExcluir = async function(i) {
-    if (!confirm('Remover este registro?')) return;
-    const r = despejoRows[i];
-    if (r._docId) await fbDelete('despejo', r._docId);
-    despejoRows.splice(i, 1); renderDespejo();
-  };
-
-  if (btnLimpar) btnLimpar.addEventListener('click', async () => {
-    if (!confirm('Limpar TODOS os registros de despejo?')) return;
-    for (const r of despejoRows) { if (r._docId) await fbDelete('despejo', r._docId); }
-    despejoRows = []; renderDespejo();
-  });
-
-  // Load from Firebase on init
-  setTimeout(async () => {
-    if (!getDb()) return;
-    try {
-      const snap = await getDb().collection('despejo').orderBy('_criadoEm','asc').get();
-      despejoRows = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
-      renderDespejo();
-    } catch(e) {}
-  }, 2000);
-})();
-
-// ══════════════════════════════════════════════════════
-//  REPACK TIMER
-// ══════════════════════════════════════════════════════
-const REPACK_EMBALAGENS = [
-  { nome: 'LATA 250', meta: '00:04:00' },
-  { nome: 'LATA 269', meta: '00:04:00' },
-  { nome: 'LATA 350', meta: '00:04:30' },
-  { nome: 'LATA 473', meta: '00:04:30' },
-  { nome: 'LONG NECK', meta: '00:05:30' },
-  { nome: 'PET 1L', meta: '00:05:00' },
-  { nome: 'PET 2L', meta: '00:04:30' },
-];
-
-(function initRepack() {
-  const sel   = document.getElementById('repack-embalagem');
-  const metaEl= document.getElementById('repack-metaValue');
-  if (!sel) return;
-  REPACK_EMBALAGENS.forEach(e => {
-    const opt = document.createElement('option');
-    opt.value = e.nome; opt.textContent = e.nome + ' (meta: ' + e.meta + ')'; sel.appendChild(opt);
-  });
-  function updateMeta() {
-    const emb = REPACK_EMBALAGENS.find(e => e.nome === sel.value);
-    metaEl.textContent = emb ? emb.meta : '—:—:—';
-  }
-  sel.addEventListener('change', () => { updateMeta(); calcRepack(); });
-
-  const btnIni = document.getElementById('repack-btnInicio');
-  const btnFim = document.getElementById('repack-btnFim');
-  const inpIni = document.getElementById('repack-inicio');
-  const inpFim = document.getElementById('repack-fim');
-  const inpDur = document.getElementById('repack-duracao');
-  const inpQtd = document.getElementById('repack-quantidade');
-  const btnReg = document.getElementById('repack-btnRegistrar');
-  const statusEl = document.getElementById('repack-status');
-  const tbody = document.getElementById('repack-tbody');
-  const btnLimpar = document.getElementById('repack-btnLimpar');
-
-  if (btnIni) btnIni.addEventListener('click', () => { inpIni.value = nowHHMMSS(); calcRepack(); });
-  if (btnFim) btnFim.addEventListener('click', () => { inpFim.value = nowHHMMSS(); calcRepack(); });
-
-  function calcRepack() {
-    if (!inpIni.value || !inpFim.value) { inpDur.value='00:00:00'; statusEl.textContent='—'; if(btnReg) btnReg.disabled=true; return; }
-    const tot = toSec(inpFim.value) - toSec(inpIni.value);
-    if (tot <= 0) { inpDur.value='00:00:00'; statusEl.textContent='—'; if(btnReg) btnReg.disabled=true; return; }
-    inpDur.value = toHMS(tot);
-    const emb = REPACK_EMBALAGENS.find(e => e.nome === sel.value);
-    if (emb && inpQtd.value > 0) {
-      const metaSec = toSec(emb.meta);
-      const totalMeta = metaSec * Number(inpQtd.value);
-      const ok = tot <= totalMeta;
-      statusEl.textContent = ok ? '✅ META BATIDA' : '❌ ACIMA DA META';
-      statusEl.style.color = ok ? 'var(--green)' : 'var(--red)';
-    }
-    if (btnReg) btnReg.disabled = false;
-  }
-  if (inpIni) inpIni.addEventListener('change', calcRepack);
-  if (inpFim) inpFim.addEventListener('change', calcRepack);
-  if (inpQtd) inpQtd.addEventListener('input', calcRepack);
-
-  let repackRows = [];
-  function renderRepack() {
-    if (!tbody) return;
-    tbody.innerHTML = repackRows.length ? '' : '<tr><td colspan="9" style="padding:20px;text-align:center;color:var(--text-muted)">Nenhum registro ainda</td></tr>';
-    repackRows.forEach((r,i) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td style="padding:8px">${r.data}</td><td style="padding:8px">${r.embalagem}</td><td style="padding:8px">${r.quantidade}</td><td style="padding:8px">${r.inicio}</td><td style="padding:8px">${r.fim}</td><td style="padding:8px;font-family:'Share Tech Mono',monospace">${r.duracao}</td><td style="padding:8px;font-family:'Share Tech Mono',monospace">${r.meta}</td><td style="padding:8px;font-weight:700;color:${r.resultado.includes('✅')?'var(--green)':'var(--red)'}">${r.resultado}</td><td style="padding:8px;text-align:right"><button class="btn btn-red btn-sm" onclick="repackExcluir(${i})">✕</button></td>`;
-      tbody.appendChild(tr);
-    });
-  }
-
-  if (btnReg) btnReg.addEventListener('click', async () => {
-    const emb = REPACK_EMBALAGENS.find(e => e.nome === sel.value);
-    if (!emb) { alert('Selecione uma embalagem'); return; }
-    const row = {
-      data: todayBR(), dataISO: todayISO(),
-      embalagem: sel.value, quantidade: Number(inpQtd.value),
-      inicio: inpIni.value, fim: inpFim.value,
-      duracao: inpDur.value, meta: emb.meta,
-      resultado: statusEl.textContent
-    };
-    const docId = await fbSave('repack', row);
-    if (docId) { row._docId = docId; repackRows.push(row); renderRepack(); toast('Registro repack salvo!'); }
-    inpIni.value=''; inpFim.value=''; inpDur.value='00:00:00'; statusEl.textContent='—'; btnReg.disabled=true;
-  });
-
-  window.repackExcluir = async function(i) {
-    if (!confirm('Remover este registro?')) return;
-    const r = repackRows[i];
-    if (r._docId) await fbDelete('repack', r._docId);
-    repackRows.splice(i, 1); renderRepack();
-  };
-
-  if (btnLimpar) btnLimpar.addEventListener('click', async () => {
-    if (!confirm('Limpar TODOS os registros de repack?')) return;
-    for (const r of repackRows) { if (r._docId) await fbDelete('repack', r._docId); }
-    repackRows = []; renderRepack();
-  });
-
-  setTimeout(async () => {
-    if (!getDb()) return;
-    try {
-      const snap = await getDb().collection('repack').orderBy('_criadoEm','asc').get();
-      repackRows = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
-      renderRepack();
-    } catch(e) {}
-  }, 2000);
-})();
-
-// ══════════════════════════════════════════════════════
-//  ARMAZÉM FÁCIL
-// ══════════════════════════════════════════════════════
-(function initArmazem() {
-  const data = document.getElementById('af-data');
-  const statusChip = document.getElementById('af-statusChip');
-  const inpIni = document.getElementById('af-inicio');
-  const inpFim = document.getElementById('af-fim');
-  const btnIni = document.getElementById('af-btnInicio');
-  const btnFim = document.getElementById('af-btnFim');
-  const btnSalvar = document.getElementById('af-btnSalvar');
-  const btnClear = document.getElementById('af-btnClear');
-  const btnLimpar = document.getElementById('af-btnLimpar');
-  const placa = document.getElementById('af-placa');
-  const placaOutro = document.getElementById('af-placaOutro');
-  const tbody = document.getElementById('af-tbody');
-  const nowInfo = document.getElementById('armazem-nowInfo');
-
-  if (data) data.value = todayISO();
-  function updateStatusChip() {
-    if (!inpIni.value || !inpFim.value) { statusChip.textContent='—'; statusChip.style.color='var(--text-dim)'; return; }
-    const h = parseInt(inpIni.value.split(':')[0]);
-    const hF = parseInt(inpFim.value.split(':')[0]);
-    const ok = h >= 7 && hF <= 21;
-    statusChip.textContent = ok ? '✅ DENTRO DA JANELA' : '⚠ FORA DA JANELA';
-    statusChip.style.color = ok ? 'var(--green)' : 'var(--amber)';
-  }
-  if (inpIni) inpIni.addEventListener('change', updateStatusChip);
-  if (inpFim) inpFim.addEventListener('change', updateStatusChip);
-  if (btnIni) btnIni.addEventListener('click', () => { inpIni.value = nowHHMM(); updateStatusChip(); });
-  if (btnFim) btnFim.addEventListener('click', () => { inpFim.value = nowHHMM(); updateStatusChip(); });
-  if (placa) placa.addEventListener('change', () => { if (placaOutro) placaOutro.style.display = placa.value === 'Outra...' ? 'block' : 'none'; });
-
-  let armazemRows = [];
-  function renderArmazem() {
-    if (!tbody) return;
-    tbody.innerHTML = '';
-    if (!armazemRows.length) { tbody.innerHTML = '<tr><td colspan="11" style="padding:20px;text-align:center;color:var(--text-muted)">Nenhum registro</td></tr>'; return; }
-    armazemRows.forEach((r,i) => {
-      const tr = document.createElement('tr');
-      const ok = r.status && r.status.includes('DENTRO');
-      tr.innerHTML = `<td style="padding:8px">${r.operacao||'—'}</td><td style="padding:8px">${r.data||'—'}</td><td style="padding:8px">${r.inicio||'—'}</td><td style="padding:8px">${r.fim||'—'}</td><td style="padding:8px;font-weight:700;color:${ok?'var(--green)':'var(--amber)'}">${r.status||'—'}</td><td style="padding:8px">${r.empilhador||'—'}</td><td style="padding:8px">${r.turno||'—'}</td><td style="padding:8px">${r.placa||'—'}</td><td style="padding:8px">${r.tipo||'—'}</td><td style="padding:8px">${r.palhete||0}</td><td style="padding:8px;max-width:200px;overflow:hidden;text-overflow:ellipsis">${r.obs||''}</td>`;
-      tbody.appendChild(tr);
-    });
-  }
-
-  if (btnSalvar) btnSalvar.addEventListener('click', async () => {
-    const op = document.getElementById('af-operacao').value;
-    const emp = document.getElementById('af-empilhador').value;
-    const turno = document.getElementById('af-turno').value;
-    const pl = placa.value === 'Outra...' ? (placaOutro ? placaOutro.value : '') : placa.value;
-    const tipo = document.getElementById('af-tipo').value;
-    const palhete = document.getElementById('af-palhete').value;
-    const obs = document.getElementById('af-obs').value;
-    if (!op || !emp || !turno || !pl || !tipo || !palhete || !inpIni.value || !inpFim.value) { alert('Preencha todos os campos obrigatórios (*)'); return; }
-    const h = parseInt(inpIni.value.split(':')[0]);
-    const hF = parseInt(inpFim.value.split(':')[0]);
-    const isOk = h >= 7 && hF <= 21;
-    if (!isOk && !obs) { alert('Observação obrigatória quando fora da janela 07:00-21:00'); return; }
-    const row = { operacao:op, data:data.value, dataISO:data.value, inicio:inpIni.value, fim:inpFim.value, status: isOk ? '✅ DENTRO DA JANELA' : '⚠ FORA DA JANELA', empilhador:emp, turno, placa:pl, tipo, palhete:Number(palhete), obs };
-    const docId = await fbSave('armazem', row);
-    if (docId) { row._docId = docId; armazemRows.push(row); renderArmazem(); toast('Registro armazém salvo!'); }
-    ['af-operacao','af-inicio','af-fim','af-palhete','af-obs'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
-    if (statusChip) { statusChip.textContent='—'; statusChip.style.color='var(--text-dim)'; }
-  });
-
-  if (btnClear) btnClear.addEventListener('click', () => {
-    ['af-operacao','af-inicio','af-fim','af-palhete','af-obs'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
-    if (statusChip) { statusChip.textContent='—'; statusChip.style.color='var(--text-dim)'; }
-  });
-
-  if (btnLimpar) btnLimpar.addEventListener('click', async () => {
-    if (!confirm('Apagar TODOS os registros de armazém?')) return;
-    for (const r of armazemRows) { if (r._docId) await fbDelete('armazem', r._docId); }
-    armazemRows = []; renderArmazem();
-  });
-
-  function updateNowInfo() {
-    if (nowInfo) { const n = new Date(); nowInfo.textContent = `${pad2(n.getHours())}:${pad2(n.getMinutes())} · ${todayBR()}`; }
-  }
-  updateNowInfo(); setInterval(updateNowInfo, 30000);
-
-  setTimeout(async () => {
-    if (!getDb()) return;
-    try {
-      const snap = await getDb().collection('armazem').orderBy('_criadoEm','asc').get();
-      armazemRows = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
-      renderArmazem();
-    } catch(e) {}
-  }, 2000);
-})();
-
-// ══════════════════════════════════════════════════════
-//  CONTROLE DE QUEBRAS
-// ══════════════════════════════════════════════════════
-const QB_TIPOS = {
-  'ARMAZEM': ['Avaria manuseio','Produto vencido','Palete danificado','Queda no armazém','Outro'],
-  'ENTREGA':  ['Avaria entrega','Produto recusado','Acidente rota','Extravio','Outro'],
-  'MERCADO':  ['Devolução PDV','Produto danificado PDV','Vencido PDV','Outro'],
-  'PUXADA':   ['Avaria puxada','Ruptura embalagem','Queda puxada','Outro'],
+let loc = {
+  watchId:       null,
+  taskId:        null,
+  positions:     [],
+  idleSegments:  [],
+  idleStartTs:   null,
+  lastPos:       null,
+  totalDistM:    0,
+  supported:     ('geolocation' in navigator),
+  denied:        false,
 };
 
-(function initQuebras() {
-  const prodInput = document.getElementById('qb-produtoInput');
-  const lista     = document.getElementById('qb-listaProdutos');
-  const codEl     = document.getElementById('qb-codigo');
-  const descEl    = document.getElementById('qb-descricao');
-  const areaEl    = document.getElementById('qb-area');
-  const tipoEl    = document.getElementById('qb-tipoQuebra');
-  const tbody     = document.getElementById('qb-tbody');
-  let qbSelecionado = null;
-  let qbRows = [];
-
-  if (prodInput) {
-    prodInput.addEventListener('input', () => {
-      const q = prodInput.value.toLowerCase();
-      if (!q) { lista.style.display='none'; return; }
-      const matches = (typeof PRODUCTS !== 'undefined' ? PRODUCTS : [])
-        .filter(p => String(p.codigo).includes(q) || p.descricao.toLowerCase().includes(q)).slice(0,10);
-      if (!matches.length) { lista.style.display='none'; return; }
-      lista.innerHTML = matches.map(p =>
-        `<div onclick="qbSelectProd(${p.codigo},'${p.descricao.replace(/'/g,"\\'")}')" style="padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);transition:background .1s" onmouseover="this.style.background='#1a2030'" onmouseout="this.style.background=''">`+
-        `<span style="color:var(--amber);font-family:'Share Tech Mono',monospace;font-size:10px;margin-right:8px">${p.codigo}</span>${p.descricao}</div>`
-      ).join('');
-      lista.style.display='block';
-    });
-    document.addEventListener('click', e => { if (!prodInput.contains(e.target) && !lista.contains(e.target)) lista.style.display='none'; });
-  }
-
-  window.qbSelectProd = function(cod, desc) {
-    qbSelecionado = {codigo: cod, descricao: desc};
-    if (prodInput) prodInput.value = desc;
-    if (codEl)  codEl.value  = cod;
-    if (descEl) descEl.value = desc;
-    if (lista)  lista.style.display='none';
-  };
-
-  if (areaEl) areaEl.addEventListener('change', () => {
-    if (!tipoEl) return;
-    tipoEl.innerHTML = '';
-    const tipos = QB_TIPOS[areaEl.value] || [];
-    tipos.forEach(t => { const o=document.createElement('option'); o.value=t; o.textContent=t; tipoEl.appendChild(o); });
-  });
-
-  function renderQb() {
-    if (!tbody) return;
-    tbody.innerHTML = '';
-    if (!qbRows.length) { tbody.innerHTML='<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--text-muted)">Nenhuma quebra registrada</td></tr>'; return; }
-    qbRows.forEach((r,i) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td style="padding:8px;font-family:'Share Tech Mono',monospace;font-size:11px">${r.codProduto||'—'}</td><td style="padding:8px;font-size:12px">${r.descricao||'—'}</td><td style="padding:8px;color:var(--red);font-weight:700">${r.quantidade}</td><td style="padding:8px">${r.turno}</td><td style="padding:8px;font-family:'Share Tech Mono',monospace;font-size:11px">${r.codQuebra||'—'}</td><td style="padding:8px">${r.area}</td><td style="padding:8px">${r.motivo}</td><td style="padding:8px;text-align:right"><button class="btn btn-red btn-sm" onclick="qbExcluir(${i})">✕</button></td>`;
-      tbody.appendChild(tr);
-    });
-  }
-
-  window.qbAdicionar = async function() {
-    const qtd  = document.getElementById('qb-quantidade').value;
-    const area = areaEl ? areaEl.value : '';
-    const turno = document.getElementById('qb-turno').value;
-    const tipo = tipoEl ? tipoEl.value : '';
-    if (!qtd || !area || !turno || !tipo) { alert('Preencha quantidade, área, turno e tipo de quebra'); return; }
-    const codQuebra = area.slice(0,2).toUpperCase() + '-' + Date.now().toString().slice(-5);
-    const row = {
-      dataISO: todayISO(), data: todayBR(),
-      codProduto: qbSelecionado ? String(qbSelecionado.codigo) : '',
-      descricao: descEl ? descEl.value : '',
-      quantidade: Number(qtd), area, turno, codQuebra, motivo: tipo
-    };
-    const docId = await fbSave('quebras', row);
-    if (docId) { row._docId = docId; qbRows.push(row); renderQb(); toast('Quebra registrada!'); }
-    ['qb-produtoInput','qb-codigo','qb-descricao','qb-quantidade'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-    qbSelecionado = null;
-  };
-
-  window.qbExcluir = async function(i) {
-    if (!confirm('Remover este registro?')) return;
-    const r = qbRows[i];
-    if (r._docId) await fbDelete('quebras', r._docId);
-    qbRows.splice(i, 1); renderQb();
-  };
-
-  window.qbLimparTabela = async function() {
-    if (!confirm('Limpar TODOS os registros de quebras?')) return;
-    for (const r of qbRows) { if (r._docId) await fbDelete('quebras', r._docId); }
-    qbRows = []; renderQb();
-  };
-
-  setTimeout(async () => {
-    if (!getDb()) return;
-    try {
-      const snap = await getDb().collection('quebras').orderBy('_criadoEm','asc').get();
-      qbRows = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
-      renderQb();
-    } catch(e) {}
-  }, 2000);
-})();
-
-// ══════════════════════════════════════════════════════
-//  RELATÓRIO DO DIA (picking) — renderRelatorioDia
-// ══════════════════════════════════════════════════════
-function renderRelatorioDia() {
-  if (typeof S === 'undefined') return;
-  const today = new Date().toDateString();
-  const todayTasks = S.tarefas.filter(t => new Date(t.criadoEm||'').toDateString() === today || t.status !== 'done');
-  const pending  = todayTasks.filter(t => t.status === 'pending');
-  const progress = todayTasks.filter(t => t.status === 'in_progress');
-  const done     = S.tarefas.filter(t => t.status === 'done');
-
-  const numPend = document.getElementById('rel-num-pend');
-  const numProg = document.getElementById('rel-num-prog');
-  const numDone = document.getElementById('rel-num-done');
-  if (numPend) numPend.textContent = pending.length;
-  if (numProg) numProg.textContent = progress.length;
-  if (numDone) numDone.textContent = done.length;
-
-  const setCount = (id, n) => { const el=document.getElementById(id); if(!el)return; el.textContent=n; el.className='sec-cnt'+(n===0?' zero':''); };
-  setCount('cnt-rel-pend', pending.length);
-  setCount('cnt-rel-prog', progress.length);
-  setCount('cnt-rel-done', done.length);
-
-  const emptyMsg = (ico,txt) => `<div class="empty"><div class="ico">${ico}</div>${txt}</div>`;
-  const relPend = document.getElementById('rel-pend');
-  const relProg = document.getElementById('rel-prog');
-  const relDone = document.getElementById('rel-done');
-  if (relPend) relPend.innerHTML = pending.length ? pending.map(t=>taskCardReadonly(t)).join('') : emptyMsg('✅','Nenhuma tarefa pendente');
-  if (relProg) relProg.innerHTML = progress.length ? progress.map(t=>taskCardReadonly(t)).join('') : emptyMsg('⏳','Nenhuma em andamento');
-  if (relDone) relDone.innerHTML = done.length ? done.slice().reverse().map(t=>taskCardReadonly(t)).join('') : emptyMsg('📦','Nenhuma concluída hoje');
-
-  carregarResumoRelatorios();
+function haversineM(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 +
+            Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-async function carregarResumoRelatorios() {
-  if (!getDb()) return;
-  const modulos = [
-    { id: 'despejo',  label: '🗑 Despejo',  cor: '#ef4444' },
-    { id: 'repack',   label: '📦 Repack',   cor: 'var(--amber)' },
-    { id: 'armazem',  label: '🚛 Armazém',  cor: '#7cc6ff' },
-    { id: 'quebras',  label: '💥 Quebras',  cor: '#fca5a5' },
-  ];
-  const container = document.getElementById('rel-cards-resumo');
-  if (!container) return;
-  container.innerHTML = '<div style="font-size:12px;color:var(--text-dim);padding:8px 0">Carregando resumo...</div>';
-  const hoje = todayISO();
-  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px">';
-  for (const m of modulos) {
-    try {
-      const snap = await getDb().collection(m.id).get();
-      const todos = snap.docs.map(d => d.data());
-      const total = todos.length;
-      const hoje_ = todos.filter(r => r.dataISO === hoje).length;
-      const cor = total > 0 ? m.cor : 'var(--text-dim)';
-      html += `<div style="padding:14px 16px;border-radius:14px;background:var(--surface2);border:1px solid var(--border)"><div style="font-size:18px;font-weight:900;color:${cor};font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">${m.label}</div><div style="font-size:28px;font-weight:900;color:${cor};margin:4px 0">${total}</div><div style="font-size:11px;color:var(--text-dim)">total · <strong style="color:${cor}">${hoje_}</strong> hoje (${hoje})</div></div>`;
-    } catch { html += `<div style="padding:14px 16px;border-radius:14px;background:var(--surface2);border:1px solid var(--border)"><div style="color:var(--text-dim);font-size:12px">${m.label}<br>Erro ao carregar</div></div>`; }
+function startLocationTracking(taskId) {
+  if (!loc.supported || loc.denied) return;
+  loc.taskId = taskId; loc.positions = []; loc.idleSegments = [];
+  loc.idleStartTs = null; loc.lastPos = null; loc.totalDistM = 0;
+  loc.watchId = navigator.geolocation.watchPosition(
+    pos => onLocationUpdate(pos),
+    err => { if (err.code === 1) { loc.denied = true; toast('GPS negado — rastreamento desativado', true); } },
+    { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
+  );
+}
+
+function onLocationUpdate(pos) {
+  const { latitude: lat, longitude: lng, speed } = pos.coords;
+  const ts  = pos.timestamp;
+  const spd = (speed !== null && speed >= 0) ? speed : null;
+  if (loc.lastPos) {
+    const dist    = haversineM(loc.lastPos.lat, loc.lastPos.lng, lat, lng);
+    const dtSec   = (ts - loc.lastPos.ts) / 1000;
+    const estSpd  = dtSec > 0 ? dist / dtSec : 0;
+    const effSpd  = spd !== null ? spd : estSpd;
+    if (dist < 500) loc.totalDistM += dist;
+    if (effSpd < LOC_SPEED_IDLE) {
+      if (!loc.idleStartTs) loc.idleStartTs = ts;
+    } else {
+      if (loc.idleStartTs) {
+        const idleSec = (ts - loc.idleStartTs) / 1000;
+        if (idleSec >= LOC_IDLE_CONFIRM) loc.idleSegments.push({ start: loc.idleStartTs, end: ts, sec: Math.round(idleSec) });
+        loc.idleStartTs = null;
+      }
+    }
+  }
+  loc.positions.push({ lat, lng, speed: spd, ts });
+  loc.lastPos = { lat, lng, ts };
+}
+
+function stopLocationTracking() {
+  if (loc.watchId !== null) { navigator.geolocation.clearWatch(loc.watchId); loc.watchId = null; }
+  if (loc.idleStartTs) {
+    const now = Date.now(); const idleSec = (now - loc.idleStartTs) / 1000;
+    if (idleSec >= LOC_IDLE_CONFIRM) loc.idleSegments.push({ start: loc.idleStartTs, end: now, sec: Math.round(idleSec) });
+    loc.idleStartTs = null;
+  }
+  const totalIdleSec = loc.idleSegments.reduce((s, seg) => s + seg.sec, 0);
+  const first = loc.positions[0] || null;
+  const last  = loc.positions[loc.positions.length - 1] || null;
+  return {
+    distanciaM:      Math.round(loc.totalDistM),
+    totalIdleSec,
+    segmentosParado: loc.idleSegments.length,
+    posInicial:      first ? { lat: first.lat, lng: first.lng } : null,
+    posFinal:        last  ? { lat: last.lat,  lng: last.lng  } : null,
+    mapsLink:        last  ? 'https://www.google.com/maps?q=' + last.lat + ',' + last.lng : null,
+    totalLeituras:   loc.positions.length,
+  };
+}
+
+function fmtLocSummary(locData) {
+  if (!locData || !locData.totalLeituras) return '';
+  const idleMin  = Math.round(locData.totalIdleSec / 60);
+  const distTxt  = locData.distanciaM >= 1000
+    ? (locData.distanciaM / 1000).toFixed(2) + ' km'
+    : locData.distanciaM + ' m';
+  let html = '<div class="loc-summary">' +
+    '<span class="loc-chip">📍 ' + distTxt + '</span>' +
+    '<span class="loc-chip idle">⏸ ' + idleMin + 'min parado</span>';
+  if (locData.mapsLink) {
+    html += '<a class="loc-chip link" href="' + locData.mapsLink + '" target="_blank">🗺 Ver no mapa</a>';
   }
   html += '</div>';
-  container.innerHTML = html;
+  return html;
 }
 
-// ══════════════════════════════════════════════════════
-//  DASHBOARD / CONTROLE — KPIs
-// ══════════════════════════════════════════════════════
-const CHART_COLORS = ['#f5a623','#22c55e','#3b82f6','#ef4444','#8b5cf6','#06b6d4','#ec4899','#fca5a5'];
-const _chartInstances = {};
+const PRODUCTS = [
+{ "codigo": 347, "descricao": "SUKITA PET 1L CAIXA C/12" },
+  { "codigo": 371, "descricao": "MALZBIER BRAHMA LONG NECK 355ML SIX-PACK BAND" },
+  { "codigo": 503, "descricao": "SUKITA PET 2L CAIXA C/6" },
+  { "codigo": 504, "descricao": "PEPSI COLA PET 2L CAIXA C/6" },
+  { "codigo": 982, "descricao": "SKOL 600ML" },
+  { "codigo": 988, "descricao": "BRAHMA CHOPP 600ML" },
+  { "codigo": 1164, "descricao": "SUKITA UVA LATA 350ML SH C/12 NPAL" },
+  { "codigo": 1166, "descricao": "SUKITA UVA PET 2L CAIXA C/6" },
+  { "codigo": 1388, "descricao": "SKOL GFA VD 1L 2,99" },
+  { "codigo": 1695, "descricao": "BRAHMA CHOPP GFA VD 1L COM TTC" },
+  { "codigo": 1743, "descricao": "ANTARCTICA PILSEN GFA VD 1L COM TTC" },
+  { "codigo": 1745, "descricao": "SKOL LT 269ML SH C15 NPAL" },
+  { "codigo": 1898, "descricao": "BRAHMA CHOPP LT 269ML SH C15 NPAL" },
+  { "codigo": 2006, "descricao": "ANTARCTICA SUBZERO 600ML" },
+  { "codigo": 2008, "descricao": "ANTARCTICA SUBZERO LATA 350ML SH C/12 NPAL" },
+  { "codigo": 2319, "descricao": "GUARANA CHP ANTARCTICA PET 1L CAIXA C/12" },
+  { "codigo": 2320, "descricao": "SODA LIMONADA ANTARCTICA PET 1L CAIXA C/12" },
+  { "codigo": 2349, "descricao": "GUARANA CHP ANTARCTICA PET 2L CAIXA C/6" },
+  { "codigo": 2350, "descricao": "SODA LIMONADA ANTARCTICA PET 2L CAIXA C/6" },
+  { "codigo": 2353, "descricao": "GUARANA CHP ANTARCTICA DIET PET 2L CAIXA C/6" },
+  { "codigo": 2538, "descricao": "ANTARCTICA PILSEN 600ML" },
+  { "codigo": 2546, "descricao": "ORIGINAL 600ML" },
+  { "codigo": 2548, "descricao": "BUDWEISER 600ML" },
+  { "codigo": 2585, "descricao": "GUARANA CHP ANTARCTICA GFA VD 1L" },
+  { "codigo": 4141, "descricao": "PATAGONIA AMB LAG NACIONAL LT SLEEK 350ML C 8" },
+  { "codigo": 4293, "descricao": "PEPSI BLACK PET 200ML SH C/12" },
+  { "codigo": 4367, "descricao": "INDAIA AGUA MINERAL S/GAS GFA PET 1,5L FD C/6" },
+  { "codigo": 4409, "descricao": "PEPSI TWIST PET 2L SHRINK C/6" },
+  { "codigo": 6181, "descricao": "AGUA MIN DIAS DAVILA S/GAS PET 500ML CAIXA C/" },
+  { "codigo": 6183, "descricao": "AGUA MIN DIAS DAVILA C/GAS PET 500ML CAIXA C/" },
+  { "codigo": 6185, "descricao": "AGUA MIN DIAS DAVILA S/GAS PET 1,5L CAIXA C/6" },
+  { "codigo": 7325, "descricao": "PEPSI COLA PET 1L CAIXA C/12" },
+  { "codigo": 7945, "descricao": "PEPSI COLA PET 2,5L CAIXA C/6" },
+  { "codigo": 7947, "descricao": "GUARANA CHP ANTARCTICA PET 2,5L CAIXA C/6" },
+  { "codigo": 7977, "descricao": "GATORADE UVA PET 500ML SIXPACK" },
+  { "codigo": 7980, "descricao": "GATORADE TANGERINA PET 500ML SIXPACK" },
+  { "codigo": 7981, "descricao": "GATORADE LARANJA PET 500ML SIXPACK" },
+  { "codigo": 7982, "descricao": "GATORADE LIMAO PET 500ML SIXPACK" },
+  { "codigo": 7983, "descricao": "GATORADE MORANGO-MARACUJA PET 500ML SIXPACK" },
+  { "codigo": 7985, "descricao": "GATORADE MARACUJA PET 500ML SIXPACK" },
+  { "codigo": 8411, "descricao": "GUARANA CHP ANTARCTICA PET 1,5 SHRINK C/6" },
+  { "codigo": 8791, "descricao": "H2OH LIMAO C/GAS PET 500ML CAIXA C/12" },
+  { "codigo": 8793, "descricao": "H2OH LIMAO C/GAS PET 1,5L CAIXA C/6" },
+  { "codigo": 8919, "descricao": "GUARANA CHP ANTARCTICA PET 600ML CX12 NPAL" },
+  { "codigo": 9067, "descricao": "ANTARCTICA PILSEN LATA 350ML SH C/12 NPAL" },
+  { "codigo": 9068, "descricao": "SKOL LATA 350ML SH C/12 NPAL" },
+  { "codigo": 9069, "descricao": "BRAHMA CHOPP LATA 350ML SH C/12 NPAL" },
+  { "codigo": 9071, "descricao": "CARACU LATA 350ML SH C/12 NPAL" },
+  { "codigo": 9072, "descricao": "BOHEMIA NOVA EMBALAGEM LATA 350ML SH C/12 NPA" },
+  { "codigo": 9081, "descricao": "MALZBIER BRAHMA LATA 350ML SH C/12 NPAL" },
+  { "codigo": 9083, "descricao": "SKOL LT 473ML SH C/12 NPAL" },
+  { "codigo": 9084, "descricao": "GUARANA CHP ANTARCTICA LATA 350ML SH C/12 NPA" },
+  { "codigo": 9085, "descricao": "GUARANA CHP ANTARCTICA DIET LATA 350ML SH C/1" },
+  { "codigo": 9087, "descricao": "SODA LIMONADA ANTARCTICA LATA 350ML SH C/12 N" },
+  { "codigo": 9089, "descricao": "SUKITA LATA 350ML SH C/12 NPAL" },
+  { "codigo": 9091, "descricao": "TONICA ANTARCTICA LATA 350ML SH C/12 NPAL" },
+  { "codigo": 9092, "descricao": "TONICA ANTARCTICA DIET LATA 350ML SH C/12 NPA" },
+  { "codigo": 9093, "descricao": "PEPSI TWIST LATA 350ML SH C/12 NPAL" },
+  { "codigo": 9096, "descricao": "PEPSI COLA LATA 350ML SH C/12 NPAL" },
+  { "codigo": 9274, "descricao": "PEPSI ZERO LATA 350ML SH C/12 NPAL" },
+  { "codigo": 9276, "descricao": "PEPSI ZERO PET 2L CAIXA C/6" },
+  { "codigo": 9320, "descricao": "BRAHMA CHOPP LT 473ML SH C/12 NPAL" },
+  { "codigo": 9795, "descricao": "GUARANA ANTARCTICA ZERO PET 1L CAIXA C/12" },
+  { "codigo": 10175, "descricao": "ANTARCTICA SUBZERO LT 473ML SH C/12 NPAL" },
+  { "codigo": 10530, "descricao": "ANTARCTICA SUBZERO GFA VD 1L" },
+  { "codigo": 10537, "descricao": "BOHEMIA GFA VD 990ML" },
+  { "codigo": 12948, "descricao": "BRAHMA CHOPP ZERO LATA 350ML SH C/12 NPAL" },
+  { "codigo": 12951, "descricao": "BRAHMA CHOPP ZERO LN 355ML SIXPACK CX CART C/" },
+  { "codigo": 13061, "descricao": "H2OH LIMONETO PET 500ML SHRINK C/12 NPAL" },
+  { "codigo": 13065, "descricao": "H2OH LIMONETO PET 1,5 SHRINK C/06 NPAL" },
+  { "codigo": 13196, "descricao": "SKOL ONE WAY 300ML CX C/23" },
+  { "codigo": 13201, "descricao": "BRAHMA CHOPP GFA VD 300ML CX C/23" },
+  { "codigo": 13205, "descricao": "SKOL GFA VD 300ML CX C/23" },
+  { "codigo": 13307, "descricao": "BUDWEISER GFA VD 990ML CX C/12" },
+  { "codigo": 13486, "descricao": "FUSION PET 1L SH C/06" },
+  { "codigo": 13566, "descricao": "SKOL BEATS SENSES LT 269ML CX C/8 FRIDGE PACK" },
+  { "codigo": 14135, "descricao": "BUDWEISER LATA 473ML SIX-PACK SH C/2 NPAL" },
+  { "codigo": 16503, "descricao": "BOHEMIA GFA VD 300ML CX C/23" },
+  { "codigo": 17808, "descricao": "BUDWEISER OW 330ML CX C/24" },
+  { "codigo": 18152, "descricao": "GUARANA CHP ANTARCTICA PET 200ML SH C/12" },
+  { "codigo": 18266, "descricao": "PEPSI COLA PET 200ML SH C/12" },
+  { "codigo": 18267, "descricao": "SODA LIMONADA ANTARCTICA PET 200ML SH C/12" },
+  { "codigo": 18268, "descricao": "SUKITA PET 200ML SH C/12" },
+  { "codigo": 18752, "descricao": "PATAGONIA WEISSE NACIONAL ONE WAY 740ML CX6" },
+  { "codigo": 18772, "descricao": "PATAGONIA AMB LAG NACIONAL ONE WAY 740ML CX6" },
+  { "codigo": 18780, "descricao": "CORONITA EXTRA N OW 210ML CX C/4 SIX PACK" },
+  { "codigo": 18807, "descricao": "STELLA ARTOIS LONG NECK 330ML SIX-PACK SHRINK" },
+  { "codigo": 18836, "descricao": "CORONA EXTRA N LONG NECK 330ML CX C/24 NPAL" },
+  { "codigo": 19164, "descricao": "GUARANA CHP ANTARCTICA PET 1L PACK C/2 MULTPA" },
+  { "codigo": 19225, "descricao": "RED BULL BR LATA 250ML CX C 24 NPAL" },
+  { "codigo": 19227, "descricao": "RED BULL BR LATA 355ML FOUR PACK" },
+  { "codigo": 19229, "descricao": "RED BULL BR LATA 250ML SIX PACK NPAL" },
+  { "codigo": 19231, "descricao": "RED BULL SUGAR FREE BR LATA 250ML FOUR PACK N" },
+  { "codigo": 19321, "descricao": "GUARANA ANTARCTICA ZERO PET 200ML SH C/12" },
+  { "codigo": 19668, "descricao": "ORIGINAL LATA 350ML SH C/12 NPAL" },
+  { "codigo": 19729, "descricao": "STELLA ARTOIS LT SLEEK 350ML C 8 CX CARTAO" },
+  { "codigo": 20164, "descricao": "SKOL LT 473ML SH C/12 NPAL MULTPACK 12" },
+  { "codigo": 20217, "descricao": "ORIGINAL GFA VD 300ML CX C/23" },
+  { "codigo": 20329, "descricao": "BRAHMA DUPLO MALTE 600ML" },
+  { "codigo": 20498, "descricao": "BRAHMA DUPLO MALTE LT SLEEK 350ML SH C 12" },
+  { "codigo": 20530, "descricao": "STELLA ARTOIS 600 ML" },
+  { "codigo": 20535, "descricao": "STELLA ARTOIS ONE WAY 600ML CX C/12 NPAL" },
+  { "codigo": 20549, "descricao": "BRAHMA DUPLO MALTE GFA VD 300ML CX C/23" },
+  { "codigo": 20651, "descricao": "CORONA EXTRA N LT SLEEK 350ML C 8 CX CARTAO" },
+  { "codigo": 21020, "descricao": "BUDWEISER LT SLEEK 350ML CX CART C 12" },
+  { "codigo": 21119, "descricao": "SKOL BEATS GT LT 269ML CX CARTAO C/8 NPAL" },
+  { "codigo": 21441, "descricao": "SUKITA LIMAO PET 2L CAIXA C/6" },
+  { "codigo": 21526, "descricao": "JOHNNIE WALKER RED LABEL GARRAFA VIDRO 1 L" },
+  { "codigo": 21529, "descricao": "ABSOLUT ORIGINAL GARRAFA VIDRO 1 L" },
+  { "codigo": 21530, "descricao": "SMIRNOFF ORIGINAL GARRAFA VIDRO 998ML" },
+  { "codigo": 21632, "descricao": "SPATEN N LN 355ML SIXPACK SH C/4" },
+  { "codigo": 21658, "descricao": "SPATEN N LT SLEEK 350ML CX CART C 12" },
+  { "codigo": 21666, "descricao": "RED BULL TROPICAL BR LATA 250ML FOUR PACK NPA" },
+  { "codigo": 21668, "descricao": "SPATEN N ONE WAY 600ML CX C/12 NP ARTE" },
+  { "codigo": 21786, "descricao": "MONTILLA CARTA BRANCA GARRAFA VIDRO 1 L" },
+  { "codigo": 21787, "descricao": "DREHER GARRAFA VIDRO 900ML" },
+  { "codigo": 21955, "descricao": "CHIVAS REGAL 12 ANOS GARRAFA VIDRO 1 L" },
+  { "codigo": 21968, "descricao": "TRIDENT HORTELA ENVELOPE 8G CX C/21" },
+  { "codigo": 21970, "descricao": "TRIDENT MENTA ENVELOPE 8G CX C/21" },
+  { "codigo": 21973, "descricao": "TRIDENT MELANCIA ENVELOPE 8G CX C/21" },
+  { "codigo": 21974, "descricao": "TRIDENT TUTTI-FRUTTI ENVELOPE 8G CX C/21" },
+  { "codigo": 22003, "descricao": "HALLS CEREJA ENVELOPE 28G CX C/21" },
+  { "codigo": 22005, "descricao": "HALLS MENTA ENVELOPE 28G CX C/21" },
+  { "codigo": 22009, "descricao": "CHICLETE ADAMS HORTELA CAIXINHA 2,8G CX C/100" },
+  { "codigo": 22027, "descricao": "COLORADO APPIA LT SLEEK 350ML C8 CX CARTAO NP" },
+  { "codigo": 22177, "descricao": "BUDWEISER ZERO LT SLEEK 350ML C 8 CX CARTAO" },
+  { "codigo": 22180, "descricao": "BUDWEISER ZERO LONG NECK 330ML SIX-PACK SHRIN" },
+  { "codigo": 22200, "descricao": "TONICA ANTARCTICA PET 1 L SH C/06" },
+  { "codigo": 22202, "descricao": "TONICA ANTARCTICA ZERO PET 1L SH C/06" },
+  { "codigo": 22326, "descricao": "BRAHMA DUPLO MALTE LT 473ML SH C/12 NPAL" },
+  { "codigo": 22330, "descricao": "MENDORATO PCT 27G CX C/60" },
+  { "codigo": 22508, "descricao": "PERGOLA SEL. VINHO TINTO SUAVE GARRAFA VIDRO" },
+  { "codigo": 23184, "descricao": "PITU AGUARDENTE LT 350ML CX C/12" },
+  { "codigo": 23186, "descricao": "SPATEN N 600ML" },
+  { "codigo": 23256, "descricao": "PIRACANJUBA CREME DE LEITE TETRAPAK 200G CX C" },
+  { "codigo": 23269, "descricao": "SKOL BEATS GT LONG NECK 269ML SIX-PACK SH C/4" },
+  { "codigo": 23271, "descricao": "SKOL BEATS SENSES LONG NECK 269ML SIX-PACK SH" },
+  { "codigo": 23546, "descricao": "INDAIA AGUA MINERAL C/GAS GFA PET 500ML PACK" },
+  { "codigo": 23552, "descricao": "INDAIA AGUA MINERAL S/GAS GFA PET 500ML PACK" },
+  { "codigo": 24168, "descricao": "MICHELOB ULTRA N LONG NECK 330ML SIX-PACK SHR" },
+  { "codigo": 24256, "descricao": "PETROPOLIS AGUA MIN SEM GAS PET 1,5 SHRINK C/" },
+  { "codigo": 24304, "descricao": "TODDYNHO 200ML TETRA PAK 200 ML CX C/27" },
+  { "codigo": 24306, "descricao": "RED BULL MELANCIA LATA 250ML FOUR PACK NPAL" },
+  { "codigo": 24409, "descricao": "QUINTA DO MORGADO VINHO TINTO SUAVE GFA VD 75" },
+  { "codigo": 25151, "descricao": "OLD PARR WHISKY GFA VDR 1L" },
+  { "codigo": 25160, "descricao": "BLACK & WHITE WHISKY GFA VDR 1L" },
+  { "codigo": 25194, "descricao": "CACHACA 51 LT 350ML CX C/12" },
+  { "codigo": 25430, "descricao": "MATUTA CACHACA UMBURANA GARRAFA VIDRO 1 L" },
+  { "codigo": 25546, "descricao": "GARRAFEIRA PL. AL. LAT. AB. PRETA BEES 1 UN P" },
+  { "codigo": 25700, "descricao": "FUSION PET 2L SHRINK C/6" },
+  { "codigo": 25837, "descricao": "SPATEN N LT 473ML CX CARTAO C/12" },
+  { "codigo": 26037, "descricao": "MONTILLA CARTA CRISTAL GFA VDR 1L" },
+  { "codigo": 26462, "descricao": "ORIGINAL LT 473ML CX CARTAO C/12" },
+  { "codigo": 27177, "descricao": "HALLS MENTOL ENVELOPE 28G CX C/21" },
+  { "codigo": 27179, "descricao": "HALLS MORANGO ENVELOPE 28G CX C/21" },
+  { "codigo": 27522, "descricao": "CACHACA 51 PIRASSUNUNGA GFA VD 965ML RET CX/1" },
+  { "codigo": 27559, "descricao": "CACHACA 51 PIRASSUNUNGA OURO GFA VD 965ML RET" },
+  { "codigo": 27560, "descricao": "CASILLERO DEL DIABLO VINH RESERVA MALBEC GFA" },
+  { "codigo": 27562, "descricao": "CASILLERO DEL DIABLO VINH RESERVA MERLOT GFA" },
+  { "codigo": 27566, "descricao": "RESERVADO VINHO SWEET RED GFA VD 750 ML" },
+  { "codigo": 27613, "descricao": "CASILLERO DEL DIABLO VNH RSV CABER SAUVG GFA" },
+  { "codigo": 27624, "descricao": "RESERVADO VINHO MALBEC GFA VD 750 ML" },
+  { "codigo": 27866, "descricao": "CORONA CERO SUNBREW N LONG NECK 330 ML SP BAS" },
+  { "codigo": 27983, "descricao": "GFA VIDRO 635ML,AMBAR,TIPO A,RETORN." },
+  { "codigo": 29201, "descricao": "TANG REFRESCO EM PO ABACAXI PCT 18G DP C/18" },
+  { "codigo": 29207, "descricao": "TANG REFRESCO EM PO MORANGO PCT 18G DP C/18" },
+  { "codigo": 29209, "descricao": "TANG REFRESCO EM PO MARACUJA PCT 18G DP C/18" },
+  { "codigo": 29215, "descricao": "TANG REFRESCO EM PO UVA PCT 18G DP C/18" },
+  { "codigo": 29253, "descricao": "ORIGINAL GFA VD 1L" },
+  { "codigo": 29485, "descricao": "SKOL BEATS CAIPIRINHA LONG NECK 269ML SIX-PAC" },
+  { "codigo": 29504, "descricao": "OLD PARR WHISKY 12 ANOS GFA VD 750 ML" },
+  { "codigo": 29580, "descricao": "STELLA ARTOIS PURE GOLD LONG NECK 330ML SP SH" },
+  { "codigo": 29733, "descricao": "HALLS MELANCIA ENVELOPE 28G CX C/21" },
+  { "codigo": 29845, "descricao": "PEPSI BLACK PET 1 L SH C/12" },
+  { "codigo": 30045, "descricao": "RED BULL BR LATA 473ML CX C 12" },
+  { "codigo": 30148, "descricao": "TRELOSO BISCOITO RECHEADO CHOCOLATE PCT 120G" },
+  { "codigo": 30151, "descricao": "TRELOSO RECHEADO BAUNILHA CHOCORESCO PCT 120G" },
+  { "codigo": 30152, "descricao": "TRELOSO BISCOITO RECHEADO MORANGO PCT 120G CX" },
+  { "codigo": 30486, "descricao": "GARRAFEIRA PLAST,24 GFA 600ML,BRAHMA,C/1," },
+  { "codigo": 30491, "descricao": "GARRAFEIRA PLAST,24 GFA 600ML,SKOL,C/1," },
+  { "codigo": 31064, "descricao": "BUDWEISER LT 269ML SH C 15" },
+  { "codigo": 31272, "descricao": "FUSION LT 473ML SH C/12 NPAL" },
+  { "codigo": 31582, "descricao": "YPE LAVA LOUCAS LIQUIDO CLEAR FRASCO PLASTICO" },
+  { "codigo": 31589, "descricao": "YPE LAVA LOUCAS LIQUIDO MACA FRASCO PLASTICO" },
+  { "codigo": 31667, "descricao": "YPE LAVA LOUCAS LIQUIDO NEUTRO FRASCO PLASTIC" },
+  { "codigo": 31669, "descricao": "YPE LAVA LOUCAS LIQUIDO COCO FRASCO PLASTICO" },
+  { "codigo": 31674, "descricao": "YPE AMACIANTE INTENSO FRASCO PLASTICO 2 L CX6" },
+  { "codigo": 31708, "descricao": "YPE AMACIANTE CONC BLUE GARDEN FRASCO PLAST 5" },
+  { "codigo": 31713, "descricao": "YPE AMACIANTE CONC PINK FRASCO PLAST 500ML CX" },
+  { "codigo": 31766, "descricao": "YPE ASSOLAN ESPONJA LA ACO PCT 45 G CX200" },
+  { "codigo": 31789, "descricao": "YPE AMACIANTE TRADICIONAL ACONCHEGO FRASCO PL" },
+  { "codigo": 31805, "descricao": "YPE TIXAN LAVA ROUPAS LIQ PRIMAVERA FRASCO PL" },
+  { "codigo": 32067, "descricao": "GATORADE BERRY BLUE PET 500ML SIXPACK" },
+  { "codigo": 32126, "descricao": "AMINDUS GRELHADITOS AMEND. TOR. S/ PELE PCT 2" },
+  { "codigo": 32175, "descricao": "CROKISSIMO AMEND CROC LEV SALGADO PCT 24G FD/" },
+  { "codigo": 32361, "descricao": "BEATS TROPICAL LONG NECK 269ML SIX-PACK SH C/" },
+  { "codigo": 32425, "descricao": "FUSION MELANCIA LT 473ML SH C/12 NPAL" },
+  { "codigo": 32427, "descricao": "FUSION TROPICAL LT 473ML SH C/12 NPAL" },
+  { "codigo": 32500, "descricao": "STELLA ARTOIS PURE GOLD LT SLEEK 350ML C 8 CX" },
+  { "codigo": 32526, "descricao": "PETROPOLIS AGUA MIN SEM GAS GARRAFA PET 500ML" },
+  { "codigo": 32528, "descricao": "PETROPOLIS AGUA MIN COM GAS GARRAFA PET 500ML" },
+  { "codigo": 32538, "descricao": "PERGOLA SEL. VINHO TINTO SUAVE GARRAFA VIDRO" },
+  { "codigo": 32644, "descricao": "BUBBALOO UVA DISPLAY 5G CX/60" },
+  { "codigo": 32646, "descricao": "BUBBALOO TUTTI FRUTTI DISPLAY 5G CX/60" },
+  { "codigo": 32648, "descricao": "BUBBALOO MORANGO DISPLAY 5G CX/60" },
+  { "codigo": 33042, "descricao": "YPE LAVA LOUCAS LIQUIDO LIMAO FRASCO PLASTICO" },
+  { "codigo": 33046, "descricao": "YPE TIXAN LAVA ROUPAS PO MACIEZ SACHE PLASTIC" },
+  { "codigo": 33048, "descricao": "YPE TIXAN LAVA ROUPAS PO PRIMAV SACHE PLASTIC" },
+  { "codigo": 33061, "descricao": "YPE TIXAN LAVA ROUPAS PO MACIEZ SACHE 400G CX" },
+  { "codigo": 33066, "descricao": "YPE TIXAN LAVA ROUPAS PO PRIMAV SACHE 400G CX" },
+  { "codigo": 33734, "descricao": "BEATS RED MIX LT 269ML SH C/8" },
+  { "codigo": 33738, "descricao": "BEATS RED MIX LONG NECK 269ML SIX-PACK SH C/2" },
+  { "codigo": 33820, "descricao": "BRAHMA CHOPP LATA 350ML SH C/12 NPAL MULTIPAC" },
+  { "codigo": 34027, "descricao": "GUARANA CHP ANTARCTICA LATA 350ML SH C/12 NPA" },
+  { "codigo": 34263, "descricao": "CORONA CERO SUNBREW N LT SLEEK 350ML C 8 CX C" },
+  { "codigo": 34296, "descricao": "TRIDENT CANELA ENVELOPE 8G CX C/21" },
+  { "codigo": 34298, "descricao": "TRIDENT MORANGO ENVELOPE 8G CX C/21" },
+  { "codigo": 34320, "descricao": "GUARANA ANTARCTICA ZERO LATA 350ML SH C/12 NP" },
+  { "codigo": 34410, "descricao": "HALLS UVA VERDE ENVELOPE 28G CX C/21" },
+  { "codigo": 34420, "descricao": "RED BULL SUMMER MARACUJA E MELAO LATA 250ML F" },
+  { "codigo": 34429, "descricao": "RED BULL SUGAR FREE AMORA LATA 250ML FOUR PAC" },
+  { "codigo": 34475, "descricao": "ELEVE AGUA MIN S GAS GFA PET 510ML FD C/12" },
+  { "codigo": 34479, "descricao": "ELEVE AGUA MIN S GAS PET 1,5 SHRINK C/6" },
+  { "codigo": 34527, "descricao": "YPE AMACIANTE TRADICIONAL ACONCHEGO FRASCO PL" },
+  { "codigo": 34529, "descricao": "YPE TIXAN LAVA ROUPAS LIQ MACIEZ FRASCO PLAST" },
+  { "codigo": 34608, "descricao": "SKOL LATA 350ML SH C/12 NPAL MULTIPACK" },
+  { "codigo": 34770, "descricao": "RED BULL SUGAR FREE POMELO LATA 250ML FOUR PA" },
+  { "codigo": 34890, "descricao": "YPE ASSOLAN ESPONJA LA ACO CX PAPEL CART 1,6K" },
+  { "codigo": 35003, "descricao": "TRIDENT XFRESH 5S PRETO CEREJA ENVELOPE 8G CX" },
+  { "codigo": 35134, "descricao": "YPE SABAO BARRA NEUTRO PCT PLAST 800G" },
+  { "codigo": 35136, "descricao": "YPE SABAO BARRA MULTIATIVO PCT PLAST 800G" },
+  { "codigo": 35331, "descricao": "BUDWEISER GFA VD 1L" },
+  { "codigo": 37108, "descricao": "CHAPATEX,1,00 M,1,20 M,0,03 M" },
+  { "codigo": 42069, "descricao": "PALETE MADEIRA,1,05 M,1,25 M,0,16 M,PBR2" },
+  { "codigo": 101490, "descricao": "BARRIL CHOPP,50L" },
+  { "codigo": 104195, "descricao": "PALETE MADEIRA,1,00 M,1,20 M,0,14 M,PBR1" },
+  { "codigo": 138165, "descricao": "GARRAFEIRA PLAST,24 GFA 600ML,ANTARCTICA,,AZU" },
+  { "codigo": 188005, "descricao": "GARRAFEIRA PLAST,12 GFA 1L,AMBEV" },
+  { "codigo": 188006, "descricao": "GFA VIDRO 1L,AMBAR,RETORN." },
+  { "codigo": 198214, "descricao": "GFA VIDRO 330ML,AMBAR,TIPO S GP,RETORN" },
+  { "codigo": 235894, "descricao": "GFA VIDRO 1L,GCA 1L,RETORN." },
+  { "codigo": 287241, "descricao": "GFA VIDRO 300 ML,AMBAR,RETORNAVEL IMP" },
+  { "codigo": 296156, "descricao": "GARRAFEIRA PLAST,23 GFA 300ML,AZUL" },
+  { "codigo": 786238, "descricao": "GFA VIDRO 635ML,VERDE,TIPO A,RETORN." },
+  { "codigo": 857678, "descricao": "GFA VIDRO 965ML,RETORN.,TIPO A,TRANSP" },
+  { "codigo": 857679, "descricao": "GARRAFEIRA PLAST,12 GFA 965ML" },
+  { "codigo": 899599, "descricao": "GARRAFEIRA PLAST,24 GFA 600ML" }
+];
 
-function dashChart(id, type, labels, datasets) {
-  if (_chartInstances[id]) { _chartInstances[id].destroy(); }
-  const el = document.getElementById(id);
-  if (!el) return;
-  _chartInstances[id] = new Chart(el, {
-    type, data: { labels, datasets },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: '#6a7d92', font: { size: 11 } } } },
-      scales: type === 'bar' ? {
-        x: { ticks: { color: '#6a7d92', font:{size:10} }, grid: { color: '#222d3a' } },
-        y: { ticks: { color: '#6a7d92', font:{size:10} }, grid: { color: '#222d3a' } }
-      } : {}
-    }
+let S = {
+  tarefas:    [],
+  operadores: [],
+  conferentes:[],
+  selProd:    null,
+  nextId:     1
+};
+
+const FB_KEY = 'pk_firebase_config';
+let fbApp = null, fbDb = null, fbUnsub = null;
+
+// ── Firebase helpers ─────────────────────────────────
+function loadFbConfig() {
+  try { return JSON.parse(localStorage.getItem(FB_KEY) || 'null'); } catch(e) { return null; }
+}
+
+function populateFbForm() {
+  const cfg = loadFbConfig();
+  if (!cfg) return;
+  const map = { apiKey:'fb-apiKey', authDomain:'fb-authDomain', projectId:'fb-projectId',
+    storageBucket:'fb-storageBucket', messagingSenderId:'fb-messagingSenderId',
+    appId:'fb-appId', measurementId:'fb-measurementId' };
+  Object.entries(map).forEach(([k,id]) => {
+    const el = document.getElementById(id);
+    if (el && cfg[k]) el.value = cfg[k];
   });
 }
 
-function dashKpi(containerId, kpis) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  el.innerHTML = kpis.map(k =>
-    `<div class="dash-kpi"><div class="dash-kpi-val" style="color:${k.cor||'var(--amber)'}">${k.val}</div><div class="dash-kpi-label">${k.label}</div>${k.sub?`<div class="dash-kpi-sub" style="color:${k.cor||'var(--amber)'}">${k.sub}</div>`:''}</div>`
-  ).join('');
-}
-
-function contarPorChave(arr, chave) {
-  const m = {};
-  arr.forEach(r => { const v = r[chave] || '—'; m[v] = (m[v]||0) + 1; });
-  return m;
-}
-function top5(map) {
-  return Object.entries(map).sort((a,b) => b[1]-a[1]).slice(0,5);
-}
-
-async function dashCarregar() {
-  const loading = document.getElementById('dash-loading');
-  if (loading) loading.style.display = 'block';
-  try {
-    const de  = document.getElementById('dash-de').value;
-    const ate = document.getElementById('dash-ate').value;
-
-    const filtrarData = (arr) => {
-      if (!de && !ate) return arr;
-      return arr.filter(r => {
-        const d = r.dataISO || r.data || '';
-        if (de && d < de) return false;
-        if (ate && d > ate) return false;
-        return true;
-      });
-    };
-
-    const [snapT, snapD, snapR, snapA, snapQ] = await Promise.all([
-      getDb() ? getDb().collection('tarefas').get() : Promise.resolve({docs:[]}),
-      getDb() ? getDb().collection('despejo').get() : Promise.resolve({docs:[]}),
-      getDb() ? getDb().collection('repack').get() : Promise.resolve({docs:[]}),
-      getDb() ? getDb().collection('armazem').get() : Promise.resolve({docs:[]}),
-      getDb() ? getDb().collection('quebras').get() : Promise.resolve({docs:[]}),
-    ]);
-
-    const tarefas = filtrarData(snapT.docs.map(d=>d.data()));
-    const despejo = filtrarData(snapD.docs.map(d=>d.data()));
-    const repack  = filtrarData(snapR.docs.map(d=>d.data()));
-    const armazem = filtrarData(snapA.docs.map(d=>d.data()));
-    const quebras = filtrarData(snapQ.docs.map(d=>d.data()));
-
-    // ── PICKING KPIs ──────────────────────────────────
-    const done = tarefas.filter(t=>t.status==='done');
-    const pend = tarefas.filter(t=>t.status==='pending');
-    const prog = tarefas.filter(t=>t.status==='in_progress');
-    const durMin = done.map(t=>Number(t.duracaoMin)||0).filter(v=>v>0);
-    const avgMin = durMin.length ? durMin.reduce((s,v)=>s+v,0)/durMin.length : 0;
-    dashKpi('dash-picking-cards',[
-      {val: tarefas.length, label:'Total Tarefas', cor:'var(--amber)'},
-      {val: done.length,    label:'Concluídas',    cor:'var(--green)'},
-      {val: pend.length,    label:'Pendentes',     cor:'var(--amber)'},
-      {val: prog.length,    label:'Em Andamento',  cor:'var(--blue)'},
-      {val: avgMin > 0 ? avgMin.toFixed(1)+'min' : '—', label:'Tempo Médio', cor:'#7cc6ff'},
-    ]);
-    const opMap = contarPorChave(tarefas,'operador');
-    const opTop = top5(opMap);
-    dashChart('dash-chart-operadores','bar', opTop.map(e=>e[0].split(' ')[0]), [{label:'Tarefas',data:opTop.map(e=>e[1]),backgroundColor:CHART_COLORS,borderRadius:6}]);
-    dashChart('dash-chart-picking-status','doughnut',['Concluída','Pendente','Em Andamento'],
-      [{data:[done.length,pend.length,prog.length],backgroundColor:['#22c55e','#f5a623','#3b82f6'],borderWidth:0}]);
-
-    // ── DESPEJO KPIs ──────────────────────────────────
-    const dpMeta = despejo.filter(r=>r.resultado&&r.resultado.includes('✅')).length;
-    const dpNao  = despejo.length - dpMeta;
-    dashKpi('dash-despejo-cards',[
-      {val: despejo.length,  label:'Total Registros',  cor:'var(--amber)'},
-      {val: dpMeta,          label:'Meta Batida',       cor:'var(--green)'},
-      {val: dpNao,           label:'Acima da Meta',     cor:'var(--red)'},
-      {val: despejo.length ? Math.round(dpMeta/despejo.length*100)+'%' : '—', label:'Taxa de Meta', cor:'var(--green)'},
-    ]);
-    dashChart('dash-chart-despejo-meta','doughnut',['Meta Batida','Acima da Meta'],
-      [{data:[dpMeta,dpNao],backgroundColor:['#22c55e','#ef4444'],borderWidth:0}]);
-    const dpEmbMap = contarPorChave(despejo,'embalagem');
-    dashChart('dash-chart-despejo-emb','bar',Object.keys(dpEmbMap),
-      [{label:'Registros',data:Object.values(dpEmbMap),backgroundColor:CHART_COLORS,borderRadius:6}]);
-
-    // ── REPACK KPIs ───────────────────────────────────
-    const rpMeta = repack.filter(r=>r.resultado&&r.resultado.includes('✅')).length;
-    const rpNao  = repack.length - rpMeta;
-    dashKpi('dash-repack-cards',[
-      {val: repack.length,  label:'Total Registros', cor:'var(--amber)'},
-      {val: rpMeta,         label:'Meta Batida',      cor:'var(--green)'},
-      {val: rpNao,          label:'Acima da Meta',    cor:'var(--red)'},
-      {val: repack.length ? Math.round(rpMeta/repack.length*100)+'%' : '—', label:'Taxa de Meta', cor:'var(--green)'},
-    ]);
-    dashChart('dash-chart-repack-meta','doughnut',['Meta Batida','Acima da Meta'],
-      [{data:[rpMeta,rpNao],backgroundColor:['#22c55e','#ef4444'],borderWidth:0}]);
-    const rpEmbMap = contarPorChave(repack,'embalagem');
-    dashChart('dash-chart-repack-emb','bar',Object.keys(rpEmbMap),
-      [{label:'Registros',data:Object.values(rpEmbMap),backgroundColor:CHART_COLORS,borderRadius:6}]);
-
-    // ── ARMAZÉM KPIs ──────────────────────────────────
-    const azOk  = armazem.filter(r=>r.status&&r.status.includes('✅')).length;
-    const azNok = armazem.length - azOk;
-    const azPal = armazem.reduce((s,r)=>s+(Number(r.palhete)||0),0);
-    dashKpi('dash-armazem-cards',[
-      {val: armazem.length, label:'Total Operações', cor:'#7cc6ff'},
-      {val: azOk,           label:'Dentro da Janela', cor:'var(--green)'},
-      {val: azNok,          label:'Fora da Janela',  cor:'var(--amber)'},
-      {val: azPal,          label:'Total Palhetes',  cor:'#7cc6ff'},
-    ]);
-    dashChart('dash-chart-armazem-status','doughnut',['Dentro da Janela','Fora da Janela'],
-      [{data:[azOk,azNok],backgroundColor:['#22c55e','#f59e0b'],borderWidth:0}]);
-    const azTipoMap = contarPorChave(armazem,'tipo');
-    dashChart('dash-chart-armazem-tipo','bar',Object.keys(azTipoMap),
-      [{label:'Qtd',data:Object.values(azTipoMap),backgroundColor:CHART_COLORS,borderRadius:6}]);
-    const azEmpMap = contarPorChave(armazem,'empilhador');
-    const azEmpTop = top5(azEmpMap);
-    dashChart('dash-chart-armazem-emp','bar',azEmpTop.map(e=>e[0].split(' ')[0]),
-      [{label:'Operações',data:azEmpTop.map(e=>e[1]),backgroundColor:CHART_COLORS,borderRadius:6}]);
-
-    // ── QUEBRAS KPIs ──────────────────────────────────
-    const qbTotal = quebras.length;
-    const qbQtd   = quebras.reduce((s,r)=>s+(Number(r.quantidade)||0),0);
-    const qbAreas = [...new Set(quebras.map(r=>r.area))].length;
-    dashKpi('dash-quebras-cards',[
-      {val: qbTotal, label:'Total Registros',    cor:'#fca5a5'},
-      {val: qbQtd,   label:'Unidades Quebradas', cor:'var(--red)'},
-      {val: qbAreas, label:'Áreas Afetadas',     cor:'var(--amber)'},
-    ]);
-    const qbAreaMap = contarPorChave(quebras,'area');
-    dashChart('dash-chart-quebras-area','doughnut',Object.keys(qbAreaMap),
-      [{data:Object.values(qbAreaMap),backgroundColor:CHART_COLORS,borderWidth:0}]);
-    const qbMotMap = contarPorChave(quebras,'motivo');
-    const qbMotTop = top5(qbMotMap);
-    dashChart('dash-chart-quebras-motivo','bar',qbMotTop.map(e=>e[0].length>22?e[0].slice(0,22)+'…':e[0]),
-      [{label:'Qtd',data:qbMotTop.map(e=>e[1]),backgroundColor:['#ef4444','#f97316','#f59e0b','#fca5a5','#fb923c'],borderRadius:6}]);
-    const qbProdMap = {};
-    quebras.forEach(r=>{const k=(r.descricao||r.codProduto||'—').slice(0,25);qbProdMap[k]=(qbProdMap[k]||0)+(Number(r.quantidade)||1);});
-    const qbProdTop = top5(qbProdMap);
-    dashChart('dash-chart-quebras-prod','bar',qbProdTop.map(e=>e[0]),
-      [{label:'Unidades',data:qbProdTop.map(e=>e[1]),backgroundColor:CHART_COLORS,borderRadius:6}]);
-
-  } catch(e) {
-    console.error('Dashboard erro:', e);
+function saveFbConfig() {
+  const cfg = {
+    apiKey:            document.getElementById('fb-apiKey')?.value.trim(),
+    authDomain:        document.getElementById('fb-authDomain')?.value.trim(),
+    projectId:         document.getElementById('fb-projectId')?.value.trim(),
+    storageBucket:     document.getElementById('fb-storageBucket')?.value.trim(),
+    messagingSenderId: document.getElementById('fb-messagingSenderId')?.value.trim(),
+    appId:             document.getElementById('fb-appId')?.value.trim(),
+    measurementId:     document.getElementById('fb-measurementId')?.value.trim(),
+  };
+  if (!cfg.apiKey || !cfg.projectId || !cfg.appId) {
+    showFbResult('Preencha ao menos: API Key, Project ID e App ID', 'err'); return;
   }
-  if (loading) loading.style.display = 'none';
-}
-
-// ══════════════════════════════════════════════════════
-//  EXPORTAR EXCEL / CSV
-// ══════════════════════════════════════════════════════
-async function fecharTurno() {
-  if (!dbOk()) return;
-  const btn = document.getElementById('btn-fechar-turno');
-  if (btn) { btn.disabled=true; btn.textContent='⏳ Gerando Excel...'; }
-  try {
-    const [snapD,snapR,snapA,snapQ] = await Promise.all([
-      getDb().collection('despejo').orderBy('_criadoEm','asc').get(),
-      getDb().collection('repack').orderBy('_criadoEm','asc').get(),
-      getDb().collection('armazem').orderBy('_criadoEm','asc').get(),
-      getDb().collection('quebras').orderBy('_criadoEm','asc').get(),
-    ]);
-    const wb = XLSX.utils.book_new();
-    const hoje = todayBR();
-    const resumo = [
-      {Módulo:'Despejo', Total:snapD.size, Hoje:snapD.docs.filter(d=>d.data().data===hoje).length},
-      {Módulo:'Repack',  Total:snapR.size, Hoje:snapR.docs.filter(d=>d.data().data===hoje).length},
-      {Módulo:'Armazém', Total:snapA.size, Hoje:snapA.docs.filter(d=>d.data().data===hoje).length},
-      {Módulo:'Quebras', Total:snapQ.size, Hoje:snapQ.docs.filter(d=>d.data().data===hoje).length},
-    ];
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumo), 'RESUMO');
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(snapD.docs.map(d=>{const r=d.data();return{'Data':r.data,'Embalagem':r.embalagem,'Qtd':r.quantidade,'Início':r.inicio,'Fim':r.fim,'Tempo':r.tempo,'Meta':r.meta,'Resultado':r.resultado};})), 'DESPEJO');
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(snapR.docs.map(d=>{const r=d.data();return{'Data':r.data,'Embalagem':r.embalagem,'Qtd':r.quantidade,'Início':r.inicio,'Fim':r.fim,'Tempo':r.duracao,'Meta':r.meta,'Resultado':r.resultado};})), 'REPACK');
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(snapA.docs.map(d=>{const r=d.data();return{'Operação':r.operacao,'Data':r.data,'Início':r.inicio,'Fim':r.fim,'Status':r.status,'Empilhador':r.empilhador,'Turno':r.turno,'Placa':r.placa,'Tipo':r.tipo,'Palhete':r.palhete,'Obs':r.obs||''};})), 'ARMAZÉM');
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(snapQ.docs.map(d=>{const r=d.data();return{'Data':r.data,'Cód Produto':r.codProduto,'Descrição':r.descricao,'Qtd':r.quantidade,'Turno':r.turno,'Cód Quebra':r.codQuebra,'Área':r.area,'Motivo':r.motivo};})), 'QUEBRAS');
-    XLSX.writeFile(wb, `relatorio_turno_${todayISO()}.xlsx`);
-    const st = document.getElementById('rel-fechar-status');
-    if (st) st.textContent = `✅ Arquivo gerado: relatorio_turno_${todayISO()}.xlsx`;
-  } catch(e) {
-    const st = document.getElementById('rel-fechar-status');
-    if (st) st.textContent = '❌ Erro: ' + e.message;
+  if (!cfg.apiKey.startsWith('AIza')) {
+    showFbResult('API Key inválida — deve começar com "AIza..."', 'err'); return;
   }
-  if (btn) { btn.disabled=false; btn.textContent='📥 FECHAR TURNO — BAIXAR EXCEL COMPLETO'; }
+  localStorage.setItem(FB_KEY, JSON.stringify(cfg));
+  toast('Config Firebase salva!');
+  initFirebase(cfg);
 }
 
-async function exportarModulo(colecao, nomeArq, mapFn) {
-  if (!dbOk()) return;
-  const statusId = colecao + '-export-status';
-  const statusEl = document.getElementById(statusId);
-  if (statusEl) statusEl.textContent = '⏳ Buscando...';
+function clearFbConfig() {
+  if (!confirm('Remover configuração do Firebase?')) return;
+  if (fbUnsub) { fbUnsub(); fbUnsub = null; }
+  localStorage.removeItem(FB_KEY);
+  fbApp = null; fbDb = null;
+  setFbIndicator('off');
+  updateSettingsToggle(false);
+  updateMenuFbStatus(false);
+  document.getElementById('fb-test-result').innerHTML = '';
+  toast('Config removida', true);
+}
+
+function initFirebase(cfg) {
   try {
-    const snap = await getDb().collection(colecao).orderBy('_criadoEm','asc').get();
-    if (!snap.size) { if(statusEl) statusEl.textContent='⚠ Nenhum registro.'; return; }
-    const ws = XLSX.utils.json_to_sheet(snap.docs.map(d=>mapFn(d.data())));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, colecao.charAt(0).toUpperCase()+colecao.slice(1));
-    XLSX.writeFile(wb, nomeArq);
-    if(statusEl) statusEl.textContent = `✅ ${snap.size} registro(s) exportado(s).`;
-  } catch(e) { if(statusEl) statusEl.textContent='❌ Erro: '+e.message; }
+    if (fbUnsub) { fbUnsub(); fbUnsub = null; }
+    if (firebase.apps.length) { firebase.apps.forEach(a => a.delete()); }
+    fbApp = firebase.initializeApp(cfg);
+    fbDb  = firebase.firestore();
+    fbDb.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+    setFbIndicator('connecting');
+    updateSettingsToggle(false);
+    startRealtimeSync();
+  } catch(e) {
+    setFbIndicator('error');
+    showFbResult('Erro ao inicializar: ' + e.message, 'err');
+  }
 }
 
-function exportarDespejoExcel() { exportarModulo('despejo','despejo_registros.xlsx',r=>({'Data':r.data,'Embalagem':r.embalagem,'Qtd':r.quantidade,'Início':r.inicio,'Fim':r.fim,'Tempo':r.tempo,'Meta':r.meta,'Resultado':r.resultado})); }
-function exportarRepackExcel()  { exportarModulo('repack','repack_registros.xlsx',r=>({'Data':r.data,'Embalagem':r.embalagem,'Qtd':r.quantidade,'Início':r.inicio,'Fim':r.fim,'Tempo':r.duracao,'Meta':r.meta,'Resultado':r.resultado})); }
-function exportarArmazemExcel() { exportarModulo('armazem','armazem_registros.xlsx',r=>({'Operação':r.operacao,'Data':r.data,'Início':r.inicio,'Fim':r.fim,'Status':r.status,'Empilhador':r.empilhador,'Turno':r.turno,'Placa':r.placa,'Tipo':r.tipo,'Palhete':r.palhete,'Obs':r.obs||''})); }
-function exportarQuebrasExcel() { exportarModulo('quebras','quebras_registros.xlsx',r=>({'Data':r.data,'Cód Produto':r.codProduto,'Descrição':r.descricao,'Qtd':r.quantidade,'Turno':r.turno,'Cód Quebra':r.codQuebra,'Área':r.area,'Motivo':r.motivo})); }
-
-function exportCSV() {
-  if (typeof S === 'undefined' || !S.tarefas.length) { const st = document.getElementById('csv-status'); if(st) st.textContent='⚠ Nenhuma tarefa disponível.'; return; }
-  const rows = [['ID','Código','Descrição','Paletes','Conferente','Operador','Status','Criado Em','Iniciado Em','Finalizado Em','Duração (min)']];
-  S.tarefas.forEach(t => rows.push([t.id,t.codigo,'"'+t.descricao+'"',t.quantidade,t.conferente,t.operador,t.status,t.criadoEm||'',t.iniciadoEm||'',t.finalizadoEm||'',t.duracaoMin||'']));
-  const csv = rows.map(r=>r.join(',')).join('\n');
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
-  a.download = 'picking_' + todayISO() + '.csv';
-  a.click();
-  const st = document.getElementById('csv-status');
-  if (st) st.textContent = '✅ Arquivo gerado!';
+function startRealtimeSync() {
+  if (!fbDb) return;
+  fbUnsub = fbDb.collection('tarefas')
+    .orderBy('criadoEm', 'asc')
+    .onSnapshot(
+      snap => {
+        S.tarefas = snap.docs.map(d => ({ _docId: d.id, ...d.data() }));
+        const maxId = S.tarefas.reduce((m,t) => Math.max(m, t.id||0), 0);
+        if (maxId >= S.nextId) S.nextId = maxId + 1;
+        save(); renderAll();
+        setFbIndicator('online');
+        updateSettingsToggle(true);
+        updateMenuFbStatus(true);
+      },
+      err => {
+        setFbIndicator('error');
+        toast('Erro Firebase: ' + err.message, true);
+      }
+    );
 }
 
-// ══════════════════════════════════════════════════════
-//  SECTION TOGGLE (sec-head expand/collapse)
-// ══════════════════════════════════════════════════════
-function toggleSec(id) {
-  const body  = document.getElementById('sec-' + id + '-body');
-  if (!body) return;
-  const isOpen = body.classList.contains('open');
-  body.classList.toggle('open', !isOpen);
-  body.classList.toggle('closed', isOpen);
-  const head = document.getElementById('sec-' + id + '-head');
-  if (head) { const arrow = head.querySelector('.sec-arrow'); if (arrow) arrow.style.transform = isOpen ? 'rotate(-90deg)' : ''; }
+async function testFbConnection() {
+  saveFbConfig();
+  if (!fbDb) return;
+  showFbResult('Testando conexão com o Firestore...', 'load');
+  try {
+    const snap = await fbDb.collection('tarefas').limit(1).get();
+    showFbResult('Conexão OK — Firestore acessível (' + snap.size + ' doc encontrado)', 'ok');
+    setFbIndicator('online');
+    updateSettingsToggle(true);
+    updateMenuFbStatus(true);
+  } catch(e) {
+    if (e.code === 'permission-denied') {
+      showFbResult('Conectado, mas sem permissão. Va em Firestore - Regras e publique: allow read, write: if true;', 'err');
+    } else {
+      showFbResult(e.message, 'err');
+    }
+    setFbIndicator('error');
+  }
 }
 
-// ══════════════════════════════════════════════════════
-//  SETTINGS TOGGLE
-// ══════════════════════════════════════════════════════
-function toggleSettings() {
-  const body   = document.getElementById('settings-body');
-  const status = document.getElementById('settings-toggle-status');
-  if (!body) return;
-  const isVisible = body.style.display !== 'none';
-  body.style.display = isVisible ? 'none' : 'block';
-  if (status) status.textContent = isVisible ? '▾' : '▴';
+// ── Firestore escrita ─────────────────────────────────
+async function fbSaveTask(task) {
+  if (!fbDb) return;
+  try {
+    const { _docId, ...data } = task;
+    if (_docId) {
+      await fbDb.collection('tarefas').doc(_docId).set(data);
+    } else {
+      const ref = await fbDb.collection('tarefas').add(data);
+      task._docId = ref.id;
+    }
+  } catch(e) { toast('Erro ao salvar no Firebase: ' + e.message, true); }
 }
-// Start collapsed
-const _sb = document.getElementById('settings-body');
-if (_sb) _sb.style.display = 'none';
 
-// ══════════════════════════════════════════════════════
-//  FB INDICATOR + MENU STATUS HELPERS
-// ══════════════════════════════════════════════════════
+async function fbDeleteTask(task) {
+  if (!fbDb || !task._docId) return;
+  try { await fbDb.collection('tarefas').doc(task._docId).delete(); } catch(e) {}
+}
+
+async function fbPushToReport(task) {
+  if (!fbDb) return;
+  try {
+    await fbDb.collection('registros').add({
+      id: task.id, codigo: task.codigo, descricao: task.descricao,
+      quantidade: task.quantidade, conferente: task.conferente,
+      operador: task.operador, criadoEm: task.criadoEm,
+      iniciadoEm: task.iniciadoEm, finalizadoEm: task.finalizadoEm,
+      duracaoMin: task.duracaoMin, enviadoEm: new Date().toISOString(),
+      tipoOperacao:    task.tipoOperacao    ?? null,
+      locDistanciaM:   task.locData?.distanciaM   ?? null,
+      locIdleSec:      task.locData?.totalIdleSec ?? null,
+      locParadas:      task.locData?.segmentosParado ?? null,
+      locMapsLink:     task.locData?.mapsLink     ?? null,
+    });
+  } catch(e) {}
+}
+
+// ── Visuals Firebase ──────────────────────────────────
 function setFbIndicator(state) {
   const el = document.getElementById('fb-indicator');
   if (!el) return;
-  const map = {
-    off:        {cls:'fb-off',        txt:'🔴 OFFLINE'},
-    connecting: {cls:'fb-connecting', txt:'🟡 CONECTANDO'},
-    online:     {cls:'fb-online',     txt:'🟢 ONLINE'},
-    error:      {cls:'fb-error',      txt:'🔴 ERRO'},
+  const MAP = {
+    off:        { cls:'fb-off',        txt:'OFFLINE'    },
+    connecting: { cls:'fb-connecting', txt:'CONECTANDO' },
+    online:     { cls:'fb-online',     txt:'ONLINE'     },
+    error:      { cls:'fb-error',      txt:'ERRO'       },
   };
-  const s = map[state] || map.off;
-  el.className = 'fb-indicator ' + s.cls;
+  const s = MAP[state] || MAP.off;
+  el.className   = 'fb-indicator ' + s.cls;
   el.textContent = s.txt;
-}
-
-function updateSettingsToggle(isOnline) {
-  const btn = document.getElementById('settings-toggle-btn');
-  if (!btn) return;
-  btn.querySelector('span:first-child').textContent = isOnline ? '🔥 FIREBASE CONECTADO ✅' : '🔥 CONFIGURAÇÃO FIREBASE';
-}
-
-function updateMenuFbStatus(isOnline) {
-  const el = document.getElementById('menu-fb-status');
-  if (!el) return;
-  el.classList.toggle('show', isOnline);
 }
 
 function showFbResult(msg, type) {
   const el = document.getElementById('fb-test-result');
   if (!el) return;
-  const cls = type==='ok'?'fb-test-result-ok':type==='err'?'fb-test-result-err':'fb-test-result-load';
-  el.innerHTML = `<div class="${cls}">${msg}</div>`;
+  const cls = { ok:'fb-msg-ok', err:'fb-msg-err', load:'fb-msg-load' }[type] || 'fb-msg-load';
+  el.innerHTML = '<div class="fb-msg ' + cls + '">' + msg + '</div>';
 }
 
-// ══════════════════════════════════════════════════════
-//  POP / RACI MODAL
-// ══════════════════════════════════════════════════════
-function abrirModalPOP() { document.getElementById('modal-pop').style.display='flex'; }
-function fecharModalPOP() { document.getElementById('modal-pop').style.display='none'; }
-function fecharPOP(e) { if(e.target===document.getElementById('modal-pop')) fecharModalPOP(); }
-
-// ══════════════════════════════════════════════════════
-//  SOBRESCREVER requestConfTab / requestEmpTab do app.js
-//  para navegar via navGoPane em vez de goPane('menu')
-// ══════════════════════════════════════════════════════
-window.requestConfTab = function() {
-  if (typeof confUnlocked !== 'undefined' && confUnlocked) {
-    navGoPane('conf'); return;
-  }
-  const modal = document.getElementById('modal-senha');
-  const inp   = document.getElementById('inp-senha');
-  const erro  = document.getElementById('senha-erro');
-  if (inp) inp.value = '';
-  if (erro) erro.style.display = 'none';
-  if (modal) modal.style.display = 'flex';
-  setTimeout(() => inp && inp.focus(), 100);
-};
-
-window.requestEmpTab = function() {
-  if (typeof checklistDone !== 'undefined' && checklistDone) {
-    navGoPane('emp'); return;
-  }
-  if (typeof resetChecklist === 'function') resetChecklist();
-  const modal = document.getElementById('modal-checklist');
-  if (modal) modal.style.display = 'flex';
-};
-
-// Patch confirmarSenha para navegar para conf em vez de goPane('conf')
-const _origConfirmarSenha = window.confirmarSenha;
-window.confirmarSenha = function() {
-  const inp  = document.getElementById('inp-senha');
-  const erro = document.getElementById('senha-erro');
-  const pwd  = (typeof CONF_PASSWORD !== 'undefined') ? CONF_PASSWORD : '4321';
-  if (inp && inp.value === pwd) {
-    window.confUnlocked = true;
-    const modal = document.getElementById('modal-senha');
-    if (modal) modal.style.display = 'none';
-    const lockEl = document.getElementById('conf-lock-state');
-    if (lockEl) { lockEl.textContent = '🔓'; lockEl.classList.add('unlocked'); }
-    navGoPane('conf');
-    if (typeof toast === 'function') toast('Acesso liberado — Bem-vindo, Conferente!');
-    if (typeof updateMenuCounts === 'function') updateMenuCounts();
+function updateSettingsToggle(connected) {
+  const btn = document.getElementById('settings-toggle-btn');
+  if (!btn) return;
+  if (connected) {
+    btn.classList.add('connected');
+    btn.querySelector('span:first-child').textContent = 'FIREBASE — CONECTADO';
   } else {
-    if (erro) erro.style.display = 'block';
-    if (inp) { inp.classList.add('shake'); inp.value = ''; setTimeout(() => inp.classList.remove('shake'), 450); inp.focus(); }
+    btn.classList.remove('connected');
+    btn.querySelector('span:first-child').textContent = 'CONFIGURACAO FIREBASE';
   }
-};
-
-// Patch confirmarChecklist para navegar para emp em vez de goPane('emp')
-const _origConfirmarChecklist = window.confirmarChecklist;
-window.confirmarChecklist = function() {
-  const boxes = [...document.querySelectorAll('.chk-box')];
-  const TOTAL = 5;
-  if (boxes.filter(b=>b.checked).length < TOTAL) { if(typeof toast==='function') toast('Marque todos os itens antes de continuar', true); return; }
-  window.checklistDone = true;
-  const modal = document.getElementById('modal-checklist');
-  if (modal) modal.style.display = 'none';
-  const lockEl = document.getElementById('emp-lock-state');
-  if (lockEl) { lockEl.textContent = '✅'; lockEl.classList.add('unlocked'); }
-  navGoPane('emp');
-  if (typeof toast === 'function') toast('Checklist concluído — Bom turno, operador!');
-  if (typeof updateMenuCounts === 'function') updateMenuCounts();
-};
-
-// pullReport — needs to navigate to conf first so the div exists
-window.pullReport = async function() {
-  navGoPane('conf');
-  if (!getDb()) { alert('Firebase não conectado.'); return; }
-  const area = document.getElementById('report-area');
-  if (!area) return;
-  area.innerHTML = '<div style="color:var(--text-dim);font-size:12px;padding:12px 0">⏳ Buscando dados...</div>';
-  try {
-    const snap = await getDb().collection('tarefas').orderBy('criadoEm','asc').get();
-    const today = new Date().toDateString();
-    const tasks = snap.docs.map(d=>d.data()).filter(t => new Date(t.criadoEm||'').toDateString()===today || t.status!=='done');
-    if (!tasks.length) { area.innerHTML='<div style="color:var(--text-muted);font-size:12px;padding:12px 0">Nenhuma tarefa hoje.</div>'; return; }
-    area.innerHTML = tasks.map(t=>`<div style="padding:10px 14px;margin-bottom:8px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);font-size:12px"><strong>#${t.id}</strong> — ${t.descricao} <span style="color:var(--text-muted)">(${t.operador})</span> <span style="float:right;color:${t.status==='done'?'var(--green)':t.status==='in_progress'?'var(--blue)':'var(--amber)'}">${t.status}</span></div>`).join('');
-  } catch(e) { area.innerHTML='<div style="color:var(--red);font-size:12px">Erro: '+e.message+'</div>'; }
-};
-
-window.clearLocal = function() {
-  if (!confirm('Limpar dados locais?')) return;
-  if (typeof save === 'function') { if (typeof S !== 'undefined') { S.tarefas=[]; save(); if(typeof renderAll==='function') renderAll(); } }
-  toast('Dados locais limpos');
-};
-
-// ══════════════════════════════════════════════════════
-//  CLOCK
-// ══════════════════════════════════════════════════════
-function updateClock() {
-  const el = document.getElementById('clock');
-  if (!el) return;
-  const n = new Date();
-  el.textContent = [n.getHours(),n.getMinutes(),n.getSeconds()].map(x=>String(x).padStart(2,'0')).join(':');
 }
-updateClock(); setInterval(updateClock, 1000);
+
+function updateMenuFbStatus(connected) {
+  const el = document.getElementById('menu-fb-status');
+  if (!el) return;
+  el.textContent = connected
+    ? 'Firebase conectado — dados em tempo real'
+    : 'Configure o Firebase nas configuracoes do Conferente';
+  el.style.color = connected ? 'var(--green)' : '';
+}
 
 // ══════════════════════════════════════════════════════
-//  MENU BADGE — pending tasks count on emp nav item
+//  PERSIST LOCAL
+// ══════════════════════════════════════════════════════
+// ── Versão dos nomes — aumente se mudar operadores/conferentes no código
+const NAMES_VERSION = 3;
+
+function load() {
+  try {
+    const d = localStorage.getItem('pk2_s');
+    if (!d) return;
+    const saved = JSON.parse(d);
+    if (saved.tarefas) S.tarefas = saved.tarefas;
+    if (saved.nextId)  S.nextId  = saved.nextId;
+
+    // Se a versão dos nomes mudou, ignora os nomes salvos e usa só os do código
+    if ((saved.namesVersion || 0) < NAMES_VERSION) {
+      // Descarta nomes antigos — usa apenas os hardcoded acima
+      return;
+    }
+
+    // Mesma versão: mantém extras adicionados pelo usuário via +ADD
+    if (saved.operadores)  saved.operadores.forEach(n  => { if (!S.operadores.includes(n))  S.operadores.push(n);  });
+    if (saved.conferentes) saved.conferentes.forEach(n => { if (!S.conferentes.includes(n)) S.conferentes.push(n); });
+  } catch(e) {}
+}
+function save() { localStorage.setItem('pk2_s', JSON.stringify({...S, namesVersion: NAMES_VERSION})); }
+
+// ══════════════════════════════════════════════════════
+//  RELOGIO
+// ══════════════════════════════════════════════════════
+(function initClock() {
+  const tick = () => {
+    const el = document.getElementById('clock');
+    if (el) el.textContent = new Date().toLocaleTimeString('pt-BR', {hour12:false});
+  };
+  tick();
+  setInterval(tick, 1000);
+})();
+
+// ══════════════════════════════════════════════════════
+//  NAVEGACAO — PANES
+// ══════════════════════════════════════════════════════
+const ALL_PANES = ['menu','conf','emp','relatorio','reports','despejo','repack','armazem','quebras','dashboard'];
+
+function goPane(name) {
+  ALL_PANES.forEach(p => {
+    document.getElementById('pane-' + p).classList.toggle('active', p === name);
+  });
+  if (name === 'relatorio') renderRelatorioDia();
+  if (name === 'reports') {
+    // Preenche data padrão com hoje
+    const di = document.getElementById('csv-date');
+    if (di && !di.value) {
+      const t = new Date();
+      di.value = t.toISOString().slice(0,10);
+    }
+    if (typeof carregarResumoRelatorios === 'function') carregarResumoRelatorios();
+  }
+}
+
+function goMenu() {
+  goPane('menu');
+  updateMenuCounts();
+}
+
+function requestConfTab() {
+  if (confUnlocked) { goPane('conf'); return; }
+  document.getElementById('modal-senha').style.display = 'flex';
+  document.getElementById('inp-senha').value = '';
+  document.getElementById('senha-erro').style.display = 'none';
+  setTimeout(() => document.getElementById('inp-senha').focus(), 100);
+}
+
+function requestEmpTab() {
+  if (!checklistDone) {
+    resetChecklist();
+    document.getElementById('modal-checklist').style.display = 'flex';
+    return;
+  }
+  goPane('emp');
+}
+
+function toggleSec(id) {
+  document.getElementById('sec-' + id + '-head')?.classList.toggle('open');
+  document.getElementById('sec-' + id + '-body')?.classList.toggle('open');
+}
+
+function toggleSettings() {
+  document.getElementById('settings-body').classList.toggle('open');
+  const arrow = document.getElementById('settings-toggle-status');
+  if (arrow) arrow.textContent =
+    document.getElementById('settings-body').classList.contains('open') ? 'v' : '>';
+}
+
+// ══════════════════════════════════════════════════════
+//  MENU — contadores dinamicos
 // ══════════════════════════════════════════════════════
 function updateMenuCounts() {
-  if (typeof S === 'undefined') return;
-  const pending = S.tarefas.filter(t=>t.status==='pending').length;
-  // Update lock state badge on emp nav
+  const pending  = S.tarefas.filter(t => t.status === 'pending').length;
+  const progress = S.tarefas.filter(t => t.status === 'in_progress').length;
+  const done     = S.tarefas.filter(t => t.status === 'done').length;
+  const allOpen  = pending + progress;
+
+  const set = (id, txt) => { const el = document.getElementById(id); if(el) el.textContent = txt; };
+  set('mc-pend', pending + ' pend.');
+  set('mc-prog',  progress + ' and.');
+  set('mc-done',  done + ' conc.');
+
+  const badge = document.getElementById('menu-badge');
+  if (badge) {
+    badge.style.display = allOpen ? 'inline-flex' : 'none';
+    badge.textContent   = allOpen;
+  }
+
+  // Estado do lock do conferente no menu
+  const confLock = document.getElementById('conf-lock-state');
+  if (confLock) {
+    if (confUnlocked) {
+      confLock.textContent = 'Acesso liberado';
+      confLock.classList.add('unlocked');
+    } else {
+      confLock.textContent = 'Senha necessaria';
+      confLock.classList.remove('unlocked');
+    }
+  }
+
+  // Estado do lock do empilhador no menu
   const empLock = document.getElementById('emp-lock-state');
-  if (empLock && pending > 0) {
-    empLock.textContent = pending + ' pend.';
-    empLock.style.background = 'rgba(239,68,68,.15)';
-    empLock.style.color = 'var(--red)';
-    empLock.style.borderColor = 'rgba(239,68,68,.3)';
+  if (empLock) {
+    if (checklistDone) {
+      empLock.textContent = 'Checklist OK';
+      empLock.classList.add('unlocked');
+    } else {
+      empLock.textContent = 'Checklist necessario';
+      empLock.classList.remove('unlocked');
+    }
   }
 }
 
 // ══════════════════════════════════════════════════════
-//  INIT
+//  MODAL SENHA — CONFERENTE
 // ══════════════════════════════════════════════════════
-(function init() {
-  const today = todayISO();
-  const de  = document.getElementById('dash-de');
-  const ate = document.getElementById('dash-ate');
-  if (de)  de.value  = today;
-  if (ate) ate.value = today;
+function confirmarSenha() {
+  const inp  = document.getElementById('inp-senha');
+  const erro = document.getElementById('senha-erro');
+  if (inp.value === CONF_PASSWORD) {
+    confUnlocked = true;
+    document.getElementById('modal-senha').style.display = 'none';
+    goPane('conf');
+    updateMenuCounts();
+    toast('Acesso liberado — Bem-vindo, Conferente!');
+  } else {
+    erro.style.display = 'block';
+    inp.classList.add('shake');
+    inp.value = '';
+    setTimeout(() => inp.classList.remove('shake'), 450);
+    inp.focus();
+  }
+}
 
-  // Landing page = Repack (Controle requer senha)
-  navGoPane('repack');
+function fecharModalSenha() {
+  document.getElementById('modal-senha').style.display = 'none';
+}
 
-  // Manter goPane e goMenu sempre apontando para navGoPane
-  setInterval(() => { window.goPane = navGoPane; window.goMenu = function(){}; }, 500);
-})();
-</script>
-</body>
-</html>
+function togglePwdView() {
+  const inp = document.getElementById('inp-senha');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    fecharModalSenha();
+    fecharModalChecklist();
+    fecharModalPOP();
+  }
+});
+
+// ══════════════════════════════════════════════════════
+//  MODAL CHECKLIST — EMPILHADOR
+// ══════════════════════════════════════════════════════
+const TOTAL_CHECKS = 5;
+
+function resetChecklist() {
+  document.querySelectorAll('.chk-box').forEach(b => { b.checked = false; });
+  atualizarProgressoChecklist();
+}
+
+function avaliarChecklist() { atualizarProgressoChecklist(); }
+
+function atualizarProgressoChecklist() {
+  const boxes   = document.querySelectorAll('.chk-box');
+  const checked = [...boxes].filter(b => b.checked).length;
+  const pct     = Math.round((checked / TOTAL_CHECKS) * 100);
+  document.getElementById('chk-fill').style.width  = pct + '%';
+  document.getElementById('chk-label').textContent = checked + ' / ' + TOTAL_CHECKS + ' itens confirmados';
+  const btn = document.getElementById('btn-chk-ok');
+  btn.disabled    = checked < TOTAL_CHECKS;
+  btn.style.opacity = checked === TOTAL_CHECKS ? '1' : '.5';
+}
+
+function confirmarChecklist() {
+  const checked = [...document.querySelectorAll('.chk-box')].filter(b => b.checked).length;
+  if (checked < TOTAL_CHECKS) { toast('Marque todos os itens antes de continuar', true); return; }
+  checklistDone = true;
+  document.getElementById('modal-checklist').style.display = 'none';
+  goPane('emp');
+  updateMenuCounts();
+  toast('Checklist concluido — Bom turno, operador!');
+}
+
+function fecharModalChecklist() {
+  document.getElementById('modal-checklist').style.display = 'none';
+}
+
+// ══════════════════════════════════════════════════════
+//  TIPO DE OPERAÇÃO — DURANTE / APÓS CARREGAMENTO
+// ══════════════════════════════════════════════════════
+function selecionarTipo(tipo) {
+  const op = document.getElementById('sel-op')?.value;
+  if (!op) { toast('Selecione seu nome antes de escolher o tipo de operação', true); return; }
+
+  tipoPendente = tipo;
+
+  const isDurante = tipo === 'durante';
+  document.getElementById('modal-tipo-icon').textContent  = isDurante ? '🚛' : '📦';
+  document.getElementById('modal-tipo-title').textContent = isDurante
+    ? 'DURANTE O CARREGAMENTO'
+    : 'APÓS O CARREGAMENTO';
+  document.getElementById('modal-tipo-desc').innerHTML = isDurante
+    ? 'As tarefas realizadas serão registradas como <strong>reabastecimento durante o processo de carregamento</strong>.'
+    : 'As tarefas realizadas serão registradas como <strong>ressuprimento da área de picking após o carregamento</strong>.';
+  document.getElementById('modal-tipo-operador').innerHTML =
+    'Operador: <strong>' + op + '</strong>';
+
+  document.getElementById('modal-tipo').style.display = 'flex';
+}
+
+function confirmarTipo() {
+  tipoOperacao = tipoPendente;
+  tipoPendente = null;
+  document.getElementById('modal-tipo').style.display = 'none';
+  atualizarExibicaoTipo();
+  const label = tipoOperacao === 'durante' ? 'DURANTE O CARREGAMENTO' : 'APÓS O CARREGAMENTO';
+  toast('Tipo definido: ' + label);
+}
+
+function cancelarTipo() {
+  tipoPendente = null;
+  document.getElementById('modal-tipo').style.display = 'none';
+}
+
+function atualizarExibicaoTipo() {
+  const btnD  = document.getElementById('btn-tipo-durante');
+  const btnA  = document.getElementById('btn-tipo-apos');
+  const texto = document.getElementById('op-tipo-texto');
+  const status= document.getElementById('op-tipo-status');
+
+  if (!btnD || !btnA) return;
+
+  btnD.classList.toggle('ativo',   tipoOperacao === 'durante');
+  btnD.classList.toggle('inativo', tipoOperacao === 'apos');
+  btnA.classList.toggle('ativo',   tipoOperacao === 'apos');
+  btnA.classList.toggle('inativo', tipoOperacao === 'durante');
+
+  if (tipoOperacao === 'durante') {
+    texto.innerHTML = '🚛 <strong>DURANTE O CARREGAMENTO</strong> — tipo ativo';
+    status.className = 'op-tipo-status tipo-durante';
+  } else if (tipoOperacao === 'apos') {
+    texto.innerHTML = '📦 <strong>APÓS O CARREGAMENTO</strong> — tipo ativo';
+    status.className = 'op-tipo-status tipo-apos';
+  } else {
+    texto.innerHTML = '⚠ Nenhum tipo selecionado — escolha antes de iniciar uma tarefa';
+    status.className = 'op-tipo-status';
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  MODAL POP + RACI
+// ══════════════════════════════════════════════════════
+function abrirModalPOP() { document.getElementById('modal-pop').style.display = 'flex'; }
+function fecharModalPOP() { document.getElementById('modal-pop').style.display = 'none'; }
+function fecharPOP(e) { if (e.target === document.getElementById('modal-pop')) fecharModalPOP(); }
+
+// ══════════════════════════════════════════════════════
+//  SELECTS
+// ══════════════════════════════════════════════════════
+function fillAll() {
+  fillSel('sel-conf',      S.conferentes);
+  fillSel('sel-op',        S.operadores);
+  fillSel('sel-op-assign', S.operadores);
+}
+function fillSel(id, arr) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const cur = el.value;
+  const ph  = el.options[0].text;
+  el.innerHTML = '<option value="">' + ph + '</option>';
+  arr.forEach(n => {
+    const o = document.createElement('option');
+    o.value = n; o.textContent = n;
+    if (n === cur) o.selected = true;
+    el.appendChild(o);
+  });
+}
+
+function addConf() {
+  const n = v('inp-new-conf').trim().toUpperCase();
+  if (!n || S.conferentes.includes(n)) return;
+  S.conferentes.push(n);
+  document.getElementById('inp-new-conf').value = '';
+  save(); fillAll(); toast('Conferente adicionado: ' + n);
+}
+function addOp() {
+  const n = v('inp-new-op').trim().toUpperCase();
+  if (!n || S.operadores.includes(n)) return;
+  S.operadores.push(n);
+  document.getElementById('inp-new-op').value = '';
+  save(); fillAll(); renderEmp(); toast('Operador adicionado: ' + n);
+}
+
+// ══════════════════════════════════════════════════════
+//  PRODUTOS
+// ══════════════════════════════════════════════════════
+function filterProds() {
+  const q  = v('inp-search').toLowerCase().trim();
+  const el = document.getElementById('prod-list');
+  if (!q) {
+    el.innerHTML = '<div class="empty"><div class="ico">🔍</div>Digite o código ou nome do produto</div>'; return;
+  }
+  const list = PRODUCTS.filter(p => String(p.codigo).includes(q) || p.descricao.toLowerCase().includes(q));
+  if (!list.length) {
+    el.innerHTML = '<div class="empty"><div class="ico">🔍</div>Nenhum produto encontrado</div>'; return;
+  }
+  el.innerHTML = list.map(p =>
+    '<div class="prod-item ' + (S.selProd?.codigo === p.codigo ? 'sel' : '') + '" onclick="selProd(' + p.codigo + ')">' +
+    '<span class="prod-code">' + p.codigo + '</span>' +
+    '<span class="prod-desc">' + p.descricao + '</span></div>'
+  ).join('');
+}
+function selProd(codigo) {
+  S.selProd = PRODUCTS.find(p => p.codigo === codigo);
+  filterProds();
+}
+
+// ══════════════════════════════════════════════════════
+//  TAREFAS — CRUD
+// ══════════════════════════════════════════════════════
+async function criarTarefa() {
+  const conf = v('sel-conf'), op = v('sel-op-assign'), qty = parseInt(v('inp-qty'));
+  if (!S.selProd) { toast('Selecione um produto', true); return; }
+  if (!conf)      { toast('Selecione o conferente', true); return; }
+  if (!op)        { toast('Selecione o operador', true); return; }
+  if (!qty||qty<1){ toast('Informe a quantidade', true); return; }
+
+  const t = {
+    id: S.nextId++, codigo: S.selProd.codigo, descricao: S.selProd.descricao,
+    quantidade: qty, conferente: conf, operador: op, status: 'pending',
+    criadoEm: new Date().toISOString(), iniciadoEm: null, finalizadoEm: null, duracaoMin: null
+  };
+  if (fbDb) { await fbSaveTask(t); } else { S.tarefas.push(t); save(); renderAll(); }
+  S.selProd = null;
+  document.getElementById('inp-search').value = '';
+  document.getElementById('inp-qty').value = 1;
+  filterProds();
+  toast('Tarefa #' + t.id + ' criada para ' + op);
+}
+
+async function iniciar(id) {
+  const t = S.tarefas.find(t => t.id === id);
+  if (!t) return;
+  if (!tipoOperacao) {
+    toast('Selecione o tipo de operação antes de iniciar (Durante ou Após o Carregamento)', true);
+    // Scroll suave até o card de identificação
+    document.querySelector('.op-tipo-btns')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  t.status = 'in_progress';
+  t.iniciadoEm = new Date().toISOString();
+  t.locData = null;
+  t.tipoOperacao = tipoOperacao === 'durante' ? 'Durante o Carregamento' : 'Após o Carregamento';
+  startLocationTracking(id);
+  if (fbDb) { await fbSaveTask(t); } else { save(); renderAll(); }
+  toast('Tarefa #' + id + ' INICIADA — ' + t.tipoOperacao);
+}
+
+async function finalizar(id) {
+  const t = S.tarefas.find(t => t.id === id);
+  if (!t) return;
+  t.status = 'done';
+  t.finalizadoEm = new Date().toISOString();
+  t.duracaoMin = Math.round((new Date(t.finalizadoEm) - new Date(t.iniciadoEm)) / 6000) / 10;
+  // Salva dados de localização se disponíveis
+  if (loc.taskId === id) {
+    t.locData = stopLocationTracking();
+  }
+  if (fbDb) { await fbSaveTask(t); await fbPushToReport(t); } else { save(); renderAll(); }
+  toast('Tarefa #' + id + ' CONCLUIDA em ' + fmtMin(t.duracaoMin));
+}
+
+async function excluir(id) {
+  if (!confirm('Excluir tarefa #' + id + '?')) return;
+  const t = S.tarefas.find(t => t.id === id);
+  if (!t) return;
+  if (fbDb) { await fbDeleteTask(t); } else { S.tarefas = S.tarefas.filter(x => x.id !== id); save(); renderAll(); }
+}
+
+function clearLocal() {
+  if (!confirm('Limpar todas as tarefas locais?\nOs dados ja enviados ao Firebase permanecem intactos.')) return;
+  S.tarefas = []; S.nextId = 1;
+  save(); renderAll();
+  document.getElementById('report-area').innerHTML = '';
+  toast('Dados locais limpos');
+}
+
+// ══════════════════════════════════════════════════════
+//  RELATÓRIO DA ABA CONFERENTE (Firebase)
+// ══════════════════════════════════════════════════════
+async function pullReport() {
+  const area = document.getElementById('report-area');
+  if (!fbDb) { area.innerHTML = '<div class="empty"><div class="ico">🔥</div>Configure o Firebase primeiro</div>'; return; }
+  area.innerHTML = '<div class="fb-msg fb-msg-load">Buscando registros no Firebase...</div>';
+  try {
+    const snap = await fbDb.collection('registros').orderBy('finalizadoEm','desc').limit(100).get();
+    if (snap.empty) { area.innerHTML = '<div class="empty"><div class="ico">📭</div>Nenhum registro encontrado</div>'; return; }
+    const records = snap.docs.map(d => d.data());
+    const hoje    = new Date().toLocaleDateString('pt-BR');
+    const todayR  = records.filter(r => r.finalizadoEm && new Date(r.finalizadoEm).toLocaleDateString('pt-BR') === hoje);
+    const show    = todayR.length ? todayR : records.slice(0,30);
+    const totalPal = show.reduce((s,r) => s + (r.quantidade||0), 0);
+    const comDur   = show.filter(r => r.duracaoMin);
+    const avgMin   = comDur.length ? comDur.reduce((s,r) => s + r.duracaoMin/r.quantidade, 0) / comDur.length : null;
+
+    area.innerHTML =
+      '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">' +
+      statBox(show.length, 'Tarefas', 'var(--amber)') +
+      statBox(totalPal, 'Paletes', 'var(--green)') +
+      (avgMin !== null ? statBox(fmtMin(avgMin), 'Media/Palete', 'var(--blue)') : '') +
+      '</div>' +
+      '<div style="overflow-x:auto">' +
+      '<table class="rpt-table"><thead><tr><th>#</th><th>Produto</th><th>Paletes</th><th>Conferente</th><th>Operador</th><th>Inicio</th><th>Fim</th><th>Duracao</th></tr></thead><tbody>' +
+      show.map(r =>
+        '<tr><td style="font-family:monospace;color:var(--amber)">' + r.id + '</td>' +
+        '<td><span style="color:var(--amber)">' + r.codigo + '</span> ' + r.descricao + '</td>' +
+        '<td style="text-align:center;font-weight:700">' + r.quantidade + '</td>' +
+        '<td>' + (r.conferente||'—') + '</td>' +
+        '<td style="color:var(--blue);font-weight:600">' + (r.operador||'—') + '</td>' +
+        '<td style="font-family:monospace;font-size:11px">' + fmtTime(r.iniciadoEm) + '</td>' +
+        '<td style="font-family:monospace;font-size:11px">' + fmtTime(r.finalizadoEm) + '</td>' +
+        '<td style="color:var(--green);font-weight:700">' + fmtMin(r.duracaoMin) + '</td></tr>'
+      ).join('') +
+      '</tbody></table></div>';
+  } catch(e) {
+    area.innerHTML = '<div class="fb-msg fb-msg-err">' + e.message + '</div>';
+  }
+}
+
+function statBox(val, lbl, color) {
+  return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:12px 18px;text-align:center">' +
+    '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:28px;color:' + color + '">' + val + '</div>' +
+    '<div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase">' + lbl + '</div></div>';
+}
+
+// ══════════════════════════════════════════════════════
+//  DOWNLOAD CSV POR DATA
+// ══════════════════════════════════════════════════════
+async function downloadCSV() {
+  const dateInput = document.getElementById('csv-date');
+  const date = dateInput.value;
+  if (!date) { toast('Selecione uma data', true); return; }
+
+  const status  = document.getElementById('csv-status');
+  const preview = document.getElementById('csv-preview');
+  preview.innerHTML = '';
+
+  if (!fbDb) {
+    status.innerHTML = '<div class="fb-msg fb-msg-err">Firebase nao conectado. Configure na area do Conferente.</div>';
+    return;
+  }
+
+  status.innerHTML = '<div class="fb-msg fb-msg-load">Buscando registros no Firebase...</div>';
+
+  try {
+    const snap = await fbDb.collection('registros').get();
+    const all  = snap.docs.map(d => d.data());
+
+    const [ano, mes, dia] = date.split('-');
+    const dataFmt = dia + '/' + mes + '/' + ano;
+
+    const filtered = all.filter(r => {
+      if (!r.finalizadoEm) return false;
+      return new Date(r.finalizadoEm).toLocaleDateString('pt-BR') === dataFmt;
+    }).sort((a,b) => (a.finalizadoEm||'').localeCompare(b.finalizadoEm||''));
+
+    if (!filtered.length) {
+      status.innerHTML = '<div class="fb-msg fb-msg-err">Nenhum registro encontrado para ' + dataFmt + '. Verifique se ha tarefas finalizadas nesse dia.</div>';
+      return;
+    }
+
+    // Formata duração para texto legível: "4min 32s" ou "45s"
+    function fmtDurCSV(min) {
+      if (min === null || min === undefined || min === '') return '';
+      const totalSec = Math.round(min * 60);
+      const m = Math.floor(totalSec / 60);
+      const s = totalSec % 60;
+      if (m > 0 && s > 0) return m + 'min ' + s + 's';
+      if (m > 0)          return m + 'min';
+      return totalSec + 's';
+    }
+
+    function fmtDateCSV(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      const pad = n => String(n).padStart(2,'0');
+      return pad(d.getDate()) + '/' + pad(d.getMonth()+1) + '/' + d.getFullYear()
+        + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+    }
+
+    // Separador ponto-e-vírgula para Excel BR abrir colunas corretamente
+    const SEP = ';';
+
+    const headers = [
+      'CODIGO DO PRODUTO',
+      'DESCRICAO DO PRODUTO',
+      'QUANTIDADE DE PALETES',
+      'CONFERENTE',
+      'OPERADOR',
+      'CRIADO EM',
+      'INICIADO EM',
+      'FINALIZADO EM',
+      'DURACAO DA OPERACAO',
+      'DURANTE / APÓS O CARREGAMENTO'
+    ];
+
+    const rows = filtered.map(r => [
+      r.codigo        ?? '',
+      r.descricao     ?? '',
+      r.quantidade    ?? '',
+      r.conferente    ?? '',
+      r.operador      ?? '',
+      fmtDateCSV(r.criadoEm),
+      fmtDateCSV(r.iniciadoEm),
+      fmtDateCSV(r.finalizadoEm),
+      fmtDurCSV(r.duracaoMin),
+      r.tipoOperacao  ?? ''
+    ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(SEP));
+
+    const csvContent = [headers.map(h => '"'+h+'"').join(SEP), ...rows].join('\r\n');
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'relatorio_picking_' + date + '.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    status.innerHTML = '<div class="fb-msg fb-msg-ok">' + filtered.length + ' registros baixados — arquivo: relatorio_picking_' + date + '.csv</div>';
+
+    const prev = filtered.slice(0,10);
+    const totalPal = filtered.reduce((s,r) => s + (r.quantidade||0), 0);
+
+    preview.innerHTML =
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 10px">' +
+      statBox(filtered.length, 'Tarefas', 'var(--amber)') +
+      statBox(totalPal, 'Paletes', 'var(--green)') +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px">Preview — ' +
+        (filtered.length > 10 ? 'primeiros 10 de ' + filtered.length + ' registros' : filtered.length + ' registros') +
+        ' do dia <strong style="color:var(--text)">' + dataFmt + '</strong></div>' +
+      '<div style="overflow-x:auto"><table class="rpt-table"><thead><tr>' +
+      '<th>#</th><th>Produto</th><th>Paletes</th><th>Conferente</th><th>Operador</th><th>Inicio</th><th>Fim</th><th>Duracao</th>' +
+      '</tr></thead><tbody>' +
+      prev.map(r =>
+        '<tr><td style="font-family:monospace;color:var(--amber)">' + r.id + '</td>' +
+        '<td><span style="color:var(--amber)">' + r.codigo + '</span> ' + r.descricao + '</td>' +
+        '<td style="text-align:center;font-weight:700">' + r.quantidade + '</td>' +
+        '<td>' + (r.conferente||'—') + '</td>' +
+        '<td style="color:var(--blue);font-weight:600">' + (r.operador||'—') + '</td>' +
+        '<td style="font-family:monospace;font-size:11px">' + fmtTime(r.iniciadoEm) + '</td>' +
+        '<td style="font-family:monospace;font-size:11px">' + fmtTime(r.finalizadoEm) + '</td>' +
+        '<td style="color:var(--green);font-weight:700">' + fmtMin(r.duracaoMin) + '</td></tr>'
+      ).join('') +
+      '</tbody></table></div>' +
+      (filtered.length > 10 ? '<div style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center">+ ' + (filtered.length - 10) + ' registros adicionais no arquivo CSV</div>' : '');
+
+  } catch(e) {
+    status.innerHTML = '<div class="fb-msg fb-msg-err">Erro ao buscar dados: ' + e.message + '</div>';
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  RELATORIO DO DIA — pane
+// ══════════════════════════════════════════════════════
+function renderRelatorioDia() {
+  const hoje = new Date().toLocaleDateString('pt-BR');
+
+  const pending  = S.tarefas.filter(t => t.status === 'pending');
+  const progress = S.tarefas.filter(t => t.status === 'in_progress');
+  const done     = S.tarefas.filter(t =>
+    t.status === 'done' && t.finalizadoEm &&
+    new Date(t.finalizadoEm).toLocaleDateString('pt-BR') === hoje
+  );
+
+  const setNum = (id, n) => { const el = document.getElementById(id); if(el) el.textContent = n; };
+  setNum('rel-num-pend', pending.length);
+  setNum('rel-num-prog', progress.length);
+  setNum('rel-num-done', done.length);
+
+  const setCount = (id, n) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = n;
+    el.className = 'sec-cnt' + (n === 0 ? ' zero' : '');
+  };
+  setCount('cnt-rel-pend', pending.length);
+  setCount('cnt-rel-prog', progress.length);
+  setCount('cnt-rel-done', done.length);
+
+  const emptyMsg = (ico, txt) => '<div class="empty"><div class="ico">' + ico + '</div>' + txt + '</div>';
+
+  document.getElementById('rel-pend').innerHTML = pending.length
+    ? pending.map(t => taskCardReadonly(t)).join('')
+    : emptyMsg('✅', 'Nenhuma tarefa pendente');
+
+  document.getElementById('rel-prog').innerHTML = progress.length
+    ? progress.map(t => taskCardReadonly(t)).join('')
+    : emptyMsg('⏳', 'Nenhuma tarefa em andamento');
+
+  document.getElementById('rel-done').innerHTML = done.length
+    ? done.slice().reverse().map(t => taskCardReadonly(t)).join('')
+    : emptyMsg('📦', 'Nenhuma tarefa concluida hoje');
+}
+
+// Card de leitura (sem botoes de acao) para o relatorio
+function taskCardReadonly(t) {
+  const statusBadge =
+    t.status === 'pending'     ? '<span class="bdg bdg-amber">PENDENTE</span>' :
+    t.status === 'in_progress' ? '<span class="bdg bdg-blue">EM ANDAMENTO</span>' :
+                                 '<span class="bdg bdg-green">CONCLUIDA</span>';
+  return '<div class="tc ' + t.status + '">' +
+    '<div class="tc-top">' +
+      '<div><div class="tc-code">' + t.codigo + '</div><div class="tc-desc">' + t.descricao + '</div></div>' +
+      '<div><div class="tc-qty-val">' + t.quantidade + '</div><div class="tc-qty-lbl">PALETES</div></div>' +
+    '</div>' +
+    '<div class="tc-meta">' +
+      '<span>TAREFA <strong>#' + t.id + '</strong></span>' +
+      '<span>CONFERENTE <strong>' + t.conferente + '</strong></span>' +
+      '<span>OPERADOR <strong style="color:var(--blue)">' + t.operador + '</strong></span>' +
+      (t.tipoOperacao ? '<span>TIPO <strong style="color:var(--amber)">' + t.tipoOperacao + '</strong></span>' : '') +
+      (t.iniciadoEm   ? '<span>INICIO <strong>' + fmtTime(t.iniciadoEm) + '</strong></span>' : '') +
+      (t.finalizadoEm ? '<span>FIM <strong>' + fmtTime(t.finalizadoEm) + '</strong></span>' : '') +
+      (t.status==='done' ? '<span>TOTAL <strong style="color:var(--green)">' + fmtMin(t.duracaoMin) + '</strong></span>' : '') +
+    '</div>' +
+    '<div class="btn-row">' + statusBadge + '</div>' +
+    '</div>';
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER GERAL
+// ══════════════════════════════════════════════════════
+function v(id) { return document.getElementById(id)?.value || ''; }
+
+function fmtTime(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleTimeString('pt-BR', {hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+function fmtMin(m) {
+  if (m === null || m === undefined) return '—';
+  const h = Math.floor(m/60), min = Math.floor(m%60), s = Math.round((m%1)*60);
+  if (h > 0)   return h + 'h ' + min + 'min';
+  if (min > 0) return min + 'min ' + s + 's';
+  return Math.round(m*60) + 's';
+}
+
+function taskCard(t, ctx) {
+  const pp = t.duracaoMin !== null ? fmtMin(t.duracaoMin/t.quantidade) : null;
+  const actions = ctx === 'emp'
+    ? (t.status === 'pending'
+        ? '<button class="btn btn-start" onclick="iniciar(' + t.id + ')">INICIAR</button>'
+        : t.status === 'in_progress'
+        ? '<button class="btn btn-finish" onclick="finalizar(' + t.id + ')">FINALIZAR</button>'
+        : '<span class="bdg bdg-green">CONCLUIDA</span>')
+    : (t.status === 'pending'
+        ? '<span class="bdg bdg-amber">AGUARDANDO OPERADOR</span>' +
+          '<button class="btn btn-red btn-sm" onclick="excluir(' + t.id + ')">EXCLUIR</button>'
+        : t.status === 'in_progress'
+        ? '<span class="bdg bdg-blue">EM ANDAMENTO</span>'
+        : '<span class="bdg bdg-green">CONCLUIDA</span>');
+
+  return '<div class="tc ' + t.status + '">' +
+    '<div class="tc-top">' +
+      '<div><div class="tc-code">' + t.codigo + '</div><div class="tc-desc">' + t.descricao + '</div></div>' +
+      '<div><div class="tc-qty-val">' + t.quantidade + '</div><div class="tc-qty-lbl">PALETES</div></div>' +
+    '</div>' +
+    '<div class="tc-meta">' +
+      '<span>TAREFA <strong>#' + t.id + '</strong></span>' +
+      '<span>CONFERENTE <strong>' + t.conferente + '</strong></span>' +
+      '<span>OPERADOR <strong style="color:var(--blue)">' + t.operador + '</strong></span>' +
+      (t.tipoOperacao ? '<span>TIPO <strong style="color:var(--amber)">' + t.tipoOperacao + '</strong></span>' : '') +
+      (t.iniciadoEm   ? '<span>INICIO <strong>' + fmtTime(t.iniciadoEm) + '</strong></span>' : '') +
+      (t.finalizadoEm ? '<span>FIM <strong>' + fmtTime(t.finalizadoEm) + '</strong></span>' : '') +
+      (t.status==='done' ? '<span>TOTAL <strong style="color:var(--green)">' + fmtMin(t.duracaoMin) + '</strong></span>' : '') +
+      (pp && t.status==='done' ? '<span>/ PALETE <strong style="color:var(--green)">' + pp + '</strong></span>' : '') +
+    '</div>' +
+    (t.status === 'done' && t.locData ? fmtLocSummary(t.locData) : '') +
+    (t.status === 'in_progress' && loc.taskId === t.id ? '<div class="loc-tracking-live">📡 GPS ativo — rastreando movimento</div>' : '') +
+    '<div class="btn-row">' + actions + '</div></div>';
+}
+
+function renderAll() { renderConf(); renderEmp(); updateMenuCounts(); }
+
+function renderConf() {
+  const open = S.tarefas.filter(t => t.status !== 'done');
+  const done = S.tarefas.filter(t => t.status === 'done').slice().reverse().slice(0,10);
+  const setCount = (id,n) => { const el=document.getElementById(id); if(!el)return; el.textContent=n; el.className='sec-cnt'+(n===0?' zero':''); };
+  setCount('cnt-conf-open', open.length);
+  setCount('cnt-conf-done', done.length);
+  document.getElementById('conf-open').innerHTML = open.length
+    ? open.map(t => taskCard(t,'conf')).join('')
+    : '<div class="empty"><div class="ico">✅</div>Nenhuma tarefa aberta</div>';
+  document.getElementById('conf-done').innerHTML = done.length
+    ? done.map(t => taskCard(t,'conf')).join('')
+    : '<div class="empty"><div class="ico">📦</div>Nenhuma tarefa concluida ainda hoje</div>';
+}
+
+function renderEmp() {
+  const op       = v('sel-op');
+  const pending  = S.tarefas.filter(t => t.operador===op && t.status==='pending');
+  const progress = S.tarefas.filter(t => t.operador===op && t.status==='in_progress');
+  const done     = S.tarefas.filter(t => t.operador===op && t.status==='done').slice().reverse().slice(0,10);
+  const setCount = (id,n,noOp) => { const el=document.getElementById(id); if(!el)return; el.textContent=noOp?0:n; el.className='sec-cnt'+((!op||n===0)?' zero':''); };
+  setCount('cnt-emp-pending',  pending.length,  !op);
+  setCount('cnt-emp-progress', progress.length, !op);
+  setCount('cnt-emp-done',     done.length,     !op);
+  const noOp = '<div class="empty"><div class="ico">👷</div>Selecione seu nome para ver as tarefas</div>';
+  document.getElementById('emp-pending').innerHTML  = !op ? noOp : pending.length  ? pending.map(t=>taskCard(t,'emp')).join('')  : '<div class="empty"><div class="ico">✅</div>Nenhuma tarefa pendente</div>';
+  document.getElementById('emp-progress').innerHTML = !op ? ''   : progress.length ? progress.map(t=>taskCard(t,'emp')).join('') : '<div class="empty"><div class="ico">⏳</div>Nenhuma em andamento</div>';
+  document.getElementById('emp-done').innerHTML     = !op ? ''   : done.length     ? done.map(t=>taskCard(t,'emp')).join('')     : '<div class="empty"><div class="ico">📦</div>Nenhuma concluida ainda</div>';
+}
+
+// ══════════════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════════════
+function toast(msg, warn=false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = warn ? '#d97706' : 'var(--green)';
+  el.style.color = '#0d0f12';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// ══════════════════════════════════════════════════════
+//  INICIALIZACAO
+// ══════════════════════════════════════════════════════
+load();
+fillAll();
+filterProds();
+renderAll();
+populateFbForm();
+
+const _cfg = loadFbConfig();
+if (_cfg && _cfg.apiKey && _cfg.projectId) {
+  setFbIndicator('connecting');
+  initFirebase(_cfg);
+}
+
+// Inicia no menu principal
+goPane('menu');
