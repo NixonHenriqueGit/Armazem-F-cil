@@ -2092,23 +2092,50 @@ async function exportarModulo(colecao, nomeArqBase, mapFn) {
   const dataBR = dia + '/' + mes + '/' + ano;
   const nomeArq = nomeArqBase.replace('.xlsx', '_' + dataISO + '.xlsx');
 
-  if (statusEl) statusEl.textContent = '⏳ Buscando...';
+  if (statusEl) statusEl.textContent = '⏳ Buscando no Firebase...';
   try {
-    const snap = await getDb().collection(colecao).orderBy('_criadoEm','asc').get();
-    const todos = snap.docs.map(d => d.data());
-    const filtrados = todos.filter(r => (r.data || r.dataISO || '').includes(dia + '/' + mes) || (r.dataISO || '').startsWith(dataISO) || (r.data || '') === dataBR);
-    if (!filtrados.length) {
-      if (statusEl) statusEl.textContent = `⚠ Nenhum registro para ${dataBR}.`;
+    // Consulta direta no Firebase filtrando pelo campo dataISO
+    const snap = await getDb()
+      .collection(colecao)
+      .where('dataISO', '==', dataISO)
+      .orderBy('_criadoEm', 'asc')
+      .get();
+
+    if (snap.empty) {
+      if (statusEl) statusEl.textContent = `⚠ Nenhum registro encontrado para ${dataBR}.`;
       return;
     }
-    const data = filtrados.map(r => mapFn(r));
-    const ws = XLSX.utils.json_to_sheet(data);
-    xlsAutoColWidth(ws, data);
+
+    const rows = snap.docs.map(d => mapFn(d.data()));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    xlsAutoColWidth(ws, rows);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, colecao.charAt(0).toUpperCase()+colecao.slice(1));
+    XLSX.utils.book_append_sheet(wb, ws, colecao.charAt(0).toUpperCase() + colecao.slice(1));
     XLSX.writeFile(wb, nomeArq);
-    if (statusEl) statusEl.textContent = `✅ ${filtrados.length} registro(s) de ${dataBR} exportado(s).`;
-  } catch(e) { if(statusEl) statusEl.textContent='❌ Erro: '+e.message; }
+    if (statusEl) statusEl.textContent = `✅ ${rows.length} registro(s) de ${dataBR} exportado(s).`;
+  } catch(e) {
+    // Fallback: se o índice composto não existir, busca tudo e filtra no cliente
+    if (statusEl) statusEl.textContent = '⏳ Ajustando consulta...';
+    try {
+      const snap2 = await getDb().collection(colecao).orderBy('_criadoEm','asc').get();
+      const filtrados = snap2.docs
+        .map(d => d.data())
+        .filter(r => (r.dataISO || '') === dataISO);
+      if (!filtrados.length) {
+        if (statusEl) statusEl.textContent = `⚠ Nenhum registro encontrado para ${dataBR}.`;
+        return;
+      }
+      const rows = filtrados.map(r => mapFn(r));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      xlsAutoColWidth(ws, rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, colecao.charAt(0).toUpperCase() + colecao.slice(1));
+      XLSX.writeFile(wb, nomeArq);
+      if (statusEl) statusEl.textContent = `✅ ${rows.length} registro(s) de ${dataBR} exportado(s).`;
+    } catch(e2) {
+      if (statusEl) statusEl.textContent = '❌ Erro: ' + e2.message;
+    }
+  }
 }
 
 function exportarDespejoExcel() { exportarModulo('despejo','despejo_registros.xlsx',r=>({'Data':r.data,'Embalagem':r.embalagem,'Qtd':r.quantidade,'Início':r.inicio,'Fim':r.fim,'Tempo':r.tempo,'Meta':r.meta,'Resultado':r.resultado})); }
