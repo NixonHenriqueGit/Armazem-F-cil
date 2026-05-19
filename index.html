@@ -523,6 +523,16 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
 .modal-tipo-operador{font-size:12px;color:var(--text-muted);margin-top:10px;padding:8px 14px;background:rgba(255,255,255,.05);border-radius:6px;text-align:center;letter-spacing:.4px}
 .modal-tipo-operador strong{color:var(--blue);font-weight:700}
 
+/* ── Abas internas dos panes ── */
+.ptabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:18px;overflow-x:auto}
+.ptab{padding:10px 22px;font-size:11px;font-weight:700;letter-spacing:1.2px;cursor:pointer;border:none;background:transparent;color:var(--text-dim);border-bottom:2px solid transparent;transition:all .18s;white-space:nowrap;font-family:'Barlow Condensed',sans-serif}
+.ptab:hover{color:var(--text);background:var(--surface2)}
+.ptab.active{color:var(--amber);border-bottom-color:var(--amber);background:var(--amber-glow)}
+.ptab-content{display:none}
+.ptab-content.active{display:block}
+.ptab-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;font-size:10px;font-weight:700;margin-left:6px;background:var(--surface2);color:var(--text-dim);transition:all .18s}
+.ptab.active .ptab-badge{background:var(--amber);color:#0d0f12}
+
 /* ── Fechar turno / CSV ── */
 .fb-test-result-ok,.fb-msg-ok{background:var(--green-dim);color:var(--green);border:1px solid #166534;border-radius:8px;padding:10px 14px;font-size:12px;margin-top:10px}
 .fb-test-result-err,.fb-msg-err{background:var(--red-dim);color:var(--red);border:1px solid #7f1d1d;border-radius:8px;padding:10px 14px;font-size:12px;margin-top:10px}
@@ -743,28 +753,33 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
         </div>
       </div>
       <div class="wrap">
-        <div class="card">
-          <div class="card-title">⚙ Configurar Registro</div>
-          <div class="row2" style="gap:14px;margin-bottom:14px">
-            <div><div class="field-label">Embalagem</div><select id="repack-embalagem"></select></div>
-            <div><div class="field-label">Quantidade feita</div><input type="number" id="repack-quantidade" min="1" value="1"></div>
-          </div>
-          <div class="row2" style="gap:14px;margin-bottom:14px">
-            <div><div class="field-label">Hora inicial</div><input type="time" id="repack-inicio" step="1"></div>
-            <div><div class="field-label">Hora final</div><input type="time" id="repack-fim" step="1"></div>
-          </div>
-          <div class="row2" style="gap:14px;margin-bottom:16px">
-            <div><div class="field-label">Tempo total</div><input type="text" id="repack-duracao" readonly value="00:00:00" style="opacity:.9"></div>
-            <div><div class="field-label">Status vs Meta</div><div id="repack-status" style="font-weight:700;padding:10px 0;font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">—</div></div>
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-ghost btn-sm" id="repack-btnInicio">⏱ Puxar hora inicial</button>
-            <button class="btn btn-ghost btn-sm" id="repack-btnFim">⏱ Puxar hora final</button>
-            <button class="btn btn-amber" id="repack-btnRegistrar" disabled>✅ REGISTRAR</button>
-            <button class="btn btn-red btn-sm" id="repack-btnLimpar">🗑 LIMPAR TUDO</button>
+        <div class="ptabs">
+          <button class="ptab active" data-ptab-group="repack" data-ptab="form" onclick="ptabSwitch('repack','form')">⚙ REGISTRAR</button>
+          <button class="ptab" data-ptab-group="repack" data-ptab="hist" onclick="ptabSwitch('repack','hist')">📋 HISTÓRICO <span class="ptab-badge" id="repack-hist-cnt">0</span></button>
+        </div>
+        <div id="repack-ptab-form" class="ptab-content active">
+          <div class="card">
+            <div class="card-title">⚙ Configurar Registro</div>
+            <div class="row2" style="gap:14px;margin-bottom:14px">
+              <div><div class="field-label">Embalagem</div><select id="repack-embalagem"></select></div>
+              <div><div class="field-label">Quantidade feita</div><input type="number" id="repack-quantidade" min="1" value="1"></div>
+            </div>
+            <div class="row2" style="gap:14px;margin-bottom:14px">
+              <div><div class="field-label">Hora inicial</div><input type="time" id="repack-inicio" step="1"></div>
+              <div><div class="field-label">Hora final</div><input type="time" id="repack-fim" step="1"></div>
+            </div>
+            <div class="row2" style="gap:14px;margin-bottom:16px">
+              <div><div class="field-label">Tempo total</div><input type="text" id="repack-duracao" readonly value="00:00:00" style="opacity:.9"></div>
+              <div><div class="field-label">Status vs Meta</div><div id="repack-status" style="font-weight:700;padding:10px 0;font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">—</div></div>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-ghost btn-sm" id="repack-btnInicio">⏱ Puxar hora inicial</button>
+              <button class="btn btn-ghost btn-sm" id="repack-btnFim">⏱ Puxar hora final</button>
+              <button class="btn btn-amber" id="repack-btnRegistrar" disabled>✅ REGISTRAR</button>
+            </div>
           </div>
         </div>
-        <div style="margin-top:16px;overflow-x:auto">
+        <div id="repack-ptab-hist" class="ptab-content" data-ptab-pane="repack" style="overflow-x:auto">
           <table style="width:100%;border-collapse:collapse;font-size:13px">
             <thead style="background:var(--surface2)">
               <tr>
@@ -797,28 +812,33 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
         </div>
       </div>
       <div class="wrap">
-        <div class="card">
-          <div class="card-title">⚙ Configurar Registro</div>
-          <div class="row2" style="gap:14px;margin-bottom:14px">
-            <div><div class="field-label">Embalagem</div><select id="despejo-embalagem"></select></div>
-            <div><div class="field-label">Quantidade feita</div><input type="number" id="despejo-quantidade" min="1" value="1"></div>
-          </div>
-          <div class="row2" style="gap:14px;margin-bottom:14px">
-            <div><div class="field-label">Hora inicial</div><input type="time" id="despejo-inicio" step="1"></div>
-            <div><div class="field-label">Hora final</div><input type="time" id="despejo-fim" step="1"></div>
-          </div>
-          <div class="row2" style="gap:14px;margin-bottom:16px">
-            <div><div class="field-label">Tempo total</div><input type="text" id="despejo-duracao" readonly value="00:00:00" style="opacity:.9"></div>
-            <div><div class="field-label">Status vs Meta</div><div id="despejo-status" style="font-weight:700;padding:10px 0;font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">—</div></div>
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-ghost btn-sm" id="despejo-btnInicio">⏱ Puxar hora inicial</button>
-            <button class="btn btn-ghost btn-sm" id="despejo-btnFim">⏱ Puxar hora final</button>
-            <button class="btn btn-amber" id="despejo-btnRegistrar" disabled>✅ REGISTRAR</button>
-            <button class="btn btn-red btn-sm" id="despejo-btnLimpar">🗑 LIMPAR TUDO</button>
+        <div class="ptabs">
+          <button class="ptab active" data-ptab-group="despejo" data-ptab="form" onclick="ptabSwitch('despejo','form')">⚙ REGISTRAR</button>
+          <button class="ptab" data-ptab-group="despejo" data-ptab="hist" onclick="ptabSwitch('despejo','hist')">📋 HISTÓRICO <span class="ptab-badge" id="despejo-hist-cnt">0</span></button>
+        </div>
+        <div id="despejo-ptab-form" class="ptab-content active">
+          <div class="card">
+            <div class="card-title">⚙ Configurar Registro</div>
+            <div class="row2" style="gap:14px;margin-bottom:14px">
+              <div><div class="field-label">Embalagem</div><select id="despejo-embalagem"></select></div>
+              <div><div class="field-label">Quantidade feita</div><input type="number" id="despejo-quantidade" min="1" value="1"></div>
+            </div>
+            <div class="row2" style="gap:14px;margin-bottom:14px">
+              <div><div class="field-label">Hora inicial</div><input type="time" id="despejo-inicio" step="1"></div>
+              <div><div class="field-label">Hora final</div><input type="time" id="despejo-fim" step="1"></div>
+            </div>
+            <div class="row2" style="gap:14px;margin-bottom:16px">
+              <div><div class="field-label">Tempo total</div><input type="text" id="despejo-duracao" readonly value="00:00:00" style="opacity:.9"></div>
+              <div><div class="field-label">Status vs Meta</div><div id="despejo-status" style="font-weight:700;padding:10px 0;font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">—</div></div>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-ghost btn-sm" id="despejo-btnInicio">⏱ Puxar hora inicial</button>
+              <button class="btn btn-ghost btn-sm" id="despejo-btnFim">⏱ Puxar hora final</button>
+              <button class="btn btn-amber" id="despejo-btnRegistrar" disabled>✅ REGISTRAR</button>
+            </div>
           </div>
         </div>
-        <div style="margin-top:16px;overflow-x:auto">
+        <div id="despejo-ptab-hist" class="ptab-content" data-ptab-pane="despejo" style="overflow-x:auto">
           <table style="width:100%;border-collapse:collapse;font-size:13px">
             <thead style="background:var(--surface2)">
               <tr>
@@ -851,25 +871,31 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
         </div>
       </div>
       <div class="wrap">
-        <div class="card">
-          <div class="card-title">📝 Formulário de Registro</div>
-          <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px">Janela válida: <strong style="color:#7cc6ff">07:00</strong> até <strong style="color:#7cc6ff">21:00</strong>. Observação obrigatória quando fora da janela.</p>
-          <div class="form-grid">
-            <div class="fg-4"><div class="field-label">Operação *</div><select id="af-operacao"><option value="" disabled selected>Selecione</option><option>Descarregamento</option><option>Carregamento</option></select></div>
-            <div class="fg-4"><div class="field-label">Empilhador *</div><select id="af-empilhador"><option value="" disabled selected>Selecione</option><option>Paulo Pereira</option><option>Marivaldo</option><option>Ronildo</option><option>Outros...</option></select></div>
-            <div class="fg-4"><div class="field-label">Turno *</div><select id="af-turno"><option value="" disabled selected>Selecione</option><option>Diurno</option><option>Noturno</option></select></div>
-            <div class="fg-6"><div class="field-label">Placa do Veículo *</div><select id="af-placa"><option value="" disabled selected>Selecione</option><option>QSK7D92</option><option>OXO0532</option><option>OXO0542</option><option>OXO0552</option><option>OXO0782</option><option>SLB4A26</option><option>NPR2601</option><option>SLB4A56</option><option>TOZ8B20</option><option>TOZ8B50</option><option>RLR8G79</option><option>RLU4H49</option><option>TOU7F79</option><option>RLW0C17</option><option>SLB3J76</option><option>RLU3F59</option><option>RLT5J54</option><option>RLT5J44</option><option>Outra...</option></select><input id="af-placaOutro" type="text" placeholder="Digite a placa" maxlength="8" style="display:none;margin-top:6px"></div>
-            <div class="fg-3"><div class="field-label">Tipo *</div><select id="af-tipo"><option value="" disabled selected>Selecione</option><option value="rota">Rota</option><option value="puxada">Puxada</option><option value="recarga">Recarga</option><option value="terceiro">Terceiro</option></select></div>
-            <div class="fg-2"><div class="field-label">Palhete *</div><input id="af-palhete" type="number" min="0" placeholder="Qtd"></div>
-            <div class="fg-1"><div class="field-label">Data</div><input id="af-data" type="date" readonly style="opacity:.8"></div>
-            <div class="fg-4"><div class="field-label">Hora Início *</div><div style="display:flex;gap:6px"><input id="af-inicio" type="time" style="flex:1;min-width:0"><button class="btn btn-ghost btn-sm" id="af-btnInicio" style="white-space:nowrap;flex-shrink:0">⏱ Agora</button></div></div>
-            <div class="fg-4"><div class="field-label">Hora Final *</div><div style="display:flex;gap:6px"><input id="af-fim" type="time" style="flex:1;min-width:0"><button class="btn btn-ghost btn-sm" id="af-btnFim" style="white-space:nowrap;flex-shrink:0">⏱ Agora</button></div></div>
-            <div class="fg-4"><div class="field-label">Status (07:00 → 21:00)</div><div id="af-statusChip" style="padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg);font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">—</div></div>
-            <div class="fg-12"><div class="field-label">Observação (obrigatória quando fora da janela)</div><textarea id="af-obs" placeholder="Descreva o motivo quando estiver fora da janela" style="min-height:70px;resize:vertical"></textarea></div>
-            <div class="fg-12"><div class="btn-row"><button class="btn btn-amber" id="af-btnSalvar">💾 SALVAR REGISTRO</button><button class="btn btn-ghost" id="af-btnClear">↺ LIMPAR FORM</button><button class="btn btn-red btn-sm" id="af-btnLimpar">🗑 APAGAR TUDO</button></div></div>
+        <div class="ptabs">
+          <button class="ptab active" data-ptab-group="armazem" data-ptab="form" onclick="ptabSwitch('armazem','form')">📝 REGISTRAR</button>
+          <button class="ptab" data-ptab-group="armazem" data-ptab="hist" onclick="ptabSwitch('armazem','hist')">📋 HISTÓRICO <span class="ptab-badge" id="armazem-hist-cnt">0</span></button>
+        </div>
+        <div id="armazem-ptab-form" class="ptab-content active">
+          <div class="card">
+            <div class="card-title">📝 Formulário de Registro</div>
+            <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px">Janela válida: <strong style="color:#7cc6ff">07:00</strong> até <strong style="color:#7cc6ff">21:00</strong>. Observação obrigatória quando fora da janela.</p>
+            <div class="form-grid">
+              <div class="fg-4"><div class="field-label">Operação *</div><select id="af-operacao"><option value="" disabled selected>Selecione</option><option>Descarregamento</option><option>Carregamento</option></select></div>
+              <div class="fg-4"><div class="field-label">Empilhador *</div><select id="af-empilhador"><option value="" disabled selected>Selecione</option><option>Paulo Pereira</option><option>Marivaldo</option><option>Ronildo</option><option>Outros...</option></select></div>
+              <div class="fg-4"><div class="field-label">Turno *</div><select id="af-turno"><option value="" disabled selected>Selecione</option><option>Diurno</option><option>Noturno</option></select></div>
+              <div class="fg-6"><div class="field-label">Placa do Veículo *</div><select id="af-placa"><option value="" disabled selected>Selecione</option><option>QSK7D92</option><option>OXO0532</option><option>OXO0542</option><option>OXO0552</option><option>OXO0782</option><option>SLB4A26</option><option>NPR2601</option><option>SLB4A56</option><option>TOZ8B20</option><option>TOZ8B50</option><option>RLR8G79</option><option>RLU4H49</option><option>TOU7F79</option><option>RLW0C17</option><option>SLB3J76</option><option>RLU3F59</option><option>RLT5J54</option><option>RLT5J44</option><option>Outra...</option></select><input id="af-placaOutro" type="text" placeholder="Digite a placa" maxlength="8" style="display:none;margin-top:6px"></div>
+              <div class="fg-3"><div class="field-label">Tipo *</div><select id="af-tipo"><option value="" disabled selected>Selecione</option><option value="rota">Rota</option><option value="puxada">Puxada</option><option value="recarga">Recarga</option><option value="terceiro">Terceiro</option></select></div>
+              <div class="fg-2"><div class="field-label">Palhete *</div><input id="af-palhete" type="number" min="0" placeholder="Qtd"></div>
+              <div class="fg-1"><div class="field-label">Data</div><input id="af-data" type="date" readonly style="opacity:.8"></div>
+              <div class="fg-4"><div class="field-label">Hora Início *</div><div style="display:flex;gap:6px"><input id="af-inicio" type="time" style="flex:1;min-width:0"><button class="btn btn-ghost btn-sm" id="af-btnInicio" style="white-space:nowrap;flex-shrink:0">⏱ Agora</button></div></div>
+              <div class="fg-4"><div class="field-label">Hora Final *</div><div style="display:flex;gap:6px"><input id="af-fim" type="time" style="flex:1;min-width:0"><button class="btn btn-ghost btn-sm" id="af-btnFim" style="white-space:nowrap;flex-shrink:0">⏱ Agora</button></div></div>
+              <div class="fg-4"><div class="field-label">Status (07:00 → 21:00)</div><div id="af-statusChip" style="padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--bg);font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">—</div></div>
+              <div class="fg-12"><div class="field-label">Observação (obrigatória quando fora da janela)</div><textarea id="af-obs" placeholder="Descreva o motivo quando estiver fora da janela" style="min-height:70px;resize:vertical"></textarea></div>
+              <div class="fg-12"><div class="btn-row"><button class="btn btn-amber" id="af-btnSalvar">💾 SALVAR REGISTRO</button><button class="btn btn-ghost" id="af-btnClear">↺ LIMPAR FORM</button></div></div>
+            </div>
           </div>
         </div>
-        <div style="margin-top:16px;overflow-x:auto">
+        <div id="armazem-ptab-hist" class="ptab-content" data-ptab-pane="armazem" style="overflow-x:auto">
           <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:700px">
             <thead style="background:var(--surface2)">
               <tr>
@@ -901,23 +927,28 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
         <span class="pane-topbar-title">💥 CONTROLE DE QUEBRAS — REGISTRO DE AVARIAS</span>
       </div>
       <div class="wrap">
-        <div class="card">
-          <div class="card-title">📝 Cadastro de Quebra</div>
-          <div class="form-grid">
-            <div class="fg-8" style="position:relative"><div class="field-label">Produto</div><input id="qb-produtoInput" autocomplete="off" placeholder="Digite código ou nome do produto..."><div id="qb-listaProdutos" style="position:absolute;top:100%;left:0;right:0;background:#0e1626;border:1px solid var(--border);border-radius:10px;z-index:50;max-height:220px;overflow-y:auto;display:none"></div></div>
-            <div class="fg-2"><div class="field-label">Código</div><input id="qb-codigo" placeholder="Auto" readonly style="opacity:.8"></div>
-            <div class="fg-2"><div class="field-label">Quantidade *</div><input id="qb-quantidade" type="number" min="1" placeholder="Qtd"></div>
-            <div class="fg-12"><div class="field-label">Descrição</div><input id="qb-descricao" placeholder="Automático ou manual"></div>
-            <div class="fg-4"><div class="field-label">Área *</div><select id="qb-area"><option value="">Selecione</option><option>ARMAZEM</option><option>ENTREGA</option><option>MERCADO</option><option>PUXADA</option></select></div>
-            <div class="fg-4"><div class="field-label">Turno *</div><select id="qb-turno"><option value="">Selecione</option><option>MANHÃ</option><option>NOITE</option></select></div>
-            <div class="fg-4"><div class="field-label">Tipo de Quebra *</div><select id="qb-tipoQuebra"><option value="">Selecione a área primeiro</option></select></div>
-            <div class="fg-12"><button class="btn btn-amber" onclick="qbAdicionar()" style="max-width:220px">➕ ADICIONAR QUEBRA</button></div>
+        <div class="ptabs">
+          <button class="ptab active" data-ptab-group="quebras" data-ptab="form" onclick="ptabSwitch('quebras','form')">📝 CADASTRAR</button>
+          <button class="ptab" data-ptab-group="quebras" data-ptab="hist" onclick="ptabSwitch('quebras','hist')">📋 HISTÓRICO <span class="ptab-badge" id="quebras-hist-cnt">0</span></button>
+        </div>
+        <div id="quebras-ptab-form" class="ptab-content active">
+          <div class="card">
+            <div class="card-title">📝 Cadastro de Quebra</div>
+            <div class="form-grid">
+              <div class="fg-8" style="position:relative"><div class="field-label">Produto</div><input id="qb-produtoInput" autocomplete="off" placeholder="Digite código ou nome do produto..."><div id="qb-listaProdutos" style="position:absolute;top:100%;left:0;right:0;background:#0e1626;border:1px solid var(--border);border-radius:10px;z-index:50;max-height:220px;overflow-y:auto;display:none"></div></div>
+              <div class="fg-2"><div class="field-label">Código</div><input id="qb-codigo" placeholder="Auto" readonly style="opacity:.8"></div>
+              <div class="fg-2"><div class="field-label">Quantidade *</div><input id="qb-quantidade" type="number" min="1" placeholder="Qtd"></div>
+              <div class="fg-12"><div class="field-label">Descrição</div><input id="qb-descricao" placeholder="Automático ou manual"></div>
+              <div class="fg-4"><div class="field-label">Área *</div><select id="qb-area"><option value="">Selecione</option><option>ARMAZEM</option><option>ENTREGA</option><option>MERCADO</option><option>PUXADA</option></select></div>
+              <div class="fg-4"><div class="field-label">Turno *</div><select id="qb-turno"><option value="">Selecione</option><option>MANHÃ</option><option>NOITE</option></select></div>
+              <div class="fg-4"><div class="field-label">Tipo de Quebra *</div><select id="qb-tipoQuebra"><option value="">Selecione a área primeiro</option></select></div>
+              <div class="fg-12"><button class="btn btn-amber" onclick="qbAdicionar()" style="max-width:220px">➕ ADICIONAR QUEBRA</button></div>
+            </div>
           </div>
         </div>
-        <div style="margin-top:16px;overflow-x:auto">
+        <div id="quebras-ptab-hist" class="ptab-content" data-ptab-pane="quebras" style="overflow-x:auto">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
             <span style="font-size:12px;color:var(--text-dim)">⚠ Dados ficam na memória — exporte antes de fechar o navegador</span>
-            <button class="btn btn-red btn-sm" onclick="qbLimparTabela()">🗑 Limpar tabela</button>
           </div>
           <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:700px">
             <thead style="background:var(--surface2)">
@@ -1093,51 +1124,78 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
         <div class="mobile-menu-gap"></div>
         <span class="pane-topbar-title">⬇ EXPORTAR DADOS</span>
       </div>
-      <div class="wrap">
-        <div class="card">
-          <div class="card-title">📄 Picking — Exportar CSV</div>
-          <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Exporta as tarefas de picking/reabastecimento salvas localmente.</p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <button class="btn btn-ghost" onclick="exportCSV()">⬇ BAIXAR CSV PICKING</button>
-            <span id="csv-status" style="font-size:12px;color:var(--text-dim)"></span>
-          </div>
-          <div id="csv-preview"></div>
+
+      <!-- TELA DE SENHA -->
+      <div id="csv-lock-screen" class="wrap" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:20px">
+        <div style="font-size:48px">🔒</div>
+        <div style="font-size:18px;font-weight:700;letter-spacing:2px;color:var(--text);font-family:'Barlow Condensed',sans-serif">ACESSO RESTRITO</div>
+        <div style="font-size:13px;color:var(--text-dim);text-align:center;max-width:280px">Esta área é exclusiva para gestores. Digite a senha para continuar.</div>
+        <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px">
+          <input type="password" id="csv-senha-input" placeholder="Digite a senha" style="text-align:center;letter-spacing:4px;font-size:16px" onkeydown="if(event.key==='Enter') csvUnlock()">
+          <button class="btn btn-amber" onclick="csvUnlock()">🔓 ENTRAR</button>
+          <div id="csv-senha-erro" style="color:var(--red);font-size:12px;text-align:center;display:none">Senha incorreta. Tente novamente.</div>
         </div>
-        <div class="card" style="margin-top:16px">
-          <div class="card-title" style="color:#ef4444">🗑 Despejo Timer — Exportar Excel</div>
-          <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Exporta todos os registros de produtividade de despejo salvos no Firebase.</p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <button class="btn btn-red" onclick="exportarDespejoExcel()">⬇ BAIXAR RELATÓRIO DESPEJO (.xlsx)</button>
-            <span id="despejo-export-status" style="font-size:12px;color:var(--text-dim)"></span>
+      </div>
+
+      <!-- CONTEÚDO (oculto até senha correta) -->
+      <div id="csv-content-area" style="display:none">
+        <div class="wrap">
+
+          <!-- FILTRO DE DATA GLOBAL -->
+          <div class="card" style="background:var(--surface2);border:1px solid var(--amber);margin-bottom:20px">
+            <div class="card-title" style="color:var(--amber)">📅 Data do Relatório</div>
+            <p style="font-size:12px;color:var(--text-dim);margin-bottom:14px">Todos os relatórios abaixo serão filtrados pela data selecionada.</p>
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+              <input type="date" id="relatorio-data-global" style="max-width:200px;font-size:15px;font-weight:700">
+              <button class="btn btn-ghost btn-sm" onclick="relatorioSetHoje()">📅 Hoje</button>
+              <span id="relatorio-data-label" style="font-size:13px;color:var(--amber);font-weight:700;font-family:'Barlow Condensed',sans-serif"></span>
+            </div>
           </div>
-        </div>
-        <div class="card" style="margin-top:16px">
-          <div class="card-title" style="color:var(--amber)">📦 Repack Timer — Exportar Excel</div>
-          <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Exporta todos os registros de produtividade de repack salvos no Firebase.</p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <button class="btn btn-amber" onclick="exportarRepackExcel()">⬇ BAIXAR RELATÓRIO REPACK (.xlsx)</button>
-            <span id="repack-export-status" style="font-size:12px;color:var(--text-dim)"></span>
+
+          <div class="card">
+            <div class="card-title">📄 Picking — Exportar CSV</div>
+            <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Exporta as tarefas de picking/reabastecimento salvas localmente.</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <button class="btn btn-ghost" onclick="exportCSV()">⬇ BAIXAR CSV PICKING</button>
+              <span id="csv-status" style="font-size:12px;color:var(--text-dim)"></span>
+            </div>
+            <div id="csv-preview"></div>
           </div>
-        </div>
-        <div class="card" style="margin-top:16px">
-          <div class="card-title" style="color:#7cc6ff">🚛 Armazém Fácil — Exportar Excel</div>
-          <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Exporta todos os registros de carregamento e descarregamento salvos no Firebase.</p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <button class="btn" style="background:#7cc6ff;color:#0b1220;font-weight:700" onclick="exportarArmazemExcel()">⬇ BAIXAR RELATÓRIO ARMAZÉM (.xlsx)</button>
-            <span id="armazem-export-status" style="font-size:12px;color:var(--text-dim)"></span>
+          <div class="card" style="margin-top:16px">
+            <div class="card-title" style="color:#ef4444">🗑 Despejo Timer — Exportar Excel</div>
+            <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Exporta os registros de produtividade de despejo da data selecionada.</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <button class="btn btn-red" onclick="exportarDespejoExcel()">⬇ BAIXAR RELATÓRIO DESPEJO (.xlsx)</button>
+              <span id="despejo-export-status" style="font-size:12px;color:var(--text-dim)"></span>
+            </div>
           </div>
-        </div>
-        <div class="card" style="margin-top:16px">
-          <div class="card-title" style="color:#fca5a5">💥 Controle de Quebras — Exportar Excel</div>
-          <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Exporta todos os registros de avarias salvos no Firebase.</p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <button class="btn btn-red" onclick="exportarQuebrasExcel()">⬇ BAIXAR RELATÓRIO QUEBRAS (.xlsx)</button>
-            <span id="quebras-export-status" style="font-size:12px;color:var(--text-dim)"></span>
+          <div class="card" style="margin-top:16px">
+            <div class="card-title" style="color:var(--amber)">📦 Repack Timer — Exportar Excel</div>
+            <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Exporta os registros de produtividade de repack da data selecionada.</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <button class="btn btn-amber" onclick="exportarRepackExcel()">⬇ BAIXAR RELATÓRIO REPACK (.xlsx)</button>
+              <span id="repack-export-status" style="font-size:12px;color:var(--text-dim)"></span>
+            </div>
           </div>
-        </div>
-        <div class="settings-note" style="margin-top:16px">
-          <strong>Picking CSV — Colunas:</strong><br>ID · Código · Descrição · Paletes · Conferente · Operador · Criado Em · Iniciado Em · Finalizado Em · Duração (min) · Duração / Palete<br><br>
-          <strong>Dica:</strong> Para abrir corretamente no Excel, use <em>Dados → Obter dados externos → De arquivo de texto/CSV</em> e selecione delimitador vírgula.
+          <div class="card" style="margin-top:16px">
+            <div class="card-title" style="color:#7cc6ff">🚛 Armazém Fácil — Exportar Excel</div>
+            <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Exporta os registros de carregamento e descarregamento da data selecionada.</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <button class="btn" style="background:#7cc6ff;color:#0b1220;font-weight:700" onclick="exportarArmazemExcel()">⬇ BAIXAR RELATÓRIO ARMAZÉM (.xlsx)</button>
+              <span id="armazem-export-status" style="font-size:12px;color:var(--text-dim)"></span>
+            </div>
+          </div>
+          <div class="card" style="margin-top:16px">
+            <div class="card-title" style="color:#fca5a5">💥 Controle de Quebras — Exportar Excel</div>
+            <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Exporta os registros de avarias da data selecionada.</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <button class="btn btn-red" onclick="exportarQuebrasExcel()">⬇ BAIXAR RELATÓRIO QUEBRAS (.xlsx)</button>
+              <span id="quebras-export-status" style="font-size:12px;color:var(--text-dim)"></span>
+            </div>
+          </div>
+          <div style="margin-top:16px;display:flex;justify-content:flex-end">
+            <button class="btn btn-ghost btn-sm" onclick="csvLock()">🔒 Sair dos Relatórios</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1359,7 +1417,9 @@ const DESPEJO_EMBALAGENS = [
       resultado: statusEl.textContent
     };
     const docId = await fbSave('despejo', row);
-    if (docId) { row._docId = docId; despejoRows.push(row); renderDespejo(); toast('Registro despejo salvo!'); }
+    if (docId) { row._docId = docId; despejoRows.push(row); renderDespejo(); toast('Registro despejo salvo!');
+      const cnt = document.getElementById('despejo-hist-cnt'); if(cnt) cnt.textContent = despejoRows.length;
+    }
     inpIni.value=''; inpFim.value=''; inpDur.value='00:00:00'; statusEl.textContent='—'; btnReg.disabled=true;
   });
 
@@ -1367,13 +1427,13 @@ const DESPEJO_EMBALAGENS = [
     if (!confirm('Remover este registro?')) return;
     const r = despejoRows[i];
     if (r._docId) await fbDelete('despejo', r._docId);
-    despejoRows.splice(i, 1); renderDespejo();
+    despejoRows.splice(i, 1); renderDespejo(); const dc=document.getElementById('despejo-hist-cnt'); if(dc) dc.textContent=despejoRows.length;
   };
 
   if (btnLimpar) btnLimpar.addEventListener('click', async () => {
     if (!confirm('Limpar TODOS os registros de despejo?')) return;
     for (const r of despejoRows) { if (r._docId) await fbDelete('despejo', r._docId); }
-    despejoRows = []; renderDespejo();
+    despejoRows = []; renderDespejo(); const dc2=document.getElementById('despejo-hist-cnt'); if(dc2) dc2.textContent=0;
   });
 
   // Load from Firebase on init
@@ -1383,6 +1443,7 @@ const DESPEJO_EMBALAGENS = [
       const snap = await getDb().collection('despejo').orderBy('_criadoEm','asc').get();
       despejoRows = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
       renderDespejo();
+      const cnt = document.getElementById('despejo-hist-cnt'); if(cnt) cnt.textContent = despejoRows.length;
     } catch(e) {}
   }, 2000);
 })();
@@ -1469,7 +1530,9 @@ const REPACK_EMBALAGENS = [
       resultado: statusEl.textContent
     };
     const docId = await fbSave('repack', row);
-    if (docId) { row._docId = docId; repackRows.push(row); renderRepack(); toast('Registro repack salvo!'); }
+    if (docId) { row._docId = docId; repackRows.push(row); renderRepack(); toast('Registro repack salvo!');
+      const cnt = document.getElementById('repack-hist-cnt'); if(cnt) cnt.textContent = repackRows.length;
+    }
     inpIni.value=''; inpFim.value=''; inpDur.value='00:00:00'; statusEl.textContent='—'; btnReg.disabled=true;
   });
 
@@ -1477,13 +1540,13 @@ const REPACK_EMBALAGENS = [
     if (!confirm('Remover este registro?')) return;
     const r = repackRows[i];
     if (r._docId) await fbDelete('repack', r._docId);
-    repackRows.splice(i, 1); renderRepack();
+    repackRows.splice(i, 1); renderRepack(); const rc=document.getElementById('repack-hist-cnt'); if(rc) rc.textContent=repackRows.length;
   };
 
   if (btnLimpar) btnLimpar.addEventListener('click', async () => {
     if (!confirm('Limpar TODOS os registros de repack?')) return;
     for (const r of repackRows) { if (r._docId) await fbDelete('repack', r._docId); }
-    repackRows = []; renderRepack();
+    repackRows = []; renderRepack(); const rc2=document.getElementById('repack-hist-cnt'); if(rc2) rc2.textContent=0;
   });
 
   setTimeout(async () => {
@@ -1492,6 +1555,7 @@ const REPACK_EMBALAGENS = [
       const snap = await getDb().collection('repack').orderBy('_criadoEm','asc').get();
       repackRows = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
       renderRepack();
+      const cnt = document.getElementById('repack-hist-cnt'); if(cnt) cnt.textContent = repackRows.length;
     } catch(e) {}
   }, 2000);
 })();
@@ -1557,7 +1621,9 @@ const REPACK_EMBALAGENS = [
     if (!isOk && !obs) { alert('Observação obrigatória quando fora da janela 07:00-21:00'); return; }
     const row = { operacao:op, data:data.value, dataISO:data.value, inicio:inpIni.value, fim:inpFim.value, status: isOk ? '✅ DENTRO DA JANELA' : '⚠ FORA DA JANELA', empilhador:emp, turno, placa:pl, tipo, palhete:Number(palhete), obs };
     const docId = await fbSave('armazem', row);
-    if (docId) { row._docId = docId; armazemRows.push(row); renderArmazem(); toast('Registro armazém salvo!'); }
+    if (docId) { row._docId = docId; armazemRows.push(row); renderArmazem(); toast('Registro armazém salvo!');
+      const cnt = document.getElementById('armazem-hist-cnt'); if(cnt) cnt.textContent = armazemRows.length;
+    }
     ['af-operacao','af-inicio','af-fim','af-palhete','af-obs'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
     if (statusChip) { statusChip.textContent='—'; statusChip.style.color='var(--text-dim)'; }
   });
@@ -1570,7 +1636,7 @@ const REPACK_EMBALAGENS = [
   if (btnLimpar) btnLimpar.addEventListener('click', async () => {
     if (!confirm('Apagar TODOS os registros de armazém?')) return;
     for (const r of armazemRows) { if (r._docId) await fbDelete('armazem', r._docId); }
-    armazemRows = []; renderArmazem();
+    armazemRows = []; renderArmazem(); const ac2=document.getElementById('armazem-hist-cnt'); if(ac2) ac2.textContent=0;
   });
 
   function updateNowInfo() {
@@ -1584,6 +1650,7 @@ const REPACK_EMBALAGENS = [
       const snap = await getDb().collection('armazem').orderBy('_criadoEm','asc').get();
       armazemRows = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
       renderArmazem();
+      const cnt = document.getElementById('armazem-hist-cnt'); if(cnt) cnt.textContent = armazemRows.length;
     } catch(e) {}
   }, 2000);
 })();
@@ -1665,7 +1732,9 @@ const QB_TIPOS = {
       quantidade: Number(qtd), area, turno, codQuebra, motivo: tipo
     };
     const docId = await fbSave('quebras', row);
-    if (docId) { row._docId = docId; qbRows.push(row); renderQb(); toast('Quebra registrada!'); }
+    if (docId) { row._docId = docId; qbRows.push(row); renderQb(); toast('Quebra registrada!');
+      const cnt = document.getElementById('quebras-hist-cnt'); if(cnt) cnt.textContent = qbRows.length;
+    }
     ['qb-produtoInput','qb-codigo','qb-descricao','qb-quantidade'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
     qbSelecionado = null;
   };
@@ -1674,13 +1743,13 @@ const QB_TIPOS = {
     if (!confirm('Remover este registro?')) return;
     const r = qbRows[i];
     if (r._docId) await fbDelete('quebras', r._docId);
-    qbRows.splice(i, 1); renderQb();
+    qbRows.splice(i, 1); renderQb(); const qc=document.getElementById('quebras-hist-cnt'); if(qc) qc.textContent=qbRows.length;
   };
 
   window.qbLimparTabela = async function() {
     if (!confirm('Limpar TODOS os registros de quebras?')) return;
     for (const r of qbRows) { if (r._docId) await fbDelete('quebras', r._docId); }
-    qbRows = []; renderQb();
+    qbRows = []; renderQb(); const qc2=document.getElementById('quebras-hist-cnt'); if(qc2) qc2.textContent=0;
   };
 
   setTimeout(async () => {
@@ -1689,6 +1758,7 @@ const QB_TIPOS = {
       const snap = await getDb().collection('quebras').orderBy('_criadoEm','asc').get();
       qbRows = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
       renderQb();
+      const cnt = document.getElementById('quebras-hist-cnt'); if(cnt) cnt.textContent = qbRows.length;
     } catch(e) {}
   }, 2000);
 })();
@@ -1965,11 +2035,25 @@ async function fecharTurno() {
       {Módulo:'Armazém', Total:snapA.size, Hoje:snapA.docs.filter(d=>d.data().data===hoje).length},
       {Módulo:'Quebras', Total:snapQ.size, Hoje:snapQ.docs.filter(d=>d.data().data===hoje).length},
     ];
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumo), 'RESUMO');
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(snapD.docs.map(d=>{const r=d.data();return{'Data':r.data,'Embalagem':r.embalagem,'Qtd':r.quantidade,'Início':r.inicio,'Fim':r.fim,'Tempo':r.tempo,'Meta':r.meta,'Resultado':r.resultado};})), 'DESPEJO');
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(snapR.docs.map(d=>{const r=d.data();return{'Data':r.data,'Embalagem':r.embalagem,'Qtd':r.quantidade,'Início':r.inicio,'Fim':r.fim,'Tempo':r.duracao,'Meta':r.meta,'Resultado':r.resultado};})), 'REPACK');
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(snapA.docs.map(d=>{const r=d.data();return{'Operação':r.operacao,'Data':r.data,'Início':r.inicio,'Fim':r.fim,'Status':r.status,'Empilhador':r.empilhador,'Turno':r.turno,'Placa':r.placa,'Tipo':r.tipo,'Palhete':r.palhete,'Obs':r.obs||''};})), 'ARMAZÉM');
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(snapQ.docs.map(d=>{const r=d.data();return{'Data':r.data,'Cód Produto':r.codProduto,'Descrição':r.descricao,'Qtd':r.quantidade,'Turno':r.turno,'Cód Quebra':r.codQuebra,'Área':r.area,'Motivo':r.motivo};})), 'QUEBRAS');
+    const wsResumo = XLSX.utils.json_to_sheet(resumo);
+    xlsAutoColWidth(wsResumo, resumo);
+    XLSX.utils.book_append_sheet(wb, wsResumo, 'RESUMO');
+
+    const dataD = snapD.docs.map(d=>{const r=d.data();return{'Data':r.data,'Embalagem':r.embalagem,'Qtd':r.quantidade,'Início':r.inicio,'Fim':r.fim,'Tempo':r.tempo,'Meta':r.meta,'Resultado':r.resultado};});
+    const wsD = XLSX.utils.json_to_sheet(dataD); xlsAutoColWidth(wsD, dataD);
+    XLSX.utils.book_append_sheet(wb, wsD, 'DESPEJO');
+
+    const dataR = snapR.docs.map(d=>{const r=d.data();return{'Data':r.data,'Embalagem':r.embalagem,'Qtd':r.quantidade,'Início':r.inicio,'Fim':r.fim,'Tempo':r.duracao,'Meta':r.meta,'Resultado':r.resultado};});
+    const wsR = XLSX.utils.json_to_sheet(dataR); xlsAutoColWidth(wsR, dataR);
+    XLSX.utils.book_append_sheet(wb, wsR, 'REPACK');
+
+    const dataA = snapA.docs.map(d=>{const r=d.data();return{'Operação':r.operacao,'Data':r.data,'Início':r.inicio,'Fim':r.fim,'Status':r.status,'Empilhador':r.empilhador,'Turno':r.turno,'Placa':r.placa,'Tipo':r.tipo,'Palhete':r.palhete,'Obs':r.obs||''};});
+    const wsA = XLSX.utils.json_to_sheet(dataA); xlsAutoColWidth(wsA, dataA);
+    XLSX.utils.book_append_sheet(wb, wsA, 'ARMAZÉM');
+
+    const dataQ = snapQ.docs.map(d=>{const r=d.data();return{'Data':r.data,'Cód Produto':r.codProduto,'Descrição':r.descricao,'Qtd':r.quantidade,'Turno':r.turno,'Cód Quebra':r.codQuebra,'Área':r.area,'Motivo':r.motivo};});
+    const wsQ = XLSX.utils.json_to_sheet(dataQ); xlsAutoColWidth(wsQ, dataQ);
+    XLSX.utils.book_append_sheet(wb, wsQ, 'QUEBRAS');
     XLSX.writeFile(wb, `relatorio_turno_${todayISO()}.xlsx`);
     const st = document.getElementById('rel-fechar-status');
     if (st) st.textContent = `✅ Arquivo gerado: relatorio_turno_${todayISO()}.xlsx`;
@@ -1980,19 +2064,50 @@ async function fecharTurno() {
   if (btn) { btn.disabled=false; btn.textContent='📥 FECHAR TURNO — BAIXAR EXCEL COMPLETO'; }
 }
 
-async function exportarModulo(colecao, nomeArq, mapFn) {
+// ── Aplica largura automática de colunas e linha de cabeçalho congelada ──
+function xlsAutoColWidth(ws, data) {
+  if (!data || !data.length) return;
+  const keys = Object.keys(data[0]);
+  ws['!cols'] = keys.map(k => {
+    const maxLen = data.reduce((acc, row) => {
+      const val = row[k] != null ? String(row[k]) : '';
+      return Math.max(acc, val.length);
+    }, k.length);
+    return { wch: Math.min(Math.max(maxLen + 2, 10), 55) };
+  });
+  ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+}
+
+async function exportarModulo(colecao, nomeArqBase, mapFn) {
   if (!dbOk()) return;
   const statusId = colecao + '-export-status';
   const statusEl = document.getElementById(statusId);
+
+  const dataISO = getRelatorioData();
+  if (!dataISO) {
+    if (statusEl) statusEl.textContent = '⚠ Selecione uma data antes de exportar.';
+    return;
+  }
+  const [ano, mes, dia] = dataISO.split('-');
+  const dataBR = dia + '/' + mes + '/' + ano;
+  const nomeArq = nomeArqBase.replace('.xlsx', '_' + dataISO + '.xlsx');
+
   if (statusEl) statusEl.textContent = '⏳ Buscando...';
   try {
     const snap = await getDb().collection(colecao).orderBy('_criadoEm','asc').get();
-    if (!snap.size) { if(statusEl) statusEl.textContent='⚠ Nenhum registro.'; return; }
-    const ws = XLSX.utils.json_to_sheet(snap.docs.map(d=>mapFn(d.data())));
+    const todos = snap.docs.map(d => d.data());
+    const filtrados = todos.filter(r => (r.data || r.dataISO || '').includes(dia + '/' + mes) || (r.dataISO || '').startsWith(dataISO) || (r.data || '') === dataBR);
+    if (!filtrados.length) {
+      if (statusEl) statusEl.textContent = `⚠ Nenhum registro para ${dataBR}.`;
+      return;
+    }
+    const data = filtrados.map(r => mapFn(r));
+    const ws = XLSX.utils.json_to_sheet(data);
+    xlsAutoColWidth(ws, data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, colecao.charAt(0).toUpperCase()+colecao.slice(1));
     XLSX.writeFile(wb, nomeArq);
-    if(statusEl) statusEl.textContent = `✅ ${snap.size} registro(s) exportado(s).`;
+    if (statusEl) statusEl.textContent = `✅ ${filtrados.length} registro(s) de ${dataBR} exportado(s).`;
   } catch(e) { if(statusEl) statusEl.textContent='❌ Erro: '+e.message; }
 }
 
@@ -2003,9 +2118,10 @@ function exportarQuebrasExcel() { exportarModulo('quebras','quebras_registros.xl
 
 function exportCSV() {
   if (typeof S === 'undefined' || !S.tarefas.length) { const st = document.getElementById('csv-status'); if(st) st.textContent='⚠ Nenhuma tarefa disponível.'; return; }
+  const SEP = ';';
   const rows = [['ID','Código','Descrição','Paletes','Conferente','Operador','Status','Criado Em','Iniciado Em','Finalizado Em','Duração (min)']];
-  S.tarefas.forEach(t => rows.push([t.id,t.codigo,'"'+t.descricao+'"',t.quantidade,t.conferente,t.operador,t.status,t.criadoEm||'',t.iniciadoEm||'',t.finalizadoEm||'',t.duracaoMin||'']));
-  const csv = rows.map(r=>r.join(',')).join('\n');
+  S.tarefas.forEach(t => rows.push([t.id,t.codigo,t.descricao,t.quantidade,t.conferente,t.operador,t.status,t.criadoEm||'',t.iniciadoEm||'',t.finalizadoEm||'',t.duracaoMin||'']));
+  const csv = rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(SEP)).join('\r\n');
   const a = document.createElement('a');
   a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
   a.download = 'picking_' + todayISO() + '.csv';
@@ -2085,6 +2201,96 @@ function showFbResult(msg, type) {
 function abrirModalPOP() { document.getElementById('modal-pop').style.display='flex'; }
 function fecharModalPOP() { document.getElementById('modal-pop').style.display='none'; }
 function fecharPOP(e) { if(e.target===document.getElementById('modal-pop')) fecharModalPOP(); }
+
+// ══════════════════════════════════════════════════════
+//  SENHA DOS RELATÓRIOS
+// ══════════════════════════════════════════════════════
+const RELATORIO_SENHA = 'gestor2025'; // ← altere aqui a senha
+
+function csvUnlock() {
+  const inp = document.getElementById('csv-senha-input');
+  const erro = document.getElementById('csv-senha-erro');
+  if (!inp) return;
+  if (inp.value === RELATORIO_SENHA) {
+    document.getElementById('csv-lock-screen').style.display = 'none';
+    document.getElementById('csv-content-area').style.display = 'block';
+    erro.style.display = 'none';
+    inp.value = '';
+    relatorioSetHoje();
+  } else {
+    erro.style.display = 'block';
+    inp.value = '';
+    inp.focus();
+  }
+}
+
+function csvLock() {
+  document.getElementById('csv-lock-screen').style.display = 'flex';
+  document.getElementById('csv-content-area').style.display = 'none';
+  const inp = document.getElementById('csv-senha-input');
+  if (inp) { inp.value = ''; inp.focus(); }
+}
+
+// Toda vez que o pane-csv é exibido, mostra a tela de senha
+(function() {
+  const origNav = window.navGoPane;
+  window.navGoPane = function(id) {
+    if ((id === 'csv' || id === 'reports') && document.getElementById('csv-content-area') && document.getElementById('csv-content-area').style.display !== 'none') {
+      // já autenticado, deixa entrar
+    } else if (id === 'csv' || id === 'reports') {
+      // força tela de senha ao navegar
+      setTimeout(() => {
+        const lock = document.getElementById('csv-lock-screen');
+        const content = document.getElementById('csv-content-area');
+        if (lock)    lock.style.display = 'flex';
+        if (content) content.style.display = 'none';
+        const inp = document.getElementById('csv-senha-input');
+        if (inp) inp.focus();
+      }, 50);
+    }
+    if (typeof origNav === 'function') origNav(id);
+  };
+  window.goPane = window.navGoPane;
+})();
+
+// ══════════════════════════════════════════════════════
+//  DATA GLOBAL DOS RELATÓRIOS
+// ══════════════════════════════════════════════════════
+function relatorioSetHoje() {
+  const inp = document.getElementById('relatorio-data-global');
+  if (!inp) return;
+  inp.value = new Date().toISOString().split('T')[0];
+  atualizarLabelData();
+}
+
+function atualizarLabelData() {
+  const inp = document.getElementById('relatorio-data-global');
+  const lbl = document.getElementById('relatorio-data-label');
+  if (!inp || !lbl || !inp.value) return;
+  const [y, m, d] = inp.value.split('-');
+  lbl.textContent = d + '/' + m + '/' + y;
+}
+
+function getRelatorioData() {
+  const inp = document.getElementById('relatorio-data-global');
+  return inp ? inp.value : '';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const inp = document.getElementById('relatorio-data-global');
+  if (inp) inp.addEventListener('change', atualizarLabelData);
+});
+
+
+function ptabSwitch(prefix, tab) {
+  document.querySelectorAll('[data-ptab-group="' + prefix + '"]').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('[data-ptab-pane="' + prefix + '"]').forEach(el => el.classList.remove('active'));
+  const btn = document.querySelector('[data-ptab-group="' + prefix + '"][data-ptab="' + tab + '"]');
+  const pane = document.getElementById(prefix + '-ptab-' + tab);
+  if (btn)  btn.classList.add('active');
+  if (pane) pane.classList.add('active');
+}
+
 
 // ══════════════════════════════════════════════════════
 //  SOBRESCREVER requestConfTab / requestEmpTab do app.js
