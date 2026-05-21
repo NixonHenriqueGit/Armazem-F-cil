@@ -580,9 +580,22 @@ function load() {
     // Mesma versão: mantém extras adicionados pelo usuário via +ADD
     if (saved.operadores)  saved.operadores.forEach(n  => { if (!S.operadores.includes(n))  S.operadores.push(n);  });
     if (saved.conferentes) saved.conferentes.forEach(n => { if (!S.conferentes.includes(n)) S.conferentes.push(n); });
+
+    // Restaura estado da sessão do empilhador
+    if (saved.tipoOperacao)  tipoOperacao  = saved.tipoOperacao;
+    if (saved.checklistDone) checklistDone = saved.checklistDone;
+    if (saved.selOp)         window._savedSelOp = saved.selOp;
   } catch(e) {}
 }
-function save() { localStorage.setItem('pk2_s', JSON.stringify({...S, namesVersion: NAMES_VERSION})); }
+function save() {
+  localStorage.setItem('pk2_s', JSON.stringify({
+    ...S,
+    namesVersion:  NAMES_VERSION,
+    tipoOperacao:  tipoOperacao,
+    checklistDone: checklistDone,
+    selOp:         document.getElementById('sel-op')?.value || '',
+  }));
+}
 
 // ══════════════════════════════════════════════════════
 //  RELOGIO
@@ -762,6 +775,7 @@ function confirmarChecklist() {
   if (checked < TOTAL_CHECKS) { toast('Marque todos os itens antes de continuar', true); return; }
   checklistDone = true;
   document.getElementById('modal-checklist').style.display = 'none';
+  save();
   goPane('emp');
   updateMenuCounts();
   toast('Checklist concluido — Bom turno, operador!');
@@ -799,6 +813,7 @@ function confirmarTipo() {
   tipoPendente = null;
   document.getElementById('modal-tipo').style.display = 'none';
   atualizarExibicaoTipo();
+  save();
   const label = tipoOperacao === 'durante' ? 'DURANTE O CARREGAMENTO' : 'APÓS O CARREGAMENTO';
   toast('Tipo definido: ' + label);
 }
@@ -1315,6 +1330,18 @@ function toast(msg, warn=false) {
 // ══════════════════════════════════════════════════════
 load();
 fillAll();
+
+// Restaura operador e tipo de operação da sessão anterior
+if (window._savedSelOp) {
+  const selOp = document.getElementById('sel-op');
+  if (selOp) selOp.value = window._savedSelOp;
+  delete window._savedSelOp;
+}
+atualizarExibicaoTipo();
+
+// Persiste o operador selecionado sempre que ele mudar
+document.getElementById('sel-op')?.addEventListener('change', () => save());
+
 filterProds();
 renderAll();
 populateFbForm();
