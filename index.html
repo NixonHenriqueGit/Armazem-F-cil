@@ -1580,12 +1580,33 @@ const REPACK_EMBALAGENS = [
 
   if (data) data.value = todayISO();
   function updateStatusChip() {
-    if (!inpIni.value || !inpFim.value) { statusChip.textContent='—'; statusChip.style.color='var(--text-dim)'; return; }
-    const h = parseInt(inpIni.value.split(':')[0]);
-    const hF = parseInt(inpFim.value.split(':')[0]);
-    const ok = h >= 7 && hF <= 21;
+    if (!inpIni.value || !inpFim.value) {
+      statusChip.textContent='—'; statusChip.style.color='var(--text-dim)';
+      resetObsStyle(); return;
+    }
+    const ok = inpIni.value >= '07:00' && inpFim.value <= '21:00';
     statusChip.textContent = ok ? '✅ DENTRO DA JANELA' : '⚠ FORA DA JANELA';
     statusChip.style.color = ok ? 'var(--green)' : 'var(--amber)';
+    // Destacar campo de observação quando fora da janela
+    const obsEl = document.getElementById('af-obs');
+    const obsLabel = document.querySelector('label[for="af-obs"], .field-label:has(+ #af-obs)');
+    if (obsEl) {
+      if (!ok) {
+        obsEl.style.borderColor = 'var(--amber)';
+        obsEl.style.boxShadow = '0 0 0 2px rgba(245,166,35,0.18)';
+        obsEl.placeholder = '⚠ OBRIGATÓRIO — Descreva o motivo de estar fora da janela 07:00-21:00';
+      } else {
+        resetObsStyle();
+      }
+    }
+  }
+  function resetObsStyle() {
+    const obsEl = document.getElementById('af-obs');
+    if (obsEl) {
+      obsEl.style.borderColor = '';
+      obsEl.style.boxShadow = '';
+      obsEl.placeholder = 'Descreva o motivo quando estiver fora da janela';
+    }
   }
   if (inpIni) inpIni.addEventListener('change', updateStatusChip);
   if (inpFim) inpFim.addEventListener('change', updateStatusChip);
@@ -1613,12 +1634,22 @@ const REPACK_EMBALAGENS = [
     const pl = placa.value === 'Outra...' ? (placaOutro ? placaOutro.value : '') : placa.value;
     const tipo = document.getElementById('af-tipo').value;
     const palhete = document.getElementById('af-palhete').value;
-    const obs = document.getElementById('af-obs').value;
+    const obs = document.getElementById('af-obs').value.trim();
     if (!op || !emp || !turno || !pl || !tipo || !palhete || !inpIni.value || !inpFim.value) { alert('Preencha todos os campos obrigatórios (*)'); return; }
-    const h = parseInt(inpIni.value.split(':')[0]);
-    const hF = parseInt(inpFim.value.split(':')[0]);
-    const isOk = h >= 7 && hF <= 21;
-    if (!isOk && !obs) { alert('Observação obrigatória quando fora da janela 07:00-21:00'); return; }
+    const isOk = inpIni.value >= '07:00' && inpFim.value <= '21:00';
+    if (!isOk && !obs) {
+      const obsEl = document.getElementById('af-obs');
+      if (obsEl) {
+        obsEl.style.borderColor = 'var(--red)';
+        obsEl.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.25)';
+        obsEl.focus();
+        obsEl.placeholder = '\u26d4 OBRIGAT\u00d3RIO \u2014 Informe o motivo de estar fora da janela 07:00\u201321:00';
+        setTimeout(() => { obsEl.style.borderColor = 'var(--amber)'; obsEl.style.boxShadow = '0 0 0 2px rgba(245,166,35,0.18)'; }, 2000);
+      }
+      if (typeof toast === 'function') toast('\u26a0 Observa\u00e7\u00e3o obrigat\u00f3ria fora da janela 07:00\u201321:00', true);
+      else alert('Observação obrigatória quando fora da janela 07:00-21:00');
+      return;
+    }
     const row = { operacao:op, data:data.value, dataISO:data.value, inicio:inpIni.value, fim:inpFim.value, status: isOk ? '✅ DENTRO DA JANELA' : '⚠ FORA DA JANELA', empilhador:emp, turno, placa:pl, tipo, palhete:Number(palhete), obs };
     const docId = await fbSave('armazem', row);
     if (docId) { row._docId = docId; armazemRows.push(row); renderArmazem(); toast('Registro armazém salvo!');
@@ -1626,11 +1657,13 @@ const REPACK_EMBALAGENS = [
     }
     ['af-operacao','af-inicio','af-fim','af-palhete','af-obs'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
     if (statusChip) { statusChip.textContent='—'; statusChip.style.color='var(--text-dim)'; }
+    resetObsStyle();
   });
 
   if (btnClear) btnClear.addEventListener('click', () => {
     ['af-operacao','af-inicio','af-fim','af-palhete','af-obs'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
     if (statusChip) { statusChip.textContent='—'; statusChip.style.color='var(--text-dim)'; }
+    resetObsStyle();
   });
 
   if (btnLimpar) btnLimpar.addEventListener('click', async () => {
