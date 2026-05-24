@@ -361,8 +361,8 @@ const PRODUCTS = [
 
 let S = {
   tarefas:    [],
-  operadores: [],
-  conferentes:[],
+  operadores: ['MARIVALDO', 'RONIDLO', 'PAULO'],
+  conferentes:['GILSON', 'MATHEUS'],
   selProd:    null,
   nextId:     1
 };
@@ -561,7 +561,7 @@ function updateMenuFbStatus(connected) {
 //  PERSIST LOCAL
 // ══════════════════════════════════════════════════════
 // ── Versão dos nomes — aumente se mudar operadores/conferentes no código
-const NAMES_VERSION = 3;
+const NAMES_VERSION = 4;
 
 function load() {
   try {
@@ -578,6 +578,7 @@ function load() {
     }
 
     // Mesma versão: mantém extras adicionados pelo usuário via +ADD
+    // (os nomes fixos já estão em S desde a inicialização)
     if (saved.operadores)  saved.operadores.forEach(n  => { if (!S.operadores.includes(n))  S.operadores.push(n);  });
     if (saved.conferentes) saved.conferentes.forEach(n => { if (!S.conferentes.includes(n)) S.conferentes.push(n); });
 
@@ -620,12 +621,13 @@ function goPane(name) {
   });
   if (name === 'relatorio') renderRelatorioDia();
   if (name === 'reports') {
-    // Preenche data padrão com hoje
-    const di = document.getElementById('csv-date');
-    if (di && !di.value) {
-      const t = new Date();
-      di.value = t.toISOString().slice(0,10);
-    }
+    // Preenche data padrão com hoje se ainda não preenchido
+    const de  = document.getElementById('relatorio-data-de');
+    const ate = document.getElementById('relatorio-data-ate');
+    const hoje = new Date().toISOString().split('T')[0];
+    if (de  && !de.value)  de.value  = hoje;
+    if (ate && !ate.value) ate.value = hoje;
+    if (typeof atualizarLabelData === 'function') atualizarLabelData();
     if (typeof carregarResumoRelatorios === 'function') carregarResumoRelatorios();
   }
 }
@@ -1038,9 +1040,11 @@ function statBox(val, lbl, color) {
 //  DOWNLOAD CSV POR DATA
 // ══════════════════════════════════════════════════════
 async function downloadCSV() {
-  const dateInput = document.getElementById('csv-date');
-  const date = dateInput.value;
-  if (!date) { toast('Selecione uma data', true); return; }
+  const deInput  = document.getElementById('relatorio-data-de')  || document.getElementById('csv-date');
+  const ateInput = document.getElementById('relatorio-data-ate') || document.getElementById('csv-date');
+  const de  = deInput  ? deInput.value  : '';
+  const ate = ateInput ? ateInput.value : '';
+  if (!de && !ate) { toast('Selecione um intervalo de datas', true); return; }
 
   const status  = document.getElementById('csv-status');
   const preview = document.getElementById('csv-preview');
@@ -1057,16 +1061,18 @@ async function downloadCSV() {
     const snap = await fbDb.collection('registros').get();
     const all  = snap.docs.map(d => d.data());
 
-    const [ano, mes, dia] = date.split('-');
-    const dataFmt = dia + '/' + mes + '/' + ano;
-
     const filtered = all.filter(r => {
       if (!r.finalizadoEm) return false;
-      return new Date(r.finalizadoEm).toLocaleDateString('pt-BR') === dataFmt;
+      const dIso = r.finalizadoEm.split('T')[0]; // YYYY-MM-DD
+      if (de  && dIso < de)  return false;
+      if (ate && dIso > ate) return false;
+      return true;
     }).sort((a,b) => (a.finalizadoEm||'').localeCompare(b.finalizadoEm||''));
 
+    const labelPeriodo = de === ate ? de : (de + ' a ' + ate);
+
     if (!filtered.length) {
-      status.innerHTML = '<div class="fb-msg fb-msg-err">Nenhum registro encontrado para ' + dataFmt + '. Verifique se ha tarefas finalizadas nesse dia.</div>';
+      status.innerHTML = '<div class="fb-msg fb-msg-err">Nenhum registro encontrado para ' + labelPeriodo + '. Verifique se há tarefas finalizadas nesse período.</div>';
       return;
     }
 
@@ -1092,30 +1098,48 @@ async function downloadCSV() {
     // Separador ponto-e-vírgula para Excel BR abrir colunas corretamente
     const SEP = ';';
 
+    // Converte tipoOperacao para o label curto usado no relatório
+    function fmtTipo(tipo) {
+      if (!tipo) return '';
+      const t = tipo.toUpperCase();
+      if (t.includes('DURANTE') || t.includes('REABASTECIMENTO')) return 'RESSUPRIMENTO';
+      if (t.includes('APÓS') || t.includes('APOS') || t.includes('RESSUPRIMENTO')) return 'ABASTECIMENTO';
+      return tipo.toUpperCase();
+    }
+
+    function fmtHora(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+    }
+
+    function fmtDataCurta(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      return String(d.getDate()).padStart(2,'0') + '/' +
+             String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+    }
+
     const headers = [
-      'CODIGO DO PRODUTO',
-      'DESCRICAO DO PRODUTO',
-      'QUANTIDADE DE PALETES',
-      'CONFERENTE',
+      'DATA',
+      'HORA/INICIAL',
+      'HORA/FINAL',
+      'OPERAÇÃO',
       'OPERADOR',
-      'CRIADO EM',
-      'INICIADO EM',
-      'FINALIZADO EM',
-      'DURACAO DA OPERACAO',
-      'DURANTE / APÓS O CARREGAMENTO'
+      'RESSUPRIMENTO',
+      'COD.PRODUTO',
+      'PALLETS ABASTECIDOS'
     ];
 
     const rows = filtered.map(r => [
-      r.codigo        ?? '',
-      r.descricao     ?? '',
-      r.quantidade    ?? '',
+      fmtDataCurta(r.finalizadoEm),
+      fmtHora(r.iniciadoEm),
+      fmtHora(r.finalizadoEm),
       r.conferente    ?? '',
       r.operador      ?? '',
-      fmtDateCSV(r.criadoEm),
-      fmtDateCSV(r.iniciadoEm),
-      fmtDateCSV(r.finalizadoEm),
-      fmtDurCSV(r.duracaoMin),
-      r.tipoOperacao  ?? ''
+      fmtTipo(r.tipoOperacao),
+      r.codigo        ?? '',
+      r.quantidade    ?? ''
     ].map(v => '"' + String(v).replace(/"/g, '""') + '"').join(SEP));
 
     const csvContent = [headers.map(h => '"'+h+'"').join(SEP), ...rows].join('\r\n');
@@ -1123,13 +1147,13 @@ async function downloadCSV() {
     const url  = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', 'relatorio_picking_' + date + '.csv');
+    link.setAttribute('download', 'relatorio_picking_' + (de||'inicio') + '_a_' + (ate||'fim') + '.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    status.innerHTML = '<div class="fb-msg fb-msg-ok">' + filtered.length + ' registros baixados — arquivo: relatorio_picking_' + date + '.csv</div>';
+    status.innerHTML = '<div class="fb-msg fb-msg-ok">' + filtered.length + ' registros baixados — período: ' + labelPeriodo + '</div>';
 
     const prev = filtered.slice(0,10);
     const totalPal = filtered.reduce((s,r) => s + (r.quantidade||0), 0);
@@ -1141,19 +1165,21 @@ async function downloadCSV() {
       '</div>' +
       '<div style="font-size:11px;color:var(--text-dim);margin-bottom:8px">Preview — ' +
         (filtered.length > 10 ? 'primeiros 10 de ' + filtered.length + ' registros' : filtered.length + ' registros') +
-        ' do dia <strong style="color:var(--text)">' + dataFmt + '</strong></div>' +
+        ' · período <strong style="color:var(--text)">' + labelPeriodo + '</strong></div>' +
       '<div style="overflow-x:auto"><table class="rpt-table"><thead><tr>' +
-      '<th>#</th><th>Produto</th><th>Paletes</th><th>Conferente</th><th>Operador</th><th>Inicio</th><th>Fim</th><th>Duracao</th>' +
+      '<th>DATA</th><th>H.INICIAL</th><th>H.FINAL</th><th>OPERAÇÃO</th><th>OPERADOR</th><th>RESSUPRIMENTO</th><th>COD.PRODUTO</th><th>PALLETS</th>' +
       '</tr></thead><tbody>' +
       prev.map(r =>
-        '<tr><td style="font-family:monospace;color:var(--amber)">' + r.id + '</td>' +
-        '<td><span style="color:var(--amber)">' + r.codigo + '</span> ' + r.descricao + '</td>' +
-        '<td style="text-align:center;font-weight:700">' + r.quantidade + '</td>' +
+        '<tr>' +
+        '<td style="font-family:monospace;font-size:11px">' + fmtDataCurta(r.finalizadoEm) + '</td>' +
+        '<td style="font-family:monospace;font-size:11px">' + fmtHora(r.iniciadoEm) + '</td>' +
+        '<td style="font-family:monospace;font-size:11px">' + fmtHora(r.finalizadoEm) + '</td>' +
         '<td>' + (r.conferente||'—') + '</td>' +
         '<td style="color:var(--blue);font-weight:600">' + (r.operador||'—') + '</td>' +
-        '<td style="font-family:monospace;font-size:11px">' + fmtTime(r.iniciadoEm) + '</td>' +
-        '<td style="font-family:monospace;font-size:11px">' + fmtTime(r.finalizadoEm) + '</td>' +
-        '<td style="color:var(--green);font-weight:700">' + fmtMin(r.duracaoMin) + '</td></tr>'
+        '<td style="color:var(--amber);font-size:11px">' + fmtTipo(r.tipoOperacao) + '</td>' +
+        '<td style="font-family:monospace;color:var(--amber)">' + (r.codigo||'—') + '</td>' +
+        '<td style="text-align:center;font-weight:700">' + (r.quantidade||'—') + '</td>' +
+        '</tr>'
       ).join('') +
       '</tbody></table></div>' +
       (filtered.length > 10 ? '<div style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center">+ ' + (filtered.length - 10) + ' registros adicionais no arquivo CSV</div>' : '');
@@ -1300,9 +1326,11 @@ function renderConf() {
 
 function renderEmp() {
   const op       = v('sel-op');
-  const pending  = S.tarefas.filter(t => t.operador===op && t.status==='pending');
-  const progress = S.tarefas.filter(t => t.operador===op && t.status==='in_progress');
-  const done     = S.tarefas.filter(t => t.operador===op && t.status==='done').slice().reverse().slice(0,10);
+  // Match parcial: "MARIVALDO" captura "MARIVALDO SILVA" e vice-versa
+  const matchOp  = (nome) => !op ? false : nome === op || nome.toUpperCase().includes(op.toUpperCase()) || op.toUpperCase().includes(nome.toUpperCase());
+  const pending  = S.tarefas.filter(t => matchOp(t.operador) && t.status==='pending');
+  const progress = S.tarefas.filter(t => matchOp(t.operador) && t.status==='in_progress');
+  const done     = S.tarefas.filter(t => matchOp(t.operador) && t.status==='done').slice().reverse().slice(0,10);
   const setCount = (id,n,noOp) => { const el=document.getElementById(id); if(!el)return; el.textContent=noOp?0:n; el.className='sec-cnt'+((!op||n===0)?' zero':''); };
   setCount('cnt-emp-pending',  pending.length,  !op);
   setCount('cnt-emp-progress', progress.length, !op);
