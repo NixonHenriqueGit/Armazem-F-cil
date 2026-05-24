@@ -361,8 +361,8 @@ const PRODUCTS = [
 
 let S = {
   tarefas:    [],
-  operadores: ['MARIVALDO', 'RONIDLO', 'PAULO'],
-  conferentes:['GILSON', 'MATHEUS'],
+  operadores: ['MARIVALDO ARTHUR', 'RONIDLO', 'PAULO PEREIRA'],
+  conferentes:['GILSON ROSA DA SILVA', 'MATHEUS'],
   selProd:    null,
   nextId:     1
 };
