@@ -1143,12 +1143,24 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
 
           <!-- FILTRO DE DATA GLOBAL -->
           <div class="card" style="background:var(--surface2);border:1px solid var(--amber);margin-bottom:20px">
-            <div class="card-title" style="color:var(--amber)">📅 Data do Relatório</div>
-            <p style="font-size:12px;color:var(--text-dim);margin-bottom:14px">Todos os relatórios abaixo serão filtrados pela data selecionada.</p>
+            <div class="card-title" style="color:var(--amber)">📅 Intervalo do Relatório</div>
+            <p style="font-size:12px;color:var(--text-dim);margin-bottom:14px">Todos os relatórios abaixo serão filtrados pelo intervalo selecionado.</p>
             <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-              <input type="date" id="relatorio-data-global" style="max-width:200px;font-size:15px;font-weight:700">
-              <button class="btn btn-ghost btn-sm" onclick="relatorioSetHoje()">📅 Hoje</button>
-              <span id="relatorio-data-label" style="font-size:13px;color:var(--amber);font-weight:700;font-family:'Barlow Condensed',sans-serif"></span>
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <label style="font-size:10px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase">De</label>
+                <input type="date" id="relatorio-data-de" style="max-width:170px;font-size:15px;font-weight:700" onchange="atualizarLabelData()">
+              </div>
+              <div style="font-size:18px;color:var(--text-dim);margin-top:18px">→</div>
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <label style="font-size:10px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase">Até</label>
+                <input type="date" id="relatorio-data-ate" style="max-width:170px;font-size:15px;font-weight:700" onchange="atualizarLabelData()">
+              </div>
+              <div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-ghost btn-sm" onclick="relatorioSetHoje()">📅 Hoje</button>
+                <button class="btn btn-ghost btn-sm" onclick="relatorioSetSemana()">📆 Semana</button>
+                <button class="btn btn-ghost btn-sm" onclick="relatorioSetMes()">🗓 Mês</button>
+              </div>
+              <span id="relatorio-data-label" style="font-size:13px;color:var(--amber);font-weight:700;font-family:'Barlow Condensed',sans-serif;margin-top:18px"></span>
             </div>
           </div>
 
@@ -2116,58 +2128,40 @@ async function exportarModulo(colecao, nomeArqBase, mapFn) {
   const statusId = colecao + '-export-status';
   const statusEl = document.getElementById(statusId);
 
-  const dataISO = getRelatorioData();
-  if (!dataISO) {
-    if (statusEl) statusEl.textContent = '⚠ Selecione uma data antes de exportar.';
+  const { de, ate } = getRelatorioData();
+  if (!de && !ate) {
+    if (statusEl) statusEl.textContent = '⚠ Selecione um intervalo de datas antes de exportar.';
     return;
   }
-  const [ano, mes, dia] = dataISO.split('-');
-  const dataBR = dia + '/' + mes + '/' + ano;
-  const nomeArq = nomeArqBase.replace('.xlsx', '_' + dataISO + '.xlsx');
+
+  const labelPeriodo = (de && ate && de !== ate) ? (de + ' a ' + ate) : (de || ate);
+  const nomeArq = nomeArqBase.replace('.xlsx', '_' + (de||'inicio') + '_a_' + (ate||'fim') + '.xlsx');
 
   if (statusEl) statusEl.textContent = '⏳ Buscando no Firebase...';
   try {
-    // Consulta direta no Firebase filtrando pelo campo dataISO
-    const snap = await getDb()
-      .collection(colecao)
-      .where('dataISO', '==', dataISO)
-      .orderBy('_criadoEm', 'asc')
-      .get();
-
-    if (snap.empty) {
-      if (statusEl) statusEl.textContent = `⚠ Nenhum registro encontrado para ${dataBR}.`;
+    // Busca tudo e filtra por intervalo no cliente (suporte a range)
+    const snap = await getDb().collection(colecao).get();
+    const todos = snap.docs.map(d => d.data());
+    const filtrados = todos.filter(r => {
+      const d = r.dataISO || r.data || '';
+      const dIso = d.includes('/') ? d.split('/').reverse().join('-') : d;
+      if (de  && dIso < de)  return false;
+      if (ate && dIso > ate) return false;
+      return true;
+    });
+    if (!filtrados.length) {
+      if (statusEl) statusEl.textContent = `⚠ Nenhum registro encontrado para ${labelPeriodo}.`;
       return;
     }
-
-    const rows = snap.docs.map(d => mapFn(d.data()));
+    const rows = filtrados.map(r => mapFn(r));
     const ws = XLSX.utils.json_to_sheet(rows);
     xlsAutoColWidth(ws, rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, colecao.charAt(0).toUpperCase() + colecao.slice(1));
     XLSX.writeFile(wb, nomeArq);
-    if (statusEl) statusEl.textContent = `✅ ${rows.length} registro(s) de ${dataBR} exportado(s).`;
+    if (statusEl) statusEl.textContent = `✅ ${rows.length} registro(s) exportado(s) — período: ${labelPeriodo}.`;
   } catch(e) {
-    // Fallback: se o índice composto não existir, busca tudo e filtra no cliente
-    if (statusEl) statusEl.textContent = '⏳ Ajustando consulta...';
-    try {
-      const snap2 = await getDb().collection(colecao).orderBy('_criadoEm','asc').get();
-      const filtrados = snap2.docs
-        .map(d => d.data())
-        .filter(r => (r.dataISO || '') === dataISO);
-      if (!filtrados.length) {
-        if (statusEl) statusEl.textContent = `⚠ Nenhum registro encontrado para ${dataBR}.`;
-        return;
-      }
-      const rows = filtrados.map(r => mapFn(r));
-      const ws = XLSX.utils.json_to_sheet(rows);
-      xlsAutoColWidth(ws, rows);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, colecao.charAt(0).toUpperCase() + colecao.slice(1));
-      XLSX.writeFile(wb, nomeArq);
-      if (statusEl) statusEl.textContent = `✅ ${rows.length} registro(s) de ${dataBR} exportado(s).`;
-    } catch(e2) {
-      if (statusEl) statusEl.textContent = '❌ Erro: ' + e2.message;
-    }
+    if (statusEl) statusEl.textContent = '❌ Erro: ' + e.message;
   }
 }
 
@@ -2178,25 +2172,64 @@ function exportarQuebrasExcel() { exportarModulo('quebras','quebras_registros.xl
 
 function exportCSV() {
   const st = document.getElementById('csv-status');
-  const dataISO = getRelatorioData();
-  if (!dataISO) { if(st) st.textContent='\u26a0 Selecione uma data antes de exportar.'; return; }
-  const [ano, mes, dia] = dataISO.split('-');
-  const dataBR = dia + '/' + mes + '/' + ano;
-  if (typeof S === 'undefined' || !S.tarefas.length) { if(st) st.textContent='\u26a0 Nenhuma tarefa dispon\u00edvel.'; return; }
+  const { de, ate } = getRelatorioData();
+  if (!de && !ate) { if(st) st.textContent='⚠ Selecione um intervalo de datas antes de exportar.'; return; }
+  if (typeof S === 'undefined' || !S.tarefas.length) { if(st) st.textContent='⚠ Nenhuma tarefa disponível.'; return; }
   const SEP = ';';
+
+  function isoParaISO(iso) {
+    if (!iso) return '';
+    return iso.split('T')[0]; // YYYY-MM-DD
+  }
+  function fmtData(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+  }
+  function fmtHora(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+  function fmtTipo(tipo) {
+    if (!tipo) return '';
+    const t = tipo.toUpperCase();
+    if (t.includes('DURANTE') || t.includes('REABASTECIMENTO')) return 'RESSUPRIMENTO';
+    if (t.includes('APÓS') || t.includes('APOS') || t.includes('RESSUPRIMENTO')) return 'ABASTECIMENTO';
+    return tipo.toUpperCase();
+  }
+
+  // Filtra pela data de finalização no intervalo selecionado
   const filtradas = S.tarefas.filter(t => {
-    const d = t.criadoEm || t.data || '';
-    return d.startsWith(dataISO) || d.startsWith(dia + '/' + mes + '/' + ano);
-  });
-  if (!filtradas.length) { if(st) st.textContent='\u26a0 Nenhum registro encontrado para ' + dataBR + '.'; return; }
-  const rows = [['ID','C\u00f3digo','Descri\u00e7\u00e3o','Paletes','Conferente','Operador','Status','Criado Em','Iniciado Em','Finalizado Em','Dura\u00e7\u00e3o (min)']];
-  filtradas.forEach(t => rows.push([t.id,t.codigo,t.descricao,t.quantidade,t.conferente,t.operador,t.status,t.criadoEm||'',t.iniciadoEm||'',t.finalizadoEm||'',t.duracaoMin||'']));
-  const csv = rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(SEP)).join('\r\n');
+    if (t.status !== 'done') return false;
+    const d = isoParaISO(t.finalizadoEm || t.criadoEm || '');
+    if (!d) return false;
+    if (de && d < de) return false;
+    if (ate && d > ate) return false;
+    return true;
+  }).sort((a,b) => (a.finalizadoEm||'').localeCompare(b.finalizadoEm||''));
+
+  const labelPeriodo = de === ate ? de : (de + ' a ' + ate);
+  if (!filtradas.length) { if(st) st.textContent='⚠ Nenhum registro encontrado para ' + labelPeriodo + '.'; return; }
+
+  const headers = ['DATA','HORA/INICIAL','HORA/FINAL','OPERAÇÃO','OPERADOR','RESSUPRIMENTO','COD.PRODUTO','PALLETS ABASTECIDOS'];
+  const rows = filtradas.map(t => [
+    fmtData(t.finalizadoEm),
+    fmtHora(t.iniciadoEm),
+    fmtHora(t.finalizadoEm),
+    t.conferente  || '',
+    t.operador    || '',
+    fmtTipo(t.tipoOperacao),
+    t.codigo      || '',
+    t.quantidade  || ''
+  ]);
+
+  const csv = [headers, ...rows].map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(SEP)).join('\r\n');
   const a = document.createElement('a');
   a.href = 'data:text/csv;charset=utf-8,\ufeff' + encodeURIComponent(csv);
-  a.download = 'picking_' + dataISO + '.csv';
+  a.download = 'relatorio_picking_' + (de||'inicio') + '_a_' + (ate||'fim') + '.csv';
   a.click();
-  if (st) st.textContent = '\u2705 ' + filtradas.length + ' tarefa(s) de ' + dataBR + ' exportada(s).';
+  if (st) st.textContent = '✅ ' + filtradas.length + ' registro(s) exportado(s) — período: ' + labelPeriodo + '.';
 }
 // ══════════════════════════════════════════════════════
 //  SECTION TOGGLE (sec-head expand/collapse)
@@ -2273,7 +2306,7 @@ function fecharPOP(e) { if(e.target===document.getElementById('modal-pop')) fech
 // ══════════════════════════════════════════════════════
 //  SENHA DOS RELATÓRIOS
 // ══════════════════════════════════════════════════════
-const RELATORIO_SENHA = 'controle26'; // ← altere aqui a senha
+const RELATORIO_SENHA = 'gestor2025'; // ← altere aqui a senha
 
 function csvUnlock() {
   const inp = document.getElementById('csv-senha-input');
@@ -2325,28 +2358,63 @@ function csvLock() {
 //  DATA GLOBAL DOS RELATÓRIOS
 // ══════════════════════════════════════════════════════
 function relatorioSetHoje() {
-  const inp = document.getElementById('relatorio-data-global');
-  if (!inp) return;
-  inp.value = new Date().toISOString().split('T')[0];
+  const hoje = new Date().toISOString().split('T')[0];
+  const de  = document.getElementById('relatorio-data-de');
+  const ate = document.getElementById('relatorio-data-ate');
+  if (de)  de.value  = hoje;
+  if (ate) ate.value = hoje;
+  atualizarLabelData();
+}
+
+function relatorioSetSemana() {
+  const hoje = new Date();
+  const de  = document.getElementById('relatorio-data-de');
+  const ate = document.getElementById('relatorio-data-ate');
+  const inicio = new Date(hoje);
+  inicio.setDate(hoje.getDate() - 6);
+  if (de)  de.value  = inicio.toISOString().split('T')[0];
+  if (ate) ate.value = hoje.toISOString().split('T')[0];
+  atualizarLabelData();
+}
+
+function relatorioSetMes() {
+  const hoje = new Date();
+  const de  = document.getElementById('relatorio-data-de');
+  const ate = document.getElementById('relatorio-data-ate');
+  const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  if (de)  de.value  = inicio.toISOString().split('T')[0];
+  if (ate) ate.value = hoje.toISOString().split('T')[0];
   atualizarLabelData();
 }
 
 function atualizarLabelData() {
-  const inp = document.getElementById('relatorio-data-global');
+  const de  = document.getElementById('relatorio-data-de');
+  const ate = document.getElementById('relatorio-data-ate');
   const lbl = document.getElementById('relatorio-data-label');
-  if (!inp || !lbl || !inp.value) return;
-  const [y, m, d] = inp.value.split('-');
-  lbl.textContent = d + '/' + m + '/' + y;
+  if (!lbl) return;
+  function fmt(iso) {
+    if (!iso) return '—';
+    const [y,m,d] = iso.split('-');
+    return d + '/' + m + '/' + y;
+  }
+  const vDe  = de  ? de.value  : '';
+  const vAte = ate ? ate.value : '';
+  if (!vDe && !vAte) { lbl.textContent = ''; return; }
+  if (vDe === vAte)  { lbl.textContent = fmt(vDe); return; }
+  lbl.textContent = fmt(vDe) + ' → ' + fmt(vAte);
 }
 
 function getRelatorioData() {
-  const inp = document.getElementById('relatorio-data-global');
-  return inp ? inp.value : '';
+  const de  = document.getElementById('relatorio-data-de');
+  const ate = document.getElementById('relatorio-data-ate');
+  return {
+    de:  de  ? de.value  : '',
+    ate: ate ? ate.value : ''
+  };
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const inp = document.getElementById('relatorio-data-global');
-  if (inp) inp.addEventListener('change', atualizarLabelData);
+  relatorioSetHoje();
 });
 
 
