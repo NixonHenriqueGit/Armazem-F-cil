@@ -133,8 +133,55 @@ body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif}
 .nav-item.nav-quebras.active::before{background:#fca5a5}
 .nav-item.nav-repack.active{background:var(--amber-glow);color:var(--amber);border-color:rgba(245,166,35,.15)}
 .nav-item.nav-repack.active::before{background:var(--amber)}
-.nav-item.nav-relatorio.active{background:rgba(34,197,94,.08);color:var(--green);border-color:rgba(34,197,94,.15)}
-.nav-item.nav-relatorio.active::before{background:var(--green)}
+.nav-item.nav-validades.active{background:rgba(168,85,247,.08);color:#a855f7;border-color:rgba(168,85,247,.15)}
+.nav-item.nav-validades.active::before{background:#a855f7}
+.nav-item.nav-controle.active{background:rgba(6,182,212,.08);color:var(--cyan);border-color:rgba(6,182,212,.15)}
+.nav-item.nav-controle.active::before{background:var(--cyan)}
+.vld-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px}
+@media(max-width:700px){.vld-stats{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:420px){.vld-stats{grid-template-columns:repeat(2,1fr)}}
+.vld-stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 10px;text-align:center;position:relative;overflow:hidden}
+.vld-stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.vld-stat.expired::before{background:#7f1d1d}
+.vld-stat.crit::before{background:var(--red)}
+.vld-stat.warn::before{background:#f97316}
+.vld-stat.alert::before{background:#eab308}
+.vld-stat.ok::before{background:var(--green)}
+.vld-stat-val{font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:900;line-height:1}
+.vld-stat.expired .vld-stat-val{color:#fca5a5}
+.vld-stat.crit .vld-stat-val{color:var(--red)}
+.vld-stat.warn .vld-stat-val{color:#f97316}
+.vld-stat.alert .vld-stat-val{color:#eab308}
+.vld-stat.ok .vld-stat-val{color:var(--green)}
+.vld-stat-lbl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-top:4px}
+.vld-stat-days{font-size:10px;color:var(--text-muted);margin-top:2px}
+.vld-row{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--surface);margin-bottom:6px;flex-wrap:wrap}
+.vld-row.expired{border-color:#7f1d1d;background:rgba(127,29,29,.12)}
+.vld-row.crit{border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.06)}
+.vld-row.warn{border-color:rgba(249,115,22,.3);background:rgba(249,115,22,.06)}
+.vld-row.alert{border-color:rgba(234,179,8,.3);background:rgba(234,179,8,.06)}
+.vld-row.ok{border-color:rgba(34,197,94,.15);background:rgba(34,197,94,.04)}
+.vld-badge{display:inline-block;padding:3px 8px;border-radius:999px;font-size:9px;font-weight:700;letter-spacing:1px;white-space:nowrap}
+.vld-badge.expired{background:#7f1d1d;color:#fca5a5}
+.vld-badge.crit{background:rgba(239,68,68,.15);color:var(--red)}
+.vld-badge.warn{background:rgba(249,115,22,.15);color:#f97316}
+.vld-badge.alert{background:rgba(234,179,8,.15);color:#eab308}
+.vld-badge.ok{background:rgba(34,197,94,.12);color:var(--green)}
+.vld-code{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--text-dim);min-width:52px}
+.vld-desc{font-size:12px;color:var(--text);flex:1;min-width:120px}
+.vld-meta{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--text-dim);margin-top:4px}
+.vld-meta span{white-space:nowrap}
+.vld-meta strong{color:var(--text)}
+.vld-actions{display:flex;gap:6px;margin-left:auto}
+.vld-fefo-alert{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:12px 14px;margin-bottom:8px;font-size:12px;color:var(--red)}
+.vld-fefo-ok{background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:12px 14px;font-size:12px;color:var(--green)}
+.vld-filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.vld-filter-row select,.vld-filter-row input[type=date]{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 10px;font-size:12px;font-family:'Barlow',sans-serif}
+.vld-empty{text-align:center;padding:40px 0;color:var(--text-dim);font-size:13px}
+.vld-loc-chip{display:inline-block;padding:2px 7px;border-radius:4px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.vld-loc-chip.picking{background:rgba(59,130,246,.15);color:var(--blue)}
+.vld-loc-chip.central{background:rgba(6,182,212,.12);color:var(--cyan)}
+.vld-days-pill{display:inline-block;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;padding:2px 8px;border-radius:4px;min-width:50px;text-align:center}
 
 .nav-icon{font-size:18px;min-width:24px;text-align:center;line-height:1}
 .nav-label{
@@ -176,6 +223,7 @@ body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif}
 .fb-online{background:var(--green-dim);color:var(--green);border-color:#166534}
 .fb-error{background:var(--red-dim);color:var(--red);border-color:#7f1d1d}
 @keyframes fbpulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes ctrlPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
 
 /* Mobile hamburger */
 .sidebar-mobile-toggle{
@@ -705,6 +753,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
         <span class="nav-label">QUEBRAS</span>
       </button>
 
+      <button class="nav-item nav-validades" data-pane="validades" onclick="navGoPane('validades');vldRender()">
+        <span class="nav-icon">🏷</span>
+        <span class="nav-label">VALIDADES</span>
+      </button>
+
       <button class="nav-item nav-emp" data-pane="emp" onclick="requestEmpTab()">
         <span class="nav-icon">🚜</span>
         <span class="nav-label">EMPILHADOR</span>
@@ -714,17 +767,17 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
       <!-- GESTÃO -->
       <span class="nav-section-label" style="margin-top:8px">📋 GESTÃO</span>
 
+      <button class="nav-item nav-controle" data-pane="controle" onclick="requestControleTab()">
+        <span class="nav-icon">🎛</span>
+        <span class="nav-label">CONTROLE</span>
+        <span class="nav-lock" id="controle-lock-state">🔒</span>
+      </button>
+
       <button class="nav-item" data-pane="conf" onclick="requestConfTab()">
         <span class="nav-icon">📋</span>
         <span class="nav-label">CONFERENTE</span>
         <span class="nav-lock" id="conf-lock-state">🔒</span>
       </button>
-
-      <button class="nav-item nav-relatorio" data-pane="relatorio" onclick="navGoPane('relatorio');renderRelatorioDia()">
-        <span class="nav-icon">📈</span>
-        <span class="nav-label">RELATÓRIO</span>
-      </button>
-
       <button class="nav-item" data-pane="csv" onclick="navGoPane('csv')">
         <span class="nav-icon">⬇</span>
         <span class="nav-label">EXPORTAR</span>
@@ -970,6 +1023,115 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
     </div>
 
     <!-- ══════════════════════════════════════════════════
+         PANE — VALIDADES
+         ══════════════════════════════════════════════════ -->
+    <div class="pane" id="pane-validades">
+      <div class="pane-topbar">
+        <div class="mobile-menu-gap"></div>
+        <span class="pane-topbar-title">🏷 CONTROLE DE VALIDADES — GESTÃO FEFO</span>
+        <div class="pane-topbar-actions">
+          <button class="btn btn-sm" style="background:rgba(168,85,247,.15);color:#a855f7;border:1px solid rgba(168,85,247,.3)" onclick="vldExportExcel()">⬇ EXCEL</button>
+          <button class="btn btn-sm btn-red" onclick="vldLimparTudo()">🗑 LIMPAR TUDO</button>
+        </div>
+      </div>
+      <div class="wrap">
+
+        <!-- Dashboard de alertas -->
+        <div class="vld-stats" id="vld-stats-bar">
+          <div class="vld-stat expired"><div class="vld-stat-val" id="vs-exp">0</div><div class="vld-stat-lbl">VENCIDO</div><div class="vld-stat-days">0 dias</div></div>
+          <div class="vld-stat crit"><div class="vld-stat-val" id="vs-30">0</div><div class="vld-stat-lbl">CRÍTICO</div><div class="vld-stat-days">≤ 30 dias</div></div>
+          <div class="vld-stat warn"><div class="vld-stat-val" id="vs-45">0</div><div class="vld-stat-lbl">ATENÇÃO</div><div class="vld-stat-days">31–45 dias</div></div>
+          <div class="vld-stat alert"><div class="vld-stat-val" id="vs-60">0</div><div class="vld-stat-lbl">ALERTA</div><div class="vld-stat-days">46–60 dias</div></div>
+          <div class="vld-stat ok"><div class="vld-stat-val" id="vs-ok">0</div><div class="vld-stat-lbl">OK</div><div class="vld-stat-days">> 60 dias</div></div>
+        </div>
+
+        <div class="ptabs">
+          <button class="ptab active" data-ptab-group="validades" data-ptab="form" onclick="ptabSwitch('validades','form')">📝 CADASTRAR</button>
+          <button class="ptab" data-ptab-group="validades" data-ptab="lista" onclick="ptabSwitch('validades','lista');vldRender()">📋 LISTA <span class="ptab-badge" id="vld-lista-cnt">0</span></button>
+
+        </div>
+
+        <!-- TAB: CADASTRAR -->
+        <div id="validades-ptab-form" class="ptab-content active">
+          <div class="card">
+            <div class="card-title">📝 Novo Registro de Validade</div>
+            <div class="form-grid">
+              <!-- busca produto -->
+              <div class="fg-8" style="position:relative">
+                <div class="field-label">Produto (código ou nome)</div>
+                <input id="vld-produtoInput" autocomplete="off" placeholder="Digite código ou nome do produto..." oninput="vldBuscarProduto(this.value)">
+                <div id="vld-listaProdutos" style="position:absolute;top:100%;left:0;right:0;background:#0e1626;border:1px solid var(--border);border-radius:10px;z-index:50;max-height:220px;overflow-y:auto;display:none"></div>
+              </div>
+              <div class="fg-4">
+                <div class="field-label">Código</div>
+                <input id="vld-codigo" placeholder="Auto" readonly style="opacity:.8">
+              </div>
+              <div class="fg-12">
+                <div class="field-label">Descrição</div>
+                <input id="vld-descricao" placeholder="Preenchido automaticamente ou manual">
+              </div>
+              <!-- quantidades -->
+              <div class="fg-4">
+                <div class="field-label">Paletes</div>
+                <input id="vld-palhete" type="number" min="0" value="0" placeholder="0">
+              </div>
+              <div class="fg-4">
+                <div class="field-label">Lastros</div>
+                <input id="vld-lastro" type="number" min="0" value="0" placeholder="0">
+              </div>
+              <div class="fg-4">
+                <div class="field-label">Caixas</div>
+                <input id="vld-caixa" type="number" min="0" value="0" placeholder="0">
+              </div>
+              <!-- data e localização -->
+              <div class="fg-6">
+                <div class="field-label">Data de Validade</div>
+                <input id="vld-validade" type="date" style="color-scheme:dark">
+              </div>
+              <div class="fg-6">
+                <div class="field-label">Localização</div>
+                <select id="vld-localizacao">
+                  <option value="picking">PICKING</option>
+                  <option value="central">CENTRAL</option>
+                </select>
+              </div>
+              <div class="fg-12">
+                <button class="btn btn-amber" onclick="vldSalvar()" id="vld-btn-salvar" style="max-width:240px">💾 SALVAR PRODUTO</button>
+                <button class="btn" style="max-width:180px;margin-left:8px;background:var(--surface2)" onclick="vldCancelarEdicao()" id="vld-btn-cancelar" style="display:none">✖ CANCELAR EDIÇÃO</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: LISTA -->
+        <div id="validades-ptab-lista" class="ptab-content">
+          <div class="vld-filter-row">
+            <select id="vld-f-loc" onchange="vldRender()">
+              <option value="todos">📍 Todos os locais</option>
+              <option value="picking">Picking</option>
+              <option value="central">Central</option>
+            </select>
+            <select id="vld-f-status" onchange="vldRender()">
+              <option value="todos">🔴 Todos os status</option>
+              <option value="expired">⛔ Vencidos</option>
+              <option value="crit">🔴 Crítico (≤30d)</option>
+              <option value="warn">🟠 Atenção (≤45d)</option>
+              <option value="alert">🟡 Alerta (≤60d)</option>
+              <option value="ok">🟢 Ok</option>
+            </select>
+            <select id="vld-f-sort" onchange="vldRender()">
+              <option value="asc">📅 Mais próx. vencer</option>
+              <option value="desc">📅 Mais distante</option>
+              <option value="loc">📍 Por localização</option>
+            </select>
+          </div>
+          <div id="vld-lista-body"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════
          PANE — EMPILHADOR
          ══════════════════════════════════════════════════ -->
     <div class="pane" id="pane-emp">
@@ -1074,49 +1236,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
       </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════════
-         PANE — RELATÓRIO DO DIA
-         ══════════════════════════════════════════════════ -->
-    <div class="pane" id="pane-relatorio">
-      <div class="pane-topbar">
-        <div class="mobile-menu-gap"></div>
-        <span class="pane-topbar-title">📈 RELATÓRIO DO DIA</span>
-        <div class="pane-topbar-actions">
-          <button class="btn btn-ghost btn-sm" onclick="renderRelatorioDia()">↺ ATUALIZAR</button>
-        </div>
-      </div>
-      <div class="wrap">
-        <div class="rel-summary" id="rel-summary">
-          <div class="rel-sum-card pend"><div class="rel-sum-num" id="rel-num-pend">—</div><div class="rel-sum-lbl">PENDENTES</div></div>
-          <div class="rel-sum-card prog"><div class="rel-sum-num" id="rel-num-prog">—</div><div class="rel-sum-lbl">EM ANDAMENTO</div></div>
-          <div class="rel-sum-card done"><div class="rel-sum-num" id="rel-num-done">—</div><div class="rel-sum-lbl">CONCLUÍDAS HOJE</div></div>
-        </div>
-        <div style="margin-top:16px">
-          <div class="sec-head open" id="sec-rel-pend-head" onclick="toggleSec('rel-pend')"><h2>⏳ Pendentes de Execução</h2><span class="sec-cnt zero" id="cnt-rel-pend">0</span><span class="sec-arrow">▼</span></div>
-          <div class="sec-body open" id="sec-rel-pend-body"><div id="rel-pend"></div></div>
-        </div>
-        <div style="margin-top:6px">
-          <div class="sec-head open" id="sec-rel-prog-head" onclick="toggleSec('rel-prog')"><h2>🚜 Em Andamento</h2><span class="sec-cnt zero" id="cnt-rel-prog">0</span><span class="sec-arrow">▼</span></div>
-          <div class="sec-body open" id="sec-rel-prog-body"><div id="rel-prog"></div></div>
-        </div>
-        <div style="margin-top:6px">
-          <div class="sec-head open" id="sec-rel-done-head" onclick="toggleSec('rel-done')"><h2>✅ Concluídas Hoje</h2><span class="sec-cnt zero" id="cnt-rel-done">0</span><span class="sec-arrow">▼</span></div>
-          <div class="sec-body open" id="sec-rel-done-body"><div id="rel-done"></div></div>
-        </div>
-        <div class="sep"></div>
-        <div id="rel-cards-resumo"></div>
-        <div class="card" style="margin-top:16px">
-          <div class="card-title">📥 FECHAR TURNO</div>
-          <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Gera um relatório Excel completo com todos os registros do turno atual de todos os módulos.</p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <button class="btn btn-amber" id="btn-fechar-turno" onclick="fecharTurno()">📥 FECHAR TURNO — BAIXAR EXCEL COMPLETO</button>
-            <span id="rel-fechar-status" style="font-size:12px;color:var(--text-dim)"></span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════
+        <!-- ══════════════════════════════════════════════════
          PANE — EXPORTAR (CSV/Excel)
          ══════════════════════════════════════════════════ -->
     <div class="pane" id="pane-csv">
@@ -1212,6 +1332,189 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
       </div>
     </div>
 
+    <!-- ══════════════════════════════════════════════════
+         PANE — CONTROLE (GERÊNCIA / DASHBOARD INTELIGENTE)
+         ══════════════════════════════════════════════════ -->
+    <div class="pane" id="pane-controle">
+      <div class="pane-topbar" style="background:linear-gradient(90deg,rgba(6,182,212,.08),var(--surface));border-bottom:1px solid rgba(6,182,212,.2)">
+        <div class="mobile-menu-gap"></div>
+        <span class="pane-topbar-title" style="color:var(--cyan)">🎛 CENTRAL DE CONTROLE — DASHBOARD GERENCIAL</span>
+        <div class="pane-topbar-actions">
+          <span id="ctrl-live-dot" style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;box-shadow:0 0 8px var(--green);animation:ctrlPulse 1.5s ease-in-out infinite"></span>
+          <span style="font-size:11px;color:var(--green);font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">TEMPO REAL</span>
+          <button class="btn btn-sm" style="background:rgba(6,182,212,.15);color:var(--cyan);border:1px solid rgba(6,182,212,.3)" onclick="controleCarregar()">🔄 ATUALIZAR</button>
+          <button class="btn btn-sm btn-ghost" onclick="ctrlLock()">🔒 SAIR</button>
+        </div>
+      </div>
+
+      <!-- TELA DE SENHA -->
+      <div id="ctrl-lock-screen" class="wrap" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;gap:24px">
+        <div style="font-size:56px;filter:drop-shadow(0 0 24px rgba(6,182,212,.5))">🎛</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;letter-spacing:4px;color:var(--cyan);text-align:center">CENTRAL DE CONTROLE</div>
+        <div style="font-size:13px;color:var(--text-dim);text-align:center;max-width:320px;line-height:1.6">Área restrita a gestores. Acesso ao dashboard completo, análise de KPIs e recomendações de ações em tempo real.</div>
+        <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px">
+          <div style="position:relative">
+            <input type="password" id="ctrl-senha-input" placeholder="Senha de acesso" style="text-align:center;letter-spacing:6px;font-size:18px;width:100%;padding:14px;background:var(--surface2);border:2px solid rgba(6,182,212,.3);border-radius:12px;color:var(--text);font-family:'Share Tech Mono',monospace" onkeydown="if(event.key==='Enter') ctrlUnlock()">
+            <span onclick="var i=document.getElementById('ctrl-senha-input');i.type=i.type==='password'?'text':'password'" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:18px;opacity:.5">👁</span>
+          </div>
+          <button class="btn btn-amber" onclick="ctrlUnlock()" style="background:linear-gradient(135deg,var(--cyan),#0284c7);border:none;font-size:14px;padding:14px">🔓 ACESSAR CONTROLE</button>
+          <div id="ctrl-senha-erro" style="color:var(--red);font-size:12px;text-align:center;display:none">⛔ Senha incorreta. Tente novamente.</div>
+        </div>
+      </div>
+
+      <!-- CONTEÚDO DO DASHBOARD -->
+      <div id="ctrl-content" style="display:none">
+        <div class="wrap" style="max-width:1200px">
+
+          <!-- AÇÕES INTELIGENTES -->
+          <div id="ctrl-acoes-box" style="margin-bottom:20px"></div>
+
+          <!-- FILTRO DE DATA -->
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:20px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:14px">
+            <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase">📅 PERÍODO</span>
+            <input type="date" id="ctrl-de" style="max-width:160px;font-size:13px;font-weight:700;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text)" onchange="controleCarregar()">
+            <span style="color:var(--text-dim)">→</span>
+            <input type="date" id="ctrl-ate" style="max-width:160px;font-size:13px;font-weight:700;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text)" onchange="controleCarregar()">
+            <button class="btn btn-ghost btn-sm" onclick="ctrlSetHoje()">Hoje</button>
+            <button class="btn btn-ghost btn-sm" onclick="ctrlSetSemana()">Semana</button>
+            <button class="btn btn-ghost btn-sm" onclick="ctrlSetMes()">Mês</button>
+            <span id="ctrl-last-update" style="margin-left:auto;font-size:11px;color:var(--text-muted);font-family:'Share Tech Mono',monospace"></span>
+          </div>
+
+          <!-- VISÃO GERAL — SCORE GERAL -->
+          <div id="ctrl-score-box" style="margin-bottom:20px"></div>
+
+          <!-- KPIs PICKING -->
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+              <span style="font-size:20px">📦</span>
+              <span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:15px;letter-spacing:2px;color:var(--amber)">PICKING / REABASTECIMENTO</span>
+              <span id="ctrl-pk-badge" style="margin-left:auto;font-size:11px;padding:3px 10px;border-radius:20px;background:var(--amber-dim);color:var(--amber);font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px"></span>
+            </div>
+            <div class="dash-cards" id="ctrl-pk-kpis"></div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:14px">
+              <div style="background:var(--surface2);border-radius:10px;padding:14px">
+                <div style="font-size:10px;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700">PRODUÇÃO POR OPERADOR</div>
+                <div style="position:relative;height:160px"><canvas id="ctrl-chart-pk-op"></canvas></div>
+              </div>
+              <div style="background:var(--surface2);border-radius:10px;padding:14px">
+                <div style="font-size:10px;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700">TENDÊNCIA — TAREFAS DIÁRIAS</div>
+                <div style="position:relative;height:160px"><canvas id="ctrl-chart-pk-trend"></canvas></div>
+              </div>
+            </div>
+            <div id="ctrl-pk-acoes" style="margin-top:12px"></div>
+          </div>
+
+          <!-- KPIs DESPEJO -->
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+              <span style="font-size:20px">🗑</span>
+              <span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:15px;letter-spacing:2px;color:#ef4444">DESPEJO TIMER</span>
+              <span id="ctrl-dp-badge" style="margin-left:auto;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px"></span>
+            </div>
+            <div class="dash-cards" id="ctrl-dp-kpis"></div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:14px">
+              <div style="background:var(--surface2);border-radius:10px;padding:14px">
+                <div style="font-size:10px;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700">META POR EMBALAGEM</div>
+                <div style="position:relative;height:160px"><canvas id="ctrl-chart-dp-emb"></canvas></div>
+              </div>
+              <div style="background:var(--surface2);border-radius:10px;padding:14px">
+                <div style="font-size:10px;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700">TENDÊNCIA — META BATIDA / NÃO BATIDA</div>
+                <div style="position:relative;height:160px"><canvas id="ctrl-chart-dp-trend"></canvas></div>
+              </div>
+            </div>
+            <div id="ctrl-dp-acoes" style="margin-top:12px"></div>
+          </div>
+
+          <!-- KPIs REPACK -->
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+              <span style="font-size:20px">🔄</span>
+              <span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:15px;letter-spacing:2px;color:var(--amber)">REPACK TIMER</span>
+              <span id="ctrl-rp-badge" style="margin-left:auto;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px"></span>
+            </div>
+            <div class="dash-cards" id="ctrl-rp-kpis"></div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:14px">
+              <div style="background:var(--surface2);border-radius:10px;padding:14px">
+                <div style="font-size:10px;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700">META POR EMBALAGEM</div>
+                <div style="position:relative;height:160px"><canvas id="ctrl-chart-rp-emb"></canvas></div>
+              </div>
+              <div style="background:var(--surface2);border-radius:10px;padding:14px">
+                <div style="font-size:10px;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700">TENDÊNCIA — PRODUÇÃO DIÁRIA</div>
+                <div style="position:relative;height:160px"><canvas id="ctrl-chart-rp-trend"></canvas></div>
+              </div>
+            </div>
+            <div id="ctrl-rp-acoes" style="margin-top:12px"></div>
+          </div>
+
+          <!-- KPIs ARMAZÉM -->
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+              <span style="font-size:20px">🚛</span>
+              <span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:15px;letter-spacing:2px;color:#7cc6ff">ARMAZÉM FÁCIL</span>
+              <span id="ctrl-az-badge" style="margin-left:auto;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px"></span>
+            </div>
+            <div class="dash-cards" id="ctrl-az-kpis"></div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:14px">
+              <div style="background:var(--surface2);border-radius:10px;padding:14px">
+                <div style="font-size:10px;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700">OPERAÇÕES POR EMPILHADOR</div>
+                <div style="position:relative;height:160px"><canvas id="ctrl-chart-az-emp"></canvas></div>
+              </div>
+              <div style="background:var(--surface2);border-radius:10px;padding:14px">
+                <div style="font-size:10px;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700">TENDÊNCIA — PALHETES POR DIA</div>
+                <div style="position:relative;height:160px"><canvas id="ctrl-chart-az-trend"></canvas></div>
+              </div>
+            </div>
+            <div id="ctrl-az-acoes" style="margin-top:12px"></div>
+          </div>
+
+          <!-- KPIs QUEBRAS -->
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+              <span style="font-size:20px">💥</span>
+              <span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:15px;letter-spacing:2px;color:#fca5a5">CONTROLE DE QUEBRAS</span>
+              <span id="ctrl-qb-badge" style="margin-left:auto;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px"></span>
+            </div>
+            <div class="dash-cards" id="ctrl-qb-kpis"></div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:14px">
+              <div style="background:var(--surface2);border-radius:10px;padding:14px">
+                <div style="font-size:10px;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700">QUEBRAS POR ÁREA</div>
+                <div style="position:relative;height:160px"><canvas id="ctrl-chart-qb-area"></canvas></div>
+              </div>
+              <div style="background:var(--surface2);border-radius:10px;padding:14px">
+                <div style="font-size:10px;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700">TENDÊNCIA — UNIDADES QUEBRADAS</div>
+                <div style="position:relative;height:160px"><canvas id="ctrl-chart-qb-trend"></canvas></div>
+              </div>
+            </div>
+            <div id="ctrl-qb-acoes" style="margin-top:12px"></div>
+          </div>
+
+          <!-- KPIs VALIDADES -->
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+              <span style="font-size:20px">🏷</span>
+              <span style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:15px;letter-spacing:2px;color:#a855f7">CONTROLE DE VALIDADES</span>
+              <span id="ctrl-vl-badge" style="margin-left:auto;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px"></span>
+            </div>
+            <div class="dash-cards" id="ctrl-vl-kpis"></div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:14px">
+              <div style="background:var(--surface2);border-radius:10px;padding:14px">
+                <div style="font-size:10px;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700">STATUS POR LOCALIZAÇÃO</div>
+                <div style="position:relative;height:160px"><canvas id="ctrl-chart-vl-status"></canvas></div>
+              </div>
+              <div style="background:var(--surface2);border-radius:10px;padding:14px">
+                <div style="font-size:10px;letter-spacing:1.5px;color:var(--text-dim);margin-bottom:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700">DISTRIBUIÇÃO DE STATUS</div>
+                <div style="position:relative;height:160px"><canvas id="ctrl-chart-vl-dist"></canvas></div>
+              </div>
+            </div>
+            <div id="ctrl-vl-acoes" style="margin-top:12px"></div>
+          </div>
+
+          <div style="height:40px"></div>
+        </div>
+      </div>
+    </div>
+
   </main><!-- /main-area -->
 </div><!-- /app-layout -->
 
@@ -1270,7 +1573,7 @@ function navGoPane(id) {
   if (pane) pane.classList.add('active');
   document.getElementById('main-area').scrollTop = 0;
   closeMobileSidebar();
-  if (target === 'relatorio' && typeof renderRelatorioDia === 'function') renderRelatorioDia();
+  
 }
 
 // Expose globally — garante que qualquer chamada goPane() use navGoPane()
@@ -1808,66 +2111,8 @@ const QB_TIPOS = {
   }, 2000);
 })();
 
-// ══════════════════════════════════════════════════════
-//  RELATÓRIO DO DIA (picking) — renderRelatorioDia
-// ══════════════════════════════════════════════════════
-function renderRelatorioDia() {
-  if (typeof S === 'undefined') return;
-  const today = new Date().toDateString();
-  const todayTasks = S.tarefas.filter(t => new Date(t.criadoEm||'').toDateString() === today || t.status !== 'done');
-  const pending  = todayTasks.filter(t => t.status === 'pending');
-  const progress = todayTasks.filter(t => t.status === 'in_progress');
-  const done     = S.tarefas.filter(t => t.status === 'done');
+// renderRelatorioDia removido — substituído pelo Controle
 
-  const numPend = document.getElementById('rel-num-pend');
-  const numProg = document.getElementById('rel-num-prog');
-  const numDone = document.getElementById('rel-num-done');
-  if (numPend) numPend.textContent = pending.length;
-  if (numProg) numProg.textContent = progress.length;
-  if (numDone) numDone.textContent = done.length;
-
-  const setCount = (id, n) => { const el=document.getElementById(id); if(!el)return; el.textContent=n; el.className='sec-cnt'+(n===0?' zero':''); };
-  setCount('cnt-rel-pend', pending.length);
-  setCount('cnt-rel-prog', progress.length);
-  setCount('cnt-rel-done', done.length);
-
-  const emptyMsg = (ico,txt) => `<div class="empty"><div class="ico">${ico}</div>${txt}</div>`;
-  const relPend = document.getElementById('rel-pend');
-  const relProg = document.getElementById('rel-prog');
-  const relDone = document.getElementById('rel-done');
-  if (relPend) relPend.innerHTML = pending.length ? pending.map(t=>taskCardReadonly(t)).join('') : emptyMsg('✅','Nenhuma tarefa pendente');
-  if (relProg) relProg.innerHTML = progress.length ? progress.map(t=>taskCardReadonly(t)).join('') : emptyMsg('⏳','Nenhuma em andamento');
-  if (relDone) relDone.innerHTML = done.length ? done.slice().reverse().map(t=>taskCardReadonly(t)).join('') : emptyMsg('📦','Nenhuma concluída hoje');
-
-  carregarResumoRelatorios();
-}
-
-async function carregarResumoRelatorios() {
-  if (!getDb()) return;
-  const modulos = [
-    { id: 'despejo',  label: '🗑 Despejo',  cor: '#ef4444' },
-    { id: 'repack',   label: '📦 Repack',   cor: 'var(--amber)' },
-    { id: 'armazem',  label: '🚛 Armazém',  cor: '#7cc6ff' },
-    { id: 'quebras',  label: '💥 Quebras',  cor: '#fca5a5' },
-  ];
-  const container = document.getElementById('rel-cards-resumo');
-  if (!container) return;
-  container.innerHTML = '<div style="font-size:12px;color:var(--text-dim);padding:8px 0">Carregando resumo...</div>';
-  const hoje = todayISO();
-  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px">';
-  for (const m of modulos) {
-    try {
-      const snap = await getDb().collection(m.id).get();
-      const todos = snap.docs.map(d => d.data());
-      const total = todos.length;
-      const hoje_ = todos.filter(r => r.dataISO === hoje).length;
-      const cor = total > 0 ? m.cor : 'var(--text-dim)';
-      html += `<div style="padding:14px 16px;border-radius:14px;background:var(--surface2);border:1px solid var(--border)"><div style="font-size:18px;font-weight:900;color:${cor};font-family:'Barlow Condensed',sans-serif;letter-spacing:1px">${m.label}</div><div style="font-size:28px;font-weight:900;color:${cor};margin:4px 0">${total}</div><div style="font-size:11px;color:var(--text-dim)">total · <strong style="color:${cor}">${hoje_}</strong> hoje (${hoje})</div></div>`;
-    } catch { html += `<div style="padding:14px 16px;border-radius:14px;background:var(--surface2);border:1px solid var(--border)"><div style="color:var(--text-dim);font-size:12px">${m.label}<br>Erro ao carregar</div></div>`; }
-  }
-  html += '</div>';
-  container.innerHTML = html;
-}
 
 // ══════════════════════════════════════════════════════
 //  DASHBOARD / CONTROLE — KPIs
@@ -2061,55 +2306,7 @@ async function dashCarregar() {
 // ══════════════════════════════════════════════════════
 //  EXPORTAR EXCEL / CSV
 // ══════════════════════════════════════════════════════
-async function fecharTurno() {
-  if (!dbOk()) return;
-  const btn = document.getElementById('btn-fechar-turno');
-  if (btn) { btn.disabled=true; btn.textContent='⏳ Gerando Excel...'; }
-  try {
-    const [snapD,snapR,snapA,snapQ] = await Promise.all([
-      getDb().collection('despejo').orderBy('_criadoEm','asc').get(),
-      getDb().collection('repack').orderBy('_criadoEm','asc').get(),
-      getDb().collection('armazem').orderBy('_criadoEm','asc').get(),
-      getDb().collection('quebras').orderBy('_criadoEm','asc').get(),
-    ]);
-    const wb = XLSX.utils.book_new();
-    const hoje = todayBR();
-    const resumo = [
-      {Módulo:'Despejo', Total:snapD.size, Hoje:snapD.docs.filter(d=>d.data().data===hoje).length},
-      {Módulo:'Repack',  Total:snapR.size, Hoje:snapR.docs.filter(d=>d.data().data===hoje).length},
-      {Módulo:'Armazém', Total:snapA.size, Hoje:snapA.docs.filter(d=>d.data().data===hoje).length},
-      {Módulo:'Quebras', Total:snapQ.size, Hoje:snapQ.docs.filter(d=>d.data().data===hoje).length},
-    ];
-    const wsResumo = XLSX.utils.json_to_sheet(resumo);
-    xlsAutoColWidth(wsResumo, resumo);
-    XLSX.utils.book_append_sheet(wb, wsResumo, 'RESUMO');
 
-    const dataD = snapD.docs.map(d=>{const r=d.data();return{'Data':r.data,'Embalagem':r.embalagem,'Qtd':r.quantidade,'Início':r.inicio,'Fim':r.fim,'Tempo':r.tempo,'Meta':r.meta,'Resultado':r.resultado};});
-    const wsD = XLSX.utils.json_to_sheet(dataD); xlsAutoColWidth(wsD, dataD);
-    XLSX.utils.book_append_sheet(wb, wsD, 'DESPEJO');
-
-    const dataR = snapR.docs.map(d=>{const r=d.data();return{'Data':r.data,'Embalagem':r.embalagem,'Qtd':r.quantidade,'Início':r.inicio,'Fim':r.fim,'Tempo':r.duracao,'Meta':r.meta,'Resultado':r.resultado};});
-    const wsR = XLSX.utils.json_to_sheet(dataR); xlsAutoColWidth(wsR, dataR);
-    XLSX.utils.book_append_sheet(wb, wsR, 'REPACK');
-
-    const dataA = snapA.docs.map(d=>{const r=d.data();return{'Operação':r.operacao,'Data':r.data,'Início':r.inicio,'Fim':r.fim,'Status':r.status,'Empilhador':r.empilhador,'Turno':r.turno,'Placa':r.placa,'Tipo':r.tipo,'Palhete':r.palhete,'Obs':r.obs||''};});
-    const wsA = XLSX.utils.json_to_sheet(dataA); xlsAutoColWidth(wsA, dataA);
-    XLSX.utils.book_append_sheet(wb, wsA, 'ARMAZÉM');
-
-    const dataQ = snapQ.docs.map(d=>{const r=d.data();return{'Data':r.data,'Cód Produto':r.codProduto,'Descrição':r.descricao,'Qtd':r.quantidade,'Turno':r.turno,'Cód Quebra':r.codQuebra,'Área':r.area,'Motivo':r.motivo};});
-    const wsQ = XLSX.utils.json_to_sheet(dataQ); xlsAutoColWidth(wsQ, dataQ);
-    XLSX.utils.book_append_sheet(wb, wsQ, 'QUEBRAS');
-    XLSX.writeFile(wb, `relatorio_turno_${todayISO()}.xlsx`);
-    const st = document.getElementById('rel-fechar-status');
-    if (st) st.textContent = `✅ Arquivo gerado: relatorio_turno_${todayISO()}.xlsx`;
-  } catch(e) {
-    const st = document.getElementById('rel-fechar-status');
-    if (st) st.textContent = '❌ Erro: ' + e.message;
-  }
-  if (btn) { btn.disabled=false; btn.textContent='📥 FECHAR TURNO — BAIXAR EXCEL COMPLETO'; }
-}
-
-// ── Aplica largura automática de colunas e linha de cabeçalho congelada ──
 function xlsAutoColWidth(ws, data) {
   if (!data || !data.length) return;
   const keys = Object.keys(data[0]);
@@ -2306,7 +2503,7 @@ function fecharPOP(e) { if(e.target===document.getElementById('modal-pop')) fech
 // ══════════════════════════════════════════════════════
 //  SENHA DOS RELATÓRIOS
 // ══════════════════════════════════════════════════════
-const RELATORIO_SENHA = 'controle26'; // ← altere aqui a senha
+const RELATORIO_SENHA = 'gestor2025'; // ← altere aqui a senha
 
 function csvUnlock() {
   const inp = document.getElementById('csv-senha-input');
@@ -2518,6 +2715,587 @@ window.clearLocal = function() {
 //  Apenas garantimos que o elemento #clock existe na sidebar
 // ══════════════════════════════════════════════════════
 // (sem redeclarar — app.js cuida disso)
+
+// ══════════════════════════════════════════════════════
+//  CENTRAL DE CONTROLE — DASHBOARD GERENCIAL
+// ══════════════════════════════════════════════════════
+const CTRL_PASSWORD = 'controle26';
+let ctrlUnlocked = false;
+let ctrlAutoInterval = null;
+const _ctrlCharts = {};
+
+function requestControleTab() {
+  if (ctrlUnlocked) { navGoPane('controle'); controleCarregar(); return; }
+  navGoPane('controle');
+}
+
+function ctrlUnlock() {
+  const inp = document.getElementById('ctrl-senha-input');
+  const erro = document.getElementById('ctrl-senha-erro');
+  if (!inp) return;
+  if (inp.value === CTRL_PASSWORD) {
+    ctrlUnlocked = true;
+    document.getElementById('ctrl-lock-screen').style.display = 'none';
+    document.getElementById('ctrl-content').style.display = 'block';
+    const navLock = document.getElementById('controle-lock-state');
+    if (navLock) { navLock.textContent = '✅'; navLock.classList.add('unlocked'); }
+    ctrlSetHoje();
+    controleCarregar();
+    // Auto-refresh every 60s
+    if (ctrlAutoInterval) clearInterval(ctrlAutoInterval);
+    ctrlAutoInterval = setInterval(() => { if (ctrlUnlocked) controleCarregar(); }, 60000);
+    toast('🎛 Central de Controle — Bem-vindo, Gestor!');
+  } else {
+    erro.style.display = 'block';
+    inp.classList.add('shake');
+    inp.value = '';
+    setTimeout(() => inp.classList.remove('shake'), 450);
+    inp.focus();
+  }
+}
+
+function ctrlLock() {
+  ctrlUnlocked = false;
+  if (ctrlAutoInterval) clearInterval(ctrlAutoInterval);
+  document.getElementById('ctrl-lock-screen').style.display = 'flex';
+  document.getElementById('ctrl-content').style.display = 'none';
+  const navLock = document.getElementById('controle-lock-state');
+  if (navLock) { navLock.textContent = '🔒'; navLock.classList.remove('unlocked'); }
+  navGoPane('repack');
+}
+
+function ctrlSetHoje() {
+  const hoje = new Date().toISOString().split('T')[0];
+  const de = document.getElementById('ctrl-de');
+  const ate = document.getElementById('ctrl-ate');
+  if (de) de.value = hoje;
+  if (ate) ate.value = hoje;
+}
+function ctrlSetSemana() {
+  const hoje = new Date();
+  const de = document.getElementById('ctrl-de');
+  const ate = document.getElementById('ctrl-ate');
+  const inicio = new Date(hoje); inicio.setDate(hoje.getDate() - 6);
+  if (de) de.value = inicio.toISOString().split('T')[0];
+  if (ate) ate.value = hoje.toISOString().split('T')[0];
+}
+function ctrlSetMes() {
+  const hoje = new Date();
+  const de = document.getElementById('ctrl-de');
+  const ate = document.getElementById('ctrl-ate');
+  const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+  if (de) de.value = inicio.toISOString().split('T')[0];
+  if (ate) ate.value = hoje.toISOString().split('T')[0];
+}
+
+function _ctrlDestroyChart(id) {
+  if (_ctrlCharts[id]) { try { _ctrlCharts[id].destroy(); } catch(e){} delete _ctrlCharts[id]; }
+}
+
+function _ctrlMakeChart(id, type, labels, datasets, options={}) {
+  _ctrlDestroyChart(id);
+  const el = document.getElementById(id);
+  if (!el) return;
+  const hasData = datasets.some(d => d.data && d.data.some(v => v > 0));
+  _ctrlCharts[id] = new Chart(el.getContext('2d'), {
+    type,
+    data: { labels: hasData ? labels : ['Sem dados'], datasets: hasData ? datasets : [{data:[0],backgroundColor:'rgba(255,255,255,.05)'}] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 400 },
+      plugins: {
+        legend: { display: type === 'doughnut', labels: { color: '#dde4ee', font:{size:10}, boxWidth:10, padding:8 } },
+        tooltip: { backgroundColor:'#11151c', titleColor:'#dde4ee', bodyColor:'#6a7d92', borderColor:'#222d3a', borderWidth:1 }
+      },
+      scales: ['bar','line'].includes(type) ? {
+        x: { ticks: { color:'#6a7d92', font:{size:9}, maxRotation:35, maxTicksLimit:10 }, grid:{ color:'rgba(34,45,58,.4)' } },
+        y: { ticks: { color:'#6a7d92', font:{size:9}, maxTicksLimit:5  }, grid:{ color:'rgba(34,45,58,.4)' }, beginAtZero:true }
+      } : {},
+      ...options
+    }
+  });
+}
+
+function _ctrlKpis(id, kpis) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = kpis.map(k => `
+    <div class="dash-kpi" style="border-top:3px solid ${k.cor||'var(--amber)'}">
+      <div class="dash-kpi-val" style="color:${k.cor||'var(--amber)'}">${k.val}</div>
+      <div class="dash-kpi-label">${k.label}</div>
+      ${k.sub ? `<div class="dash-kpi-sub" style="color:${k.cor||'var(--amber)'};font-size:11px;margin-top:3px">${k.sub}</div>` : ''}
+    </div>`).join('');
+}
+
+function _ctrlBadge(id, pct, cor, bg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = typeof pct === 'number' ? pct.toFixed(0) + '% EFICIÊNCIA' : pct;
+  el.style.background = bg;
+  el.style.color = cor;
+}
+
+function _ctrlAcoes(containerId, acoes) {
+  const el = document.getElementById(containerId);
+  if (!el || !acoes.length) { if(el) el.innerHTML=''; return; }
+  el.innerHTML = acoes.map(a => `
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:10px;margin-bottom:6px;
+      background:${a.bg};border:1px solid ${a.brd}">
+      <span style="font-size:18px;flex-shrink:0">${a.icon}</span>
+      <div style="flex:1">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;color:${a.cor};margin-bottom:2px">${a.titulo}</div>
+        <div style="font-size:12px;color:#dde4ee;line-height:1.5">${a.texto}</div>
+        <div style="font-size:10px;color:#6a7d92;margin-top:4px;font-style:italic">${a.porque}</div>
+      </div>
+      <span style="font-size:11px;padding:3px 8px;border-radius:20px;background:${a.brd};color:${a.cor};font-weight:700;font-family:'Barlow Condensed',sans-serif;white-space:nowrap;flex-shrink:0">${a.prioridade}</span>
+    </div>`).join('');
+}
+
+function _ctrlGroupByDate(arr, campo) {
+  const m = {};
+  arr.forEach(r => {
+    const d = (r[campo||'dataISO'] || r.dataISO || '').substring(0,10);
+    if (!d) return;
+    m[d] = (m[d]||0) + 1;
+  });
+  return m;
+}
+
+function _ctrlGroupByDateSum(arr, campo, valorCampo) {
+  const m = {};
+  arr.forEach(r => {
+    const d = (r[campo||'dataISO'] || '').substring(0,10);
+    if (!d) return;
+    m[d] = (m[d]||0) + (Number(r[valorCampo])||0);
+  });
+  return m;
+}
+
+function _ctrlSortedDates(m) {
+  return Object.keys(m).sort();
+}
+
+function _ctrlFiltrarData(arr, de, ate, campo='dataISO') {
+  if (!de && !ate) return arr;
+  return arr.filter(r => {
+    const d = (r[campo] || r.dataISO || '');
+    const dIso = d.includes('/') ? d.split('/').reverse().join('-') : d.substring(0,10);
+    if (de && dIso < de) return false;
+    if (ate && dIso > ate) return false;
+    return true;
+  });
+}
+
+function _ctrlTopN(map, n=5) {
+  return Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,n);
+}
+
+function _ctrlTrend(map) {
+  const dates = _ctrlSortedDates(map);
+  if (dates.length < 2) return 'stable';
+  const mid = Math.floor(dates.length / 2);
+  const first = dates.slice(0, mid).reduce((s,d)=>s+map[d],0) / mid;
+  const last  = dates.slice(mid).reduce((s,d)=>s+map[d],0) / (dates.length - mid);
+  const diff = last - first;
+  if (diff > first * 0.1)  return 'up';
+  if (diff < -first * 0.1) return 'down';
+  return 'stable';
+}
+
+function _ctrlVldClassify(validade) {
+  if (!validade) return 'ok';
+  const today = new Date(); today.setHours(0,0,0,0);
+  const exp   = new Date(validade + 'T00:00:00');
+  const days  = Math.round((exp - today) / 86400000);
+  if (days < 0)  return 'expired';
+  if (days <= 30) return 'crit';
+  if (days <= 45) return 'warn';
+  if (days <= 60) return 'alert';
+  return 'ok';
+}
+
+async function controleCarregar() {
+  if (!ctrlUnlocked) return;
+  if (!getDb()) {
+    const box = document.getElementById('ctrl-acoes-box');
+    if (box) box.innerHTML = `<div style="text-align:center;padding:30px;background:var(--surface);border-radius:14px;border:1px solid var(--border)">
+      <div style="font-size:32px;margin-bottom:10px">🔥</div>
+      <div style="color:var(--amber);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:16px;letter-spacing:2px;margin-bottom:8px">FIREBASE NÃO CONECTADO</div>
+      <div style="color:var(--text-dim);font-size:12px;line-height:1.7">Configure o Firebase no painel <strong style="color:var(--amber)">Conferente</strong> e atualize.</div>
+    </div>`;
+    return;
+  }
+
+  const de  = (document.getElementById('ctrl-de')  || {}).value || '';
+  const ate = (document.getElementById('ctrl-ate') || {}).value || '';
+
+  const upd = document.getElementById('ctrl-last-update');
+  if (upd) upd.textContent = 'Carregando…';
+
+  try {
+    const [snapT, snapD, snapR, snapA, snapQ] = await Promise.all([
+      getDb().collection('tarefas').get().catch(()=>({docs:[]})),
+      getDb().collection('despejo').get().catch(()=>({docs:[]})),
+      getDb().collection('repack').get().catch(()=>({docs:[]})),
+      getDb().collection('armazem').get().catch(()=>({docs:[]})),
+      getDb().collection('quebras').get().catch(()=>({docs:[]})),
+    ]);
+
+    const allTarefas = snapT.docs.map(d=>d.data());
+    const allDespejo = snapD.docs.map(d=>d.data());
+    const allRepack  = snapR.docs.map(d=>d.data());
+    const allArmazem = snapA.docs.map(d=>d.data());
+    const allQuebras = snapQ.docs.map(d=>d.data());
+
+    const tarefas = _ctrlFiltrarData(allTarefas, de, ate, 'criadoEm');
+    const despejo = _ctrlFiltrarData(allDespejo, de, ate);
+    const repack  = _ctrlFiltrarData(allRepack,  de, ate);
+    const armazem = _ctrlFiltrarData(allArmazem, de, ate);
+    const quebras = _ctrlFiltrarData(allQuebras, de, ate);
+    const validades = typeof vldProdutos !== 'undefined' ? vldProdutos : [];
+
+    // ────────────────────────────────────────────────────
+    //  PICKING KPIs
+    // ────────────────────────────────────────────────────
+    const pkDone = tarefas.filter(t=>t.status==='done');
+    const pkPend = tarefas.filter(t=>t.status==='pending');
+    const pkProg = tarefas.filter(t=>t.status==='in_progress');
+    const pkDurMin = pkDone.map(t=>Number(t.duracaoMin)||0).filter(v=>v>0);
+    const pkAvg = pkDurMin.length ? pkDurMin.reduce((s,v)=>s+v,0)/pkDurMin.length : 0;
+    const pkTxConc = tarefas.length ? Math.round(pkDone.length/tarefas.length*100) : 0;
+
+    _ctrlKpis('ctrl-pk-kpis', [
+      {val: tarefas.length,    label:'Total Tarefas',   cor:'var(--amber)'},
+      {val: pkDone.length,     label:'Concluídas',      cor:'var(--green)',  sub: pkTxConc+'% de conclusão'},
+      {val: pkPend.length,     label:'Pendentes',       cor:'var(--amber)'},
+      {val: pkProg.length,     label:'Em Andamento',    cor:'var(--blue)'},
+      {val: pkAvg>0 ? pkAvg.toFixed(1)+'min' : '—', label:'Tempo Médio/Tarefa', cor:'#7cc6ff'},
+      {val: pkDurMin.length>0 ? Math.min(...pkDurMin).toFixed(1)+'min' : '—', label:'Melhor Tempo', cor:'var(--green)'},
+    ]);
+
+    const pkOpMap = {};
+    tarefas.forEach(t=>{ const o=t.operador||'—'; pkOpMap[o]=(pkOpMap[o]||0)+1; });
+    const pkOpTop = _ctrlTopN(pkOpMap, 8);
+    _ctrlMakeChart('ctrl-chart-pk-op','bar', pkOpTop.map(e=>e[0].split(' ')[0]),
+      [{label:'Tarefas',data:pkOpTop.map(e=>e[1]),backgroundColor:['#f5a623','#22c55e','#3b82f6','#ef4444','#8b5cf6','#06b6d4','#ec4899','#fca5a5'],borderRadius:6}]);
+
+    const pkDateMap = {};
+    tarefas.forEach(t => {
+      const d = (t.criadoEm||'').substring(0,10);
+      if(d) pkDateMap[d] = (pkDateMap[d]||0) + 1;
+    });
+    const pkDates = _ctrlSortedDates(pkDateMap).slice(-14);
+    const pkTrend = _ctrlTrend(pkDateMap);
+    _ctrlMakeChart('ctrl-chart-pk-trend','line', pkDates.map(d=>d.substring(5)),
+      [{label:'Tarefas/dia',data:pkDates.map(d=>pkDateMap[d]),borderColor:'#f5a623',backgroundColor:'rgba(245,166,35,.1)',fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#f5a623'}]);
+
+    const pkEfic = pkTxConc;
+    _ctrlBadge('ctrl-pk-badge', pkEfic, pkEfic>=80?'var(--green)':pkEfic>=50?'var(--amber)':'var(--red)', pkEfic>=80?'rgba(34,197,94,.12)':pkEfic>=50?'var(--amber-dim)':'rgba(239,68,68,.12)');
+
+    const pkAcoes = [];
+    if (pkPend.length > 5) pkAcoes.push({icon:'⚠',titulo:'ALTO VOLUME DE PENDENTES',texto:`Há ${pkPend.length} tarefas pendentes acumuladas. Verifique se os operadores estão recebendo corretamente as atribuições.`,porque:`Acima de 5 pendentes simultâneos indica gargalo operacional. Taxa de conclusão atual: ${pkTxConc}%.`,prioridade:'URGENTE',cor:'#ef4444',bg:'rgba(239,68,68,.08)',brd:'rgba(239,68,68,.3)'});
+    if (pkProg.length > 3) pkAcoes.push({icon:'⏱',titulo:'MUITAS TAREFAS EM ANDAMENTO',texto:`${pkProg.length} tarefas estão em andamento simultaneamente. Monitore se há travamentos ou tarefas esquecidas.`,porque:`Mais de 3 tarefas simultâneas pode indicar operadores parados ou problemas de acesso à área.`,prioridade:'ATENÇÃO',cor:'var(--amber)',bg:'var(--amber-dim)',brd:'rgba(245,166,35,.3)'});
+    if (pkAvg > 20) pkAcoes.push({icon:'🐢',titulo:'TEMPO MÉDIO ELEVADO',texto:`Tempo médio por tarefa: ${pkAvg.toFixed(1)} min. Revise a rota de picking e localizações dos produtos mais frequentes.`,porque:`Tarefas acima de 20 min indicam deslocamento excessivo ou dificuldade de localização.`,prioridade:'MELHORIA',cor:'#7cc6ff',bg:'var(--blue-dim)',brd:'rgba(59,130,246,.3)'});
+    if (pkTrend==='down' && pkDates.length>3) pkAcoes.push({icon:'📉',titulo:'TENDÊNCIA DE QUEDA NA PRODUÇÃO',texto:`Volume de tarefas em queda nos últimos dias. Verifique absenteísmo ou sobrecarga de trabalho.`,porque:`Análise de tendência detectou redução de mais de 10% no volume de tarefas por dia.`,prioridade:'MONITORAR',cor:'#06b6d4',bg:'rgba(6,182,212,.08)',brd:'rgba(6,182,212,.25)'});
+    if (!pkAcoes.length && tarefas.length > 0) pkAcoes.push({icon:'✅',titulo:'PICKING OPERANDO NORMALMENTE',texto:`Taxa de conclusão de ${pkTxConc}%. Continue monitorando para manter o desempenho.`,porque:`Nenhum indicador de alerta ativo para esta área no período selecionado.`,prioridade:'OK',cor:'var(--green)',bg:'rgba(34,197,94,.06)',brd:'rgba(34,197,94,.2)'});
+    _ctrlAcoes('ctrl-pk-acoes', pkAcoes);
+
+    // ────────────────────────────────────────────────────
+    //  DESPEJO KPIs
+    // ────────────────────────────────────────────────────
+    const dpMeta  = despejo.filter(r=>r.resultado&&r.resultado.includes('✅')).length;
+    const dpNao   = despejo.length - dpMeta;
+    const dpTxMeta = despejo.length ? Math.round(dpMeta/despejo.length*100) : 0;
+    const dpQtdTotal = despejo.reduce((s,r)=>s+(Number(r.quantidade)||0),0);
+
+    _ctrlKpis('ctrl-dp-kpis', [
+      {val: despejo.length,   label:'Total Registros',    cor:'#ef4444'},
+      {val: dpMeta,            label:'Meta Batida',        cor:'var(--green)', sub: dpTxMeta+'% de eficiência'},
+      {val: dpNao,             label:'Acima da Meta',      cor:'var(--red)'},
+      {val: dpQtdTotal,        label:'Unidades Despejadas',cor:'#f97316'},
+      {val: dpTxMeta+'%',      label:'Taxa de Meta Geral', cor: dpTxMeta>=80?'var(--green)':dpTxMeta>=60?'var(--amber)':'var(--red)'},
+    ]);
+
+    const dpEmbMap = {}; const dpEmbMeta = {};
+    despejo.forEach(r => {
+      const e = r.embalagem||'—';
+      dpEmbMap[e]  = (dpEmbMap[e]||0)  + 1;
+      if (r.resultado&&r.resultado.includes('✅')) dpEmbMeta[e] = (dpEmbMeta[e]||0)+1;
+    });
+    const dpEmbs = Object.keys(dpEmbMap);
+    _ctrlMakeChart('ctrl-chart-dp-emb','bar', dpEmbs,
+      [
+        {label:'Meta Batida',    data:dpEmbs.map(e=>dpEmbMeta[e]||0), backgroundColor:'rgba(34,197,94,.7)',borderRadius:4},
+        {label:'Acima da Meta',  data:dpEmbs.map(e=>(dpEmbMap[e]||0)-(dpEmbMeta[e]||0)), backgroundColor:'rgba(239,68,68,.6)',borderRadius:4},
+      ]);
+
+    const dpDateMetaMap = {}; const dpDateNaoMap = {};
+    despejo.forEach(r => {
+      const d=(r.dataISO||'').substring(0,10); if(!d) return;
+      dpDateMetaMap[d] = (dpDateMetaMap[d]||0) + (r.resultado&&r.resultado.includes('✅')?1:0);
+      dpDateNaoMap[d]  = (dpDateNaoMap[d]||0)  + (r.resultado&&r.resultado.includes('✅')?0:1);
+    });
+    const dpDates = [...new Set([...Object.keys(dpDateMetaMap),...Object.keys(dpDateNaoMap)])].sort().slice(-14);
+    _ctrlMakeChart('ctrl-chart-dp-trend','line', dpDates.map(d=>d.substring(5)),
+      [
+        {label:'Meta Batida',   data:dpDates.map(d=>dpDateMetaMap[d]||0),borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.1)',fill:false,tension:0.4,pointRadius:3},
+        {label:'Acima da Meta', data:dpDates.map(d=>dpDateNaoMap[d]||0), borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.1)',fill:false,tension:0.4,pointRadius:3},
+      ]);
+
+    _ctrlBadge('ctrl-dp-badge', dpTxMeta, dpTxMeta>=80?'var(--green)':dpTxMeta>=60?'var(--amber)':'var(--red)', dpTxMeta>=80?'rgba(34,197,94,.12)':'rgba(239,68,68,.12)');
+
+    const dpAcoes = [];
+    if (dpTxMeta < 60) dpAcoes.push({icon:'🚨',titulo:'TAXA DE META CRÍTICA NO DESPEJO',texto:`Apenas ${dpTxMeta}% das operações de despejo estão dentro da meta. Audite o processo imediatamente.`,porque:`Abaixo de 60% indica problemas sistêmicos: equipe mal treinada, metas incorretas ou lotes grandes demais.`,prioridade:'CRÍTICO',cor:'var(--red)',bg:'rgba(239,68,68,.1)',brd:'rgba(239,68,68,.4)'});
+    else if (dpTxMeta < 80) dpAcoes.push({icon:'⚠',titulo:'EFICIÊNCIA DE DESPEJO ABAIXO DO IDEAL',texto:`${dpTxMeta}% de meta batida. Reforce o treinamento de cronometragem e verifique embalagens problemáticas.`,porque:`Taxa ideal é acima de 80%. Embalagens com pior desempenho devem receber atenção especial.`,prioridade:'ATENÇÃO',cor:'var(--amber)',bg:'var(--amber-dim)',brd:'rgba(245,166,35,.3)'});
+    const dpPiorEmb = dpEmbs.sort((a,b)=>{ const pa=(dpEmbMeta[a]||0)/(dpEmbMap[a]||1); const pb=(dpEmbMeta[b]||0)/(dpEmbMap[b]||1); return pa-pb; })[0];
+    if (dpPiorEmb && dpEmbMap[dpPiorEmb]>2) { const tx=Math.round((dpEmbMeta[dpPiorEmb]||0)/dpEmbMap[dpPiorEmb]*100); if(tx<70) dpAcoes.push({icon:'📦',titulo:`EMBALAGEM CRÍTICA: ${dpPiorEmb}`,texto:`A embalagem ${dpPiorEmb} tem apenas ${tx}% de meta batida (${dpEmbMeta[dpPiorEmb]||0}/${dpEmbMap[dpPiorEmb]}). Reveja o tempo padrão ou treine especificamente para este tipo.`,porque:`Embalagem com desempenho muito abaixo das demais. Pode ser meta inviável ou dificuldade operacional específica.`,prioridade:'INVESTIGAR',cor:'#f97316',bg:'rgba(249,115,22,.08)',brd:'rgba(249,115,22,.3)'}); }
+    if (!dpAcoes.length && despejo.length>0) dpAcoes.push({icon:'✅',titulo:'DESPEJO COM BOA PERFORMANCE',texto:`Taxa de meta: ${dpTxMeta}%. Mantenha o monitoramento e busque consistência.`,porque:`Nenhum indicador crítico detectado para este período.`,prioridade:'OK',cor:'var(--green)',bg:'rgba(34,197,94,.06)',brd:'rgba(34,197,94,.2)'});
+    _ctrlAcoes('ctrl-dp-acoes', dpAcoes);
+
+    // ────────────────────────────────────────────────────
+    //  REPACK KPIs
+    // ────────────────────────────────────────────────────
+    const rpMeta  = repack.filter(r=>r.resultado&&r.resultado.includes('✅')).length;
+    const rpNao   = repack.length - rpMeta;
+    const rpTxMeta = repack.length ? Math.round(rpMeta/repack.length*100) : 0;
+    const rpQtdTotal = repack.reduce((s,r)=>s+(Number(r.quantidade)||0),0);
+
+    _ctrlKpis('ctrl-rp-kpis', [
+      {val: repack.length,   label:'Total Registros',   cor:'var(--amber)'},
+      {val: rpMeta,           label:'Meta Batida',       cor:'var(--green)', sub: rpTxMeta+'% de eficiência'},
+      {val: rpNao,            label:'Acima da Meta',     cor:'var(--red)'},
+      {val: rpQtdTotal,       label:'Unidades Repackadas', cor:'#7cc6ff'},
+      {val: rpTxMeta+'%',     label:'Taxa de Meta Geral', cor: rpTxMeta>=80?'var(--green)':rpTxMeta>=60?'var(--amber)':'var(--red)'},
+    ]);
+
+    const rpEmbMap = {}; const rpEmbMeta = {};
+    repack.forEach(r => {
+      const e = r.embalagem||'—';
+      rpEmbMap[e]=(rpEmbMap[e]||0)+1;
+      if(r.resultado&&r.resultado.includes('✅')) rpEmbMeta[e]=(rpEmbMeta[e]||0)+1;
+    });
+    const rpEmbs = Object.keys(rpEmbMap);
+    _ctrlMakeChart('ctrl-chart-rp-emb','bar', rpEmbs,
+      [
+        {label:'Meta Batida',   data:rpEmbs.map(e=>rpEmbMeta[e]||0), backgroundColor:'rgba(34,197,94,.7)',borderRadius:4},
+        {label:'Acima da Meta', data:rpEmbs.map(e=>(rpEmbMap[e]||0)-(rpEmbMeta[e]||0)), backgroundColor:'rgba(239,68,68,.6)',borderRadius:4},
+      ]);
+
+    const rpDateMap = _ctrlGroupByDate(repack);
+    const rpDates = _ctrlSortedDates(rpDateMap).slice(-14);
+    const rpTrend = _ctrlTrend(rpDateMap);
+    _ctrlMakeChart('ctrl-chart-rp-trend','line', rpDates.map(d=>d.substring(5)),
+      [{label:'Registros/dia',data:rpDates.map(d=>rpDateMap[d]),borderColor:'#f5a623',backgroundColor:'rgba(245,166,35,.1)',fill:true,tension:0.4,pointRadius:3}]);
+
+    _ctrlBadge('ctrl-rp-badge', rpTxMeta, rpTxMeta>=80?'var(--green)':rpTxMeta>=60?'var(--amber)':'var(--red)', rpTxMeta>=80?'rgba(34,197,94,.12)':'rgba(239,68,68,.12)');
+
+    const rpAcoes = [];
+    if (rpTxMeta < 60) rpAcoes.push({icon:'🚨',titulo:'REPACK COM DESEMPENHO CRÍTICO',texto:`Apenas ${rpTxMeta}% de meta batida. Revise tempos padrão e aloque operadores mais experientes.`,porque:`Taxa abaixo de 60% no repack indica falha sistêmica. Impacto direto na produtividade da operação.`,prioridade:'CRÍTICO',cor:'var(--red)',bg:'rgba(239,68,68,.1)',brd:'rgba(239,68,68,.4)'});
+    else if (rpTxMeta < 80) rpAcoes.push({icon:'⚠',titulo:'REPACK PRECISA DE ATENÇÃO',texto:`${rpTxMeta}% de meta batida. Verifique embalagens com pior desempenho e reforce treinamentos.`,porque:`Meta ideal é acima de 80%. Performance atual pode impactar o atendimento de pedidos.`,prioridade:'ATENÇÃO',cor:'var(--amber)',bg:'var(--amber-dim)',brd:'rgba(245,166,35,.3)'});
+    if (rpTrend==='down' && rpDates.length>3) rpAcoes.push({icon:'📉',titulo:'VOLUME DE REPACK EM QUEDA',texto:`Tendência de redução no volume de repack. Investigue causas: falta de material, equipe, ou demanda.`,porque:`Queda de mais de 10% detectada na análise de tendência dos últimos dias.`,prioridade:'MONITORAR',cor:'#06b6d4',bg:'rgba(6,182,212,.08)',brd:'rgba(6,182,212,.25)'});
+    if (!rpAcoes.length && repack.length>0) rpAcoes.push({icon:'✅',titulo:'REPACK DENTRO DO ESPERADO',texto:`Taxa de meta de ${rpTxMeta}%. Boa performance. Continue acompanhando.`,porque:`Sem alertas críticos para o período selecionado.`,prioridade:'OK',cor:'var(--green)',bg:'rgba(34,197,94,.06)',brd:'rgba(34,197,94,.2)'});
+    _ctrlAcoes('ctrl-rp-acoes', rpAcoes);
+
+    // ────────────────────────────────────────────────────
+    //  ARMAZÉM KPIs
+    // ────────────────────────────────────────────────────
+    const azOk   = armazem.filter(r=>r.status&&r.status.includes('✅')).length;
+    const azNok  = armazem.length - azOk;
+    const azTxOk = armazem.length ? Math.round(azOk/armazem.length*100) : 0;
+    const azPal  = armazem.reduce((s,r)=>s+(Number(r.palhete)||0),0);
+    const azOpMap= {};
+    armazem.forEach(r=>{ const o=r.empilhador||'—'; azOpMap[o]=(azOpMap[o]||0)+1; });
+    const azOpTop = _ctrlTopN(azOpMap,6);
+
+    _ctrlKpis('ctrl-az-kpis', [
+      {val: armazem.length,  label:'Total Operações',     cor:'#7cc6ff'},
+      {val: azOk,             label:'Dentro da Janela',   cor:'var(--green)', sub: azTxOk+'% dentro do horário'},
+      {val: azNok,            label:'Fora da Janela',     cor:'var(--amber)'},
+      {val: azPal,            label:'Total Palhetes',     cor:'#7cc6ff'},
+      {val: azOpTop.length>0 ? azOpTop[0][0].split(' ')[0] : '—', label:'Top Empilhador', cor:'var(--green)', sub: azOpTop[0] ? azOpTop[0][1]+' ops' : ''},
+    ]);
+
+    _ctrlMakeChart('ctrl-chart-az-emp','bar', azOpTop.map(e=>e[0].split(' ')[0]),
+      [{label:'Operações',data:azOpTop.map(e=>e[1]),backgroundColor:['#06b6d4','#22c55e','#3b82f6','#f5a623','#8b5cf6','#ec4899'],borderRadius:6}]);
+
+    const azPalDateMap = _ctrlGroupByDateSum(armazem,'dataISO','palhete');
+    const azDates = _ctrlSortedDates(azPalDateMap).slice(-14);
+    const azTrend = _ctrlTrend(azPalDateMap);
+    _ctrlMakeChart('ctrl-chart-az-trend','line', azDates.map(d=>d.substring(5)),
+      [{label:'Palhetes/dia',data:azDates.map(d=>azPalDateMap[d]),borderColor:'#7cc6ff',backgroundColor:'rgba(124,198,255,.1)',fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#7cc6ff'}]);
+
+    _ctrlBadge('ctrl-az-badge', azTxOk, azTxOk>=90?'var(--green)':azTxOk>=70?'var(--amber)':'var(--red)', azTxOk>=90?'rgba(34,197,94,.12)':'rgba(245,166,35,.12)');
+
+    const azAcoes = [];
+    if (azNok > 0) { const pct=Math.round(azNok/armazem.length*100); if(pct>=20) azAcoes.push({icon:'🚨',titulo:'OPERAÇÕES FORA DA JANELA DE HORÁRIO',texto:`${azNok} operações (${pct}%) realizadas fora da janela 07:00–21:00. Verifique as justificativas e tome medidas preventivas.`,porque:`Alta incidência de operações fora da janela indica falha de planejamento ou horas extras não controladas. Impacto em custos e segurança.`,prioridade:'URGENTE',cor:'var(--red)',bg:'rgba(239,68,68,.1)',brd:'rgba(239,68,68,.4)'}); else if(pct>0) azAcoes.push({icon:'⚠',titulo:'ALGUMAS OPERAÇÕES FORA DA JANELA',texto:`${azNok} operação(ões) fora do horário. Revise se as justificativas são adequadas.`,porque:`Operações fora da janela devem ser monitoradas. Até 20% pode ser aceitável se justificadas.`,prioridade:'MONITORAR',cor:'var(--amber)',bg:'var(--amber-dim)',brd:'rgba(245,166,35,.3)'}); }
+    if (azTrend==='up' && azDates.length>3) azAcoes.push({icon:'📈',titulo:'VOLUME DE PALHETES EM CRESCIMENTO',texto:`Tendência de aumento no volume de palhetes movimentados. Verifique capacidade da equipe e equipamentos.`,porque:`Crescimento acima de 10% detectado. Pode exigir reforço de equipe ou manutenção preventiva dos equipamentos.`,prioridade:'PLANEJAR',cor:'var(--green)',bg:'rgba(34,197,94,.06)',brd:'rgba(34,197,94,.2)'});
+    if (!azAcoes.length && armazem.length>0) azAcoes.push({icon:'✅',titulo:'ARMAZÉM OPERANDO DENTRO DA JANELA',texto:`${azTxOk}% das operações dentro do horário previsto. Continue o monitoramento.`,porque:`Sem alertas críticos para este período.`,prioridade:'OK',cor:'var(--green)',bg:'rgba(34,197,94,.06)',brd:'rgba(34,197,94,.2)'});
+    _ctrlAcoes('ctrl-az-acoes', azAcoes);
+
+    // ────────────────────────────────────────────────────
+    //  QUEBRAS KPIs
+    // ────────────────────────────────────────────────────
+    const qbTotal = quebras.length;
+    const qbQtd   = quebras.reduce((s,r)=>s+(Number(r.quantidade)||0),0);
+    const qbAreaMap = {}; const qbAreaQtd = {};
+    quebras.forEach(r=>{ const a=r.area||'—'; qbAreaMap[a]=(qbAreaMap[a]||0)+1; qbAreaQtd[a]=(qbAreaQtd[a]||0)+(Number(r.quantidade)||0); });
+    const qbMotivoMap = {};
+    quebras.forEach(r=>{ const m=r.motivo||'—'; qbMotivoMap[m]=(qbMotivoMap[m]||0)+1; });
+    const qbPiorArea = Object.entries(qbAreaQtd).sort((a,b)=>b[1]-a[1])[0];
+
+    _ctrlKpis('ctrl-qb-kpis', [
+      {val: qbTotal, label:'Ocorrências',      cor:'#fca5a5'},
+      {val: qbQtd,   label:'Unidades Quebradas',cor:'var(--red)'},
+      {val: Object.keys(qbAreaMap).length, label:'Áreas Afetadas', cor:'#f97316'},
+      {val: qbPiorArea ? qbPiorArea[0] : '—', label:'Área Crítica',  cor:'var(--red)', sub: qbPiorArea ? qbPiorArea[1]+' un.' : ''},
+      {val: qbTotal>0 ? (qbQtd/qbTotal).toFixed(1) : '—', label:'Média por Ocorrência', cor:'#fca5a5'},
+    ]);
+
+    const qbAreas = Object.keys(qbAreaMap);
+    _ctrlMakeChart('ctrl-chart-qb-area','bar', qbAreas,
+      [{label:'Unidades Quebradas',data:qbAreas.map(a=>qbAreaQtd[a]||0),backgroundColor:['#ef4444','#f97316','#fca5a5','#dc2626'],borderRadius:6}]);
+
+    const qbDateMap = _ctrlGroupByDateSum(quebras,'dataISO','quantidade');
+    const qbDates   = _ctrlSortedDates(qbDateMap).slice(-14);
+    const qbTrend   = _ctrlTrend(qbDateMap);
+    _ctrlMakeChart('ctrl-chart-qb-trend','line', qbDates.map(d=>d.substring(5)),
+      [{label:'Unidades/dia',data:qbDates.map(d=>qbDateMap[d]),borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.1)',fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#ef4444'}]);
+
+    const qbBadgeTxt = qbTotal===0 ? '✅ SEM QUEBRAS' : qbQtd + ' UNIDADES';
+    _ctrlBadge('ctrl-qb-badge', qbBadgeTxt, qbTotal===0?'var(--green)':'var(--red)', qbTotal===0?'rgba(34,197,94,.12)':'rgba(239,68,68,.12)');
+
+    const qbAcoes = [];
+    if (qbTotal > 10) qbAcoes.push({icon:'🚨',titulo:'VOLUME DE QUEBRAS CRÍTICO',texto:`${qbTotal} ocorrências com ${qbQtd} unidades quebradas. Inicie uma investigação imediata na área de maior incidência.`,porque:`Mais de 10 ocorrências no período indica problema sistêmico. Prejuízo financeiro direto acima do limite aceitável.`,prioridade:'CRÍTICO',cor:'var(--red)',bg:'rgba(239,68,68,.1)',brd:'rgba(239,68,68,.4)'});
+    else if (qbTotal > 3) qbAcoes.push({icon:'⚠',titulo:'NÍVEL DE QUEBRAS ELEVADO',texto:`${qbTotal} ocorrências registradas. Atenção especial para ${qbPiorArea?qbPiorArea[0]:'área afetada'}.`,porque:`Acima de 3 ocorrências exige revisão de processos de manuseio e movimentação.`,prioridade:'ATENÇÃO',cor:'var(--amber)',bg:'var(--amber-dim)',brd:'rgba(245,166,35,.3)'});
+    if (qbTrend==='up' && qbDates.length>3) qbAcoes.push({icon:'📈',titulo:'QUEBRAS EM TENDÊNCIA DE ALTA',texto:`Quantidade de unidades quebradas crescendo nos últimos dias. Intervenha imediatamente antes que agrave.`,porque:`Tendência de aumento detectada. Sem intervenção, o volume tende a continuar crescendo.`,prioridade:'URGENTE',cor:'var(--red)',bg:'rgba(239,68,68,.08)',brd:'rgba(239,68,68,.3)'});
+    if (qbPiorArea && qbPiorArea[1] > qbQtd*0.5) qbAcoes.push({icon:'📍',titulo:`CONCENTRAÇÃO NA ÁREA: ${qbPiorArea[0]}`,texto:`Mais de 50% das quebras concentradas em ${qbPiorArea[0]} (${qbPiorArea[1]} unidades). Foco de ação imediata.`,porque:`Concentração alta indica causa raiz específica desta área. Auditoria localizada é mais eficiente.`,prioridade:'INVESTIGAR',cor:'#f97316',bg:'rgba(249,115,22,.08)',brd:'rgba(249,115,22,.3)'});
+    if (!qbAcoes.length) qbAcoes.push({icon:'✅',titulo:'QUEBRAS SOB CONTROLE',texto:`${qbTotal===0?'Nenhuma':'Poucas'} quebras no período selecionado. Mantenha o monitoramento e boas práticas.`,porque:`Volume dentro do limite aceitável para a operação.`,prioridade:'OK',cor:'var(--green)',bg:'rgba(34,197,94,.06)',brd:'rgba(34,197,94,.2)'});
+    _ctrlAcoes('ctrl-qb-acoes', qbAcoes);
+
+    // ────────────────────────────────────────────────────
+    //  VALIDADES KPIs (dados locais)
+    // ────────────────────────────────────────────────────
+    const vlExp   = validades.filter(p=>_ctrlVldClassify(p.validade)==='expired').length;
+    const vlCrit  = validades.filter(p=>_ctrlVldClassify(p.validade)==='crit').length;
+    const vlWarn  = validades.filter(p=>_ctrlVldClassify(p.validade)==='warn').length;
+    const vlAlert = validades.filter(p=>_ctrlVldClassify(p.validade)==='alert').length;
+    const vlOk    = validades.filter(p=>_ctrlVldClassify(p.validade)==='ok').length;
+    const vlPick  = validades.filter(p=>p.localizacao==='picking').length;
+    const vlCentral = validades.filter(p=>p.localizacao==='central').length;
+    const vlRisco = vlExp + vlCrit;
+
+    _ctrlKpis('ctrl-vl-kpis', [
+      {val: validades.length, label:'Total Cadastrados',  cor:'#a855f7'},
+      {val: vlExp,             label:'VENCIDOS',           cor:'#fca5a5', sub: vlExp>0?'AÇÃO IMEDIATA':''},
+      {val: vlCrit,            label:'Crítico (≤30 dias)', cor:'var(--red)'},
+      {val: vlWarn,            label:'Atenção (≤45 dias)', cor:'#f97316'},
+      {val: vlAlert,           label:'Alerta (≤60 dias)',  cor:'#eab308'},
+      {val: vlOk,              label:'OK (>60 dias)',      cor:'var(--green)'},
+    ]);
+
+    _ctrlMakeChart('ctrl-chart-vl-status','bar',['Picking','Central'],
+      [
+        {label:'Vencidos', data:[validades.filter(p=>p.localizacao==='picking'&&_ctrlVldClassify(p.validade)==='expired').length, validades.filter(p=>p.localizacao==='central'&&_ctrlVldClassify(p.validade)==='expired').length], backgroundColor:'rgba(127,29,29,.8)',borderRadius:4},
+        {label:'Crítico',  data:[validades.filter(p=>p.localizacao==='picking'&&_ctrlVldClassify(p.validade)==='crit').length,    validades.filter(p=>p.localizacao==='central'&&_ctrlVldClassify(p.validade)==='crit').length],    backgroundColor:'rgba(239,68,68,.7)',borderRadius:4},
+        {label:'Atenção',  data:[validades.filter(p=>p.localizacao==='picking'&&_ctrlVldClassify(p.validade)==='warn').length,    validades.filter(p=>p.localizacao==='central'&&_ctrlVldClassify(p.validade)==='warn').length],    backgroundColor:'rgba(249,115,22,.7)',borderRadius:4},
+        {label:'OK',       data:[validades.filter(p=>p.localizacao==='picking'&&_ctrlVldClassify(p.validade)==='ok').length,      validades.filter(p=>p.localizacao==='central'&&_ctrlVldClassify(p.validade)==='ok').length],      backgroundColor:'rgba(34,197,94,.6)',borderRadius:4},
+      ]);
+
+    _ctrlMakeChart('ctrl-chart-vl-dist','doughnut',['Vencido','Crítico','Atenção','Alerta','OK'],
+      [{data:[vlExp,vlCrit,vlWarn,vlAlert,vlOk],backgroundColor:['#7f1d1d','#ef4444','#f97316','#eab308','#22c55e'],borderWidth:0}]);
+
+    const vlBadgeTxt = vlRisco === 0 ? '✅ SEM RISCO' : vlRisco + ' EM RISCO';
+    _ctrlBadge('ctrl-vl-badge', vlBadgeTxt, vlRisco===0?'var(--green)':'var(--red)', vlRisco===0?'rgba(34,197,94,.12)':'rgba(239,68,68,.12)');
+
+    const vlAcoes = [];
+    if (vlExp > 0) vlAcoes.push({icon:'🚨',titulo:`${vlExp} PRODUTO(S) VENCIDO(S) NO ESTOQUE`,texto:`Produtos com validade vencida devem ser retirados imediatamente do estoque e enviados para descarte conforme procedimento.`,porque:`Produto vencido em estoque é infração sanitária e risco de recall. Ação imediata é obrigatória.`,prioridade:'CRÍTICO',cor:'#fca5a5',bg:'rgba(127,29,29,.15)',brd:'rgba(127,29,29,.4)'});
+    if (vlCrit > 0) vlAcoes.push({icon:'⚠',titulo:`${vlCrit} PRODUTO(S) EM PRAZO CRÍTICO (≤30 DIAS)`,texto:`Priorize a venda destes produtos imediatamente. Aplique FEFO rigorosamente no picking para garantir rotatividade.`,porque:`Produtos com menos de 30 dias de validade têm janela muito estreita para comercialização. Cada dia perdido aumenta o risco de perda total.`,prioridade:'URGENTE',cor:'var(--red)',bg:'rgba(239,68,68,.08)',brd:'rgba(239,68,68,.3)'});
+    if (vlWarn > 2) vlAcoes.push({icon:'📋',titulo:`${vlWarn} PRODUTOS PRÓXIMOS DO VENCIMENTO (≤45 DIAS)`,texto:`Inclua estes produtos em campanhas de vendas e promoções. Garanta que estejam posicionados corretamente no picking.`,porque:`Com 45 dias ou menos, o produto precisa de atenção especial na gestão comercial para evitar perdas.`,prioridade:'PLANEJAR',cor:'#f97316',bg:'rgba(249,115,22,.08)',brd:'rgba(249,115,22,.3)'});
+    if (!vlAcoes.length && validades.length>0) vlAcoes.push({icon:'✅',titulo:'VALIDADES SOB CONTROLE',texto:`Nenhum produto vencido ou em zona crítica. Continue o controle semanal.`,porque:`Todos os produtos cadastrados estão dentro da margem segura de validade.`,prioridade:'OK',cor:'var(--green)',bg:'rgba(34,197,94,.06)',brd:'rgba(34,197,94,.2)'});
+    if (validades.length === 0) vlAcoes.push({icon:'📭',titulo:'NENHUM PRODUTO CADASTRADO EM VALIDADES',texto:`Cadastre os produtos na área de Validades para que o controle seja efetivo.`,porque:`Sem dados cadastrados, não é possível realizar a gestão de validades.`,prioridade:'ATENÇÃO',cor:'var(--amber)',bg:'var(--amber-dim)',brd:'rgba(245,166,35,.3)'});
+    _ctrlAcoes('ctrl-vl-acoes', vlAcoes);
+
+    // ────────────────────────────────────────────────────
+    //  SCORE GERAL + AÇÕES PRIORITÁRIAS
+    // ────────────────────────────────────────────────────
+    const scores = [
+      { area: 'Picking',   score: pkTxConc,  color: '#f5a623' },
+      { area: 'Despejo',   score: dpTxMeta,  color: '#ef4444' },
+      { area: 'Repack',    score: rpTxMeta,  color: '#f5a623' },
+      { area: 'Armazém',   score: azTxOk,    color: '#7cc6ff' },
+      { area: 'Quebras',   score: qbTotal===0 ? 100 : Math.max(0, 100 - qbTotal*5), color: '#fca5a5' },
+      { area: 'Validades', score: validades.length===0 ? 100 : Math.max(0, 100 - vlRisco*20), color: '#a855f7' },
+    ];
+    const scoreGeral = Math.round(scores.reduce((s,x)=>s+x.score,0)/scores.length);
+    const scoreColor = scoreGeral>=80?'var(--green)':scoreGeral>=60?'var(--amber)':'var(--red)';
+    const scoreLabel = scoreGeral>=80?'OPERAÇÃO SAUDÁVEL':scoreGeral>=60?'ATENÇÃO NECESSÁRIA':'SITUAÇÃO CRÍTICA';
+
+    const scoreBox = document.getElementById('ctrl-score-box');
+    if (scoreBox) scoreBox.innerHTML = `
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-wrap:wrap;gap:16px;align-items:center">
+        <div style="flex:0 0 auto;text-align:center;padding:0 16px">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:64px;font-weight:900;color:${scoreColor};line-height:1;text-shadow:0 0 30px ${scoreColor}40">${scoreGeral}</div>
+          <div style="font-size:10px;letter-spacing:2px;color:var(--text-dim);margin-top:4px;text-transform:uppercase">SCORE GERAL</div>
+          <div style="margin-top:8px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:${scoreColor};letter-spacing:1.5px">${scoreLabel}</div>
+        </div>
+        <div style="flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;min-width:280px">
+          ${scores.map(s=>{
+            const sc=s.score; const c=sc>=80?'var(--green)':sc>=60?'var(--amber)':'var(--red)';
+            return `<div style="background:var(--surface2);border-radius:10px;padding:12px;text-align:center">
+              <div style="font-size:22px;font-weight:900;font-family:'Barlow Condensed',sans-serif;color:${c}">${sc}%</div>
+              <div style="font-size:9px;letter-spacing:1px;color:var(--text-dim);text-transform:uppercase;margin-top:2px">${s.area}</div>
+              <div style="height:4px;border-radius:2px;background:rgba(255,255,255,.08);margin-top:6px">
+                <div style="height:100%;border-radius:2px;width:${sc}%;background:${c};transition:width .6s ease"></div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+
+    // Ações prioritárias consolidadas
+    const todasAcoes = [...pkAcoes, ...dpAcoes, ...rpAcoes, ...azAcoes, ...qbAcoes, ...vlAcoes]
+      .filter(a=>a.prioridade!=='OK')
+      .sort((a,b)=>{
+        const ord = {CRÍTICO:0,URGENTE:1,ATENÇÃO:2,INVESTIGAR:3,PLANEJAR:4,MONITORAR:5,MELHORIA:6};
+        return (ord[a.prioridade]??9) - (ord[b.prioridade]??9);
+      }).slice(0,5);
+
+    const acoesBox = document.getElementById('ctrl-acoes-box');
+    if (acoesBox) {
+      if (todasAcoes.length) {
+        acoesBox.innerHTML = `
+          <div style="background:var(--surface);border:1px solid rgba(6,182,212,.3);border-radius:16px;padding:20px;margin-bottom:0">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:15px;letter-spacing:2px;color:var(--cyan);margin-bottom:14px">
+              🎯 AÇÕES PRIORITÁRIAS — TOP ${todasAcoes.length} ALERTAS DETECTADOS
+            </div>
+            ${todasAcoes.map(a=>`
+              <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:10px;margin-bottom:6px;background:${a.bg};border:1px solid ${a.brd}">
+                <span style="font-size:18px;flex-shrink:0">${a.icon}</span>
+                <div style="flex:1">
+                  <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;color:${a.cor};margin-bottom:2px">${a.titulo}</div>
+                  <div style="font-size:12px;color:#dde4ee;line-height:1.4">${a.texto}</div>
+                </div>
+                <span style="font-size:11px;padding:3px 8px;border-radius:20px;background:${a.brd};color:${a.cor};font-weight:700;font-family:'Barlow Condensed',sans-serif;white-space:nowrap;flex-shrink:0">${a.prioridade}</span>
+              </div>`).join('')}
+          </div>`;
+      } else {
+        acoesBox.innerHTML = `<div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:16px;padding:20px;text-align:center;margin-bottom:0">
+          <div style="font-size:36px;margin-bottom:8px">🎯</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:16px;letter-spacing:2px;color:var(--green)">OPERAÇÃO EM ORDEM</div>
+          <div style="font-size:12px;color:var(--text-dim);margin-top:6px">Nenhuma ação crítica detectada para o período selecionado.</div>
+        </div>`;
+      }
+    }
+
+    if (upd) upd.textContent = 'Atualizado às ' + new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
+  } catch(e) {
+    const upd2 = document.getElementById('ctrl-last-update');
+    if (upd2) upd2.textContent = 'Erro: ' + e.message;
+    console.error('Controle erro:', e);
+  }
+}
 
 // ══════════════════════════════════════════════════════
 //  INIT
