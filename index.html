@@ -1001,7 +1001,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
         </div>
         <div id="quebras-ptab-hist" class="ptab-content" data-ptab-pane="quebras" style="overflow-x:auto">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
-            <span style="font-size:12px;color:var(--text-dim)">⚠ Dados ficam na memória — exporte antes de fechar o navegador</span>
+            <span style="font-size:12px;color:var(--green)">💾 Dados salvos localmente — disponíveis mesmo offline</span>
           </div>
           <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:700px">
             <thead style="background:var(--surface2)">
@@ -1710,6 +1710,14 @@ const DESPEJO_EMBALAGENS = [
   if (inpFim) inpFim.addEventListener('change', calcDespejo);
   if (inpQtd) inpQtd.addEventListener('input', calcDespejo);
 
+  const DEP_LS_KEY = 'pk2_despejo_rows';
+  function depLsSave() { try { localStorage.setItem(DEP_LS_KEY, JSON.stringify(despejoRows)); } catch(e) {} }
+  function depLsLoad() {
+    try {
+      const d = localStorage.getItem(DEP_LS_KEY);
+      if (d) { despejoRows = JSON.parse(d); renderDespejo(); const c=document.getElementById('despejo-hist-cnt'); if(c) c.textContent=despejoRows.length; }
+    } catch(e) {}
+  }
   let despejoRows = [];
   function renderDespejo() {
     if (!tbody) return;
@@ -1731,32 +1739,49 @@ const DESPEJO_EMBALAGENS = [
       tempo: inpDur.value, meta: emb.meta,
       resultado: statusEl.textContent
     };
-    const docId = await fbSave('despejo', row);
-    if (docId) { row._docId = docId; despejoRows.push(row); renderDespejo(); toast('Registro despejo salvo!');
-      const cnt = document.getElementById('despejo-hist-cnt'); if(cnt) cnt.textContent = despejoRows.length;
-    }
+    despejoRows.push(row);
+    depLsSave();
+    renderDespejo();
+    toast('Registro despejo salvo!');
+    const cnt = document.getElementById('despejo-hist-cnt'); if(cnt) cnt.textContent = despejoRows.length;
     inpIni.value=''; inpFim.value=''; inpDur.value='00:00:00'; statusEl.textContent='—'; btnReg.disabled=true;
+    const docId = await fbSave('despejo', row);
+    if (docId) { row._docId = docId; depLsSave(); }
   });
 
   window.despejoExcluir = async function(i) {
     if (!confirm('Remover este registro?')) return;
     const r = despejoRows[i];
     if (r._docId) await fbDelete('despejo', r._docId);
-    despejoRows.splice(i, 1); renderDespejo(); const dc=document.getElementById('despejo-hist-cnt'); if(dc) dc.textContent=despejoRows.length;
+    despejoRows.splice(i, 1); depLsSave(); renderDespejo(); const dc=document.getElementById('despejo-hist-cnt'); if(dc) dc.textContent=despejoRows.length;
   };
 
   if (btnLimpar) btnLimpar.addEventListener('click', async () => {
     if (!confirm('Limpar TODOS os registros de despejo?')) return;
     for (const r of despejoRows) { if (r._docId) await fbDelete('despejo', r._docId); }
-    despejoRows = []; renderDespejo(); const dc2=document.getElementById('despejo-hist-cnt'); if(dc2) dc2.textContent=0;
+    despejoRows = []; depLsSave(); renderDespejo(); const dc2=document.getElementById('despejo-hist-cnt'); if(dc2) dc2.textContent=0;
   });
 
-  // Load from Firebase on init
+  // Load localStorage immediately (instant — works offline)
+  depLsLoad();
+
+  // Sync with Firebase: merge by _criadoEm to fill in missing _docIds
   setTimeout(async () => {
     if (!getDb()) return;
     try {
       const snap = await getDb().collection('despejo').orderBy('_criadoEm','asc').get();
-      despejoRows = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
+      if (!snap.docs.length) return;
+      const fbRows = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
+      // Merge: any local row without _docId gets matched to Firebase by _criadoEm
+      fbRows.forEach(fb => {
+        const local = despejoRows.find(r => !r._docId && r._criadoEm && r._criadoEm === fb._criadoEm);
+        if (local) local._docId = fb._docId;
+      });
+      // Add any Firebase rows not already in local (cross-device sync)
+      fbRows.forEach(fb => {
+        if (!despejoRows.find(r => r._docId === fb._docId)) despejoRows.push(fb);
+      });
+      depLsSave();
       renderDespejo();
       const cnt = document.getElementById('despejo-hist-cnt'); if(cnt) cnt.textContent = despejoRows.length;
     } catch(e) {}
@@ -1823,6 +1848,14 @@ const REPACK_EMBALAGENS = [
   if (inpFim) inpFim.addEventListener('change', calcRepack);
   if (inpQtd) inpQtd.addEventListener('input', calcRepack);
 
+  const REP_LS_KEY = 'pk2_repack_rows';
+  function repLsSave() { try { localStorage.setItem(REP_LS_KEY, JSON.stringify(repackRows)); } catch(e) {} }
+  function repLsLoad() {
+    try {
+      const d = localStorage.getItem(REP_LS_KEY);
+      if (d) { repackRows = JSON.parse(d); renderRepack(); const c=document.getElementById('repack-hist-cnt'); if(c) c.textContent=repackRows.length; }
+    } catch(e) {}
+  }
   let repackRows = [];
   function renderRepack() {
     if (!tbody) return;
@@ -1844,31 +1877,49 @@ const REPACK_EMBALAGENS = [
       duracao: inpDur.value, meta: emb.meta,
       resultado: statusEl.textContent
     };
-    const docId = await fbSave('repack', row);
-    if (docId) { row._docId = docId; repackRows.push(row); renderRepack(); toast('Registro repack salvo!');
-      const cnt = document.getElementById('repack-hist-cnt'); if(cnt) cnt.textContent = repackRows.length;
-    }
+    repackRows.push(row);
+    repLsSave();
+    renderRepack();
+    toast('Registro repack salvo!');
+    const cnt = document.getElementById('repack-hist-cnt'); if(cnt) cnt.textContent = repackRows.length;
     inpIni.value=''; inpFim.value=''; inpDur.value='00:00:00'; statusEl.textContent='—'; btnReg.disabled=true;
+    const docId = await fbSave('repack', row);
+    if (docId) { row._docId = docId; repLsSave(); }
   });
 
   window.repackExcluir = async function(i) {
     if (!confirm('Remover este registro?')) return;
     const r = repackRows[i];
     if (r._docId) await fbDelete('repack', r._docId);
-    repackRows.splice(i, 1); renderRepack(); const rc=document.getElementById('repack-hist-cnt'); if(rc) rc.textContent=repackRows.length;
+    repackRows.splice(i, 1); repLsSave(); renderRepack(); const rc=document.getElementById('repack-hist-cnt'); if(rc) rc.textContent=repackRows.length;
   };
 
   if (btnLimpar) btnLimpar.addEventListener('click', async () => {
     if (!confirm('Limpar TODOS os registros de repack?')) return;
     for (const r of repackRows) { if (r._docId) await fbDelete('repack', r._docId); }
-    repackRows = []; renderRepack(); const rc2=document.getElementById('repack-hist-cnt'); if(rc2) rc2.textContent=0;
+    repackRows = []; repLsSave(); renderRepack(); const rc2=document.getElementById('repack-hist-cnt'); if(rc2) rc2.textContent=0;
   });
 
+  // Load localStorage immediately (instant — works offline)
+  repLsLoad();
+
+  // Sync with Firebase: merge by _criadoEm to fill in missing _docIds
   setTimeout(async () => {
     if (!getDb()) return;
     try {
       const snap = await getDb().collection('repack').orderBy('_criadoEm','asc').get();
-      repackRows = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
+      if (!snap.docs.length) return;
+      const fbRows = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
+      // Merge: any local row without _docId gets matched to Firebase by _criadoEm
+      fbRows.forEach(fb => {
+        const local = repackRows.find(r => !r._docId && r._criadoEm && r._criadoEm === fb._criadoEm);
+        if (local) local._docId = fb._docId;
+      });
+      // Add any Firebase rows not already in local (cross-device sync)
+      fbRows.forEach(fb => {
+        if (!repackRows.find(r => r._docId === fb._docId)) repackRows.push(fb);
+      });
+      repLsSave();
       renderRepack();
       const cnt = document.getElementById('repack-hist-cnt'); if(cnt) cnt.textContent = repackRows.length;
     } catch(e) {}
@@ -1929,6 +1980,14 @@ const REPACK_EMBALAGENS = [
   if (btnFim) btnFim.addEventListener('click', () => { inpFim.value = nowHHMM(); updateStatusChip(); });
   if (placa) placa.addEventListener('change', () => { if (placaOutro) placaOutro.style.display = placa.value === 'Outra...' ? 'block' : 'none'; });
 
+  const ARM_LS_KEY = 'pk2_armazem_rows';
+  function armLsSave() { try { localStorage.setItem(ARM_LS_KEY, JSON.stringify(armazemRows)); } catch(e) {} }
+  function armLsLoad() {
+    try {
+      const d = localStorage.getItem(ARM_LS_KEY);
+      if (d) { armazemRows = JSON.parse(d); renderArmazem(); const c=document.getElementById('armazem-hist-cnt'); if(c) c.textContent=armazemRows.length; }
+    } catch(e) {}
+  }
   let armazemRows = [];
   function renderArmazem() {
     if (!tbody) return;
@@ -1966,10 +2025,13 @@ const REPACK_EMBALAGENS = [
       return;
     }
     const row = { operacao:op, data:data.value, dataISO:data.value, inicio:inpIni.value, fim:inpFim.value, status: isOk ? '✅ DENTRO DA JANELA' : '⚠ FORA DA JANELA', empilhador:emp, turno, placa:pl, tipo, palhete:Number(palhete), obs };
+    armazemRows.push(row);
+    armLsSave();
+    renderArmazem();
+    toast('Registro armazém salvo!');
+    const cnt = document.getElementById('armazem-hist-cnt'); if(cnt) cnt.textContent = armazemRows.length;
     const docId = await fbSave('armazem', row);
-    if (docId) { row._docId = docId; armazemRows.push(row); renderArmazem(); toast('Registro armazém salvo!');
-      const cnt = document.getElementById('armazem-hist-cnt'); if(cnt) cnt.textContent = armazemRows.length;
-    }
+    if (docId) { row._docId = docId; armLsSave(); }
     ['af-operacao','af-inicio','af-fim','af-palhete','af-obs'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
     if (statusChip) { statusChip.textContent='—'; statusChip.style.color='var(--text-dim)'; }
     resetObsStyle();
@@ -1984,7 +2046,7 @@ const REPACK_EMBALAGENS = [
   if (btnLimpar) btnLimpar.addEventListener('click', async () => {
     if (!confirm('Apagar TODOS os registros de armazém?')) return;
     for (const r of armazemRows) { if (r._docId) await fbDelete('armazem', r._docId); }
-    armazemRows = []; renderArmazem(); const ac2=document.getElementById('armazem-hist-cnt'); if(ac2) ac2.textContent=0;
+    armazemRows = []; armLsSave(); renderArmazem(); const ac2=document.getElementById('armazem-hist-cnt'); if(ac2) ac2.textContent=0;
   });
 
   function updateNowInfo() {
@@ -1992,11 +2054,26 @@ const REPACK_EMBALAGENS = [
   }
   updateNowInfo(); setInterval(updateNowInfo, 30000);
 
+  // Load localStorage immediately (instant — works offline)
+  armLsLoad();
+
+  // Sync with Firebase: merge by _criadoEm to fill in missing _docIds
   setTimeout(async () => {
     if (!getDb()) return;
     try {
       const snap = await getDb().collection('armazem').orderBy('_criadoEm','asc').get();
-      armazemRows = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
+      if (!snap.docs.length) return;
+      const fbRows = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
+      // Merge: any local row without _docId gets matched to Firebase by _criadoEm
+      fbRows.forEach(fb => {
+        const local = armazemRows.find(r => !r._docId && r._criadoEm && r._criadoEm === fb._criadoEm);
+        if (local) local._docId = fb._docId;
+      });
+      // Add any Firebase rows not already in local (cross-device sync)
+      fbRows.forEach(fb => {
+        if (!armazemRows.find(r => r._docId === fb._docId)) armazemRows.push(fb);
+      });
+      armLsSave();
       renderArmazem();
       const cnt = document.getElementById('armazem-hist-cnt'); if(cnt) cnt.textContent = armazemRows.length;
     } catch(e) {}
@@ -2007,10 +2084,83 @@ const REPACK_EMBALAGENS = [
 //  CONTROLE DE QUEBRAS
 // ══════════════════════════════════════════════════════
 const QB_TIPOS = {
-  'ARMAZEM': ['Avaria manuseio','Produto vencido','Palete danificado','Queda no armazém','Outro'],
-  'ENTREGA':  ['Avaria entrega','Produto recusado','Acidente rota','Extravio','Outro'],
-  'MERCADO':  ['Devolução PDV','Produto danificado PDV','Vencido PDV','Outro'],
-  'PUXADA':   ['Avaria puxada','Ruptura embalagem','Queda puxada','Outro'],
+  'ARMAZEM': [
+    { cod: 521, motivo: 'ACIDENTE DE TRABALHO' },
+    { cod: 530, motivo: 'CLIENTE' },
+    { cod: 536, motivo: 'CONSUMO IMPROPRIO' },
+    { cod: 538, motivo: 'DIFERENÇA DE ESTOQUE' },
+    { cod: 540, motivo: 'DIFERENÇA INVENTÁRIO' },
+    { cod: 522, motivo: 'ESTOURADA' },
+    { cod: 523, motivo: 'ESTUFADO' },
+    { cod: 541, motivo: 'EVENTOS' },
+    { cod: 524, motivo: 'FALTA NO PALETE' },
+    { cod: 528, motivo: 'FURTO' },
+    { cod: 527, motivo: 'IMPUREZA' },
+    { cod: 520, motivo: 'INVERSÃO' },
+    { cod: 535, motivo: 'MAL CHAPEADA' },
+    { cod: 532, motivo: 'MAL CHEIO' },
+    { cod: 533, motivo: 'PRODUTO VENCIDO' },
+    { cod: 539, motivo: 'QUEBRA COM MOVIMENTAÇÃO' },
+    { cod: 537, motivo: 'QUEBRA PICKING' },
+    { cod: 525, motivo: 'QUEBRADA' },
+    { cod: 531, motivo: 'SEM GAS' },
+    { cod: 534, motivo: 'SEM TAMPA' },
+    { cod: 529, motivo: 'TROCA - ARMAZÉM' },
+    { cod: 526, motivo: 'VAZAMENTO' },
+  ],
+  'ENTREGA': [
+    { cod: 543, motivo: 'ACIDENTE DE TRABALHO' },
+    { cod: 556, motivo: 'CARGA TOMBADA' },
+    { cod: 551, motivo: 'CLIENTE' },
+    { cod: 542, motivo: 'CONSUMO IMPROPRIO' },
+    { cod: 544, motivo: 'ESTOURADA' },
+    { cod: 545, motivo: 'ESTUFADO' },
+    { cod: 558, motivo: 'EVENTOS' },
+    { cod: 546, motivo: 'FALTA NO PALETE' },
+    { cod: 550, motivo: 'FURTO' },
+    { cod: 549, motivo: 'IMPUREZA' },
+    { cod: 560, motivo: 'INVERSÃO' },
+    { cod: 559, motivo: 'MAL CHAPEADA' },
+    { cod: 553, motivo: 'MAL CHEIO' },
+    { cod: 557, motivo: 'QUEBRA COM MOVIMENTAÇÃO' },
+    { cod: 547, motivo: 'QUEBRADA' },
+    { cod: 552, motivo: 'SEM GAS' },
+    { cod: 555, motivo: 'SEM TAMPA' },
+    { cod: 548, motivo: 'VAZAMENTO' },
+    { cod: 554, motivo: 'VENCIDO' },
+  ],
+  'MERCADO': [
+    { cod: 561, motivo: 'ACIDENTE DE TRABALHO' },
+    { cod: 570, motivo: 'CLIENTE' },
+    { cod: 562, motivo: 'ESTOURADA' },
+    { cod: 563, motivo: 'ESTUFADO' },
+    { cod: 564, motivo: 'FALTA NO PALETE' },
+    { cod: 568, motivo: 'FURTO' },
+    { cod: 567, motivo: 'IMPUREZA' },
+    { cod: 572, motivo: 'MAL CHEIO' },
+    { cod: 565, motivo: 'QUEBRADA' },
+    { cod: 571, motivo: 'SEM GAS' },
+    { cod: 574, motivo: 'SEM TAMPA' },
+    { cod: 569, motivo: 'TROCA' },
+    { cod: 566, motivo: 'VAZAMENTO' },
+    { cod: 573, motivo: 'VENCIDO' },
+  ],
+  'PUXADA': [
+    { cod: 587, motivo: 'CARGA TOMBADA' },
+    { cod: 582, motivo: 'CLIENTE' },
+    { cod: 575, motivo: 'ESTUFADO' },
+    { cod: 576, motivo: 'FALTA NO PALETE' },
+    { cod: 580, motivo: 'FURTO' },
+    { cod: 579, motivo: 'IMPUREZA' },
+    { cod: 588, motivo: 'MAL CHAPEADA' },
+    { cod: 584, motivo: 'MAL CHEIO' },
+    { cod: 589, motivo: 'QUEBRA COM MOVIMENTAÇÃO' },
+    { cod: 577, motivo: 'QUEBRADA' },
+    { cod: 583, motivo: 'SEM GAS' },
+    { cod: 581, motivo: 'TROCA' },
+    { cod: 578, motivo: 'VAZAMENTO' },
+    { cod: 585, motivo: 'VENCIDO' },
+  ],
 };
 
 (function initQuebras() {
@@ -2022,6 +2172,14 @@ const QB_TIPOS = {
   const tipoEl    = document.getElementById('qb-tipoQuebra');
   const tbody     = document.getElementById('qb-tbody');
   let qbSelecionado = null;
+  const QB_LS_KEY = 'pk2_quebras_rows';
+  function qbLsSave() { try { localStorage.setItem(QB_LS_KEY, JSON.stringify(qbRows)); } catch(e) {} }
+  function qbLsLoad() {
+    try {
+      const d = localStorage.getItem(QB_LS_KEY);
+      if (d) { qbRows = JSON.parse(d); renderQb(); const cnt=document.getElementById('quebras-hist-cnt'); if(cnt) cnt.textContent=qbRows.length; }
+    } catch(e) {}
+  }
   let qbRows = [];
 
   if (prodInput) {
@@ -2048,12 +2206,22 @@ const QB_TIPOS = {
     if (lista)  lista.style.display='none';
   };
 
-  if (areaEl) areaEl.addEventListener('change', () => {
+  function qbPopularTipos(areaVal) {
     if (!tipoEl) return;
-    tipoEl.innerHTML = '';
-    const tipos = QB_TIPOS[areaEl.value] || [];
-    tipos.forEach(t => { const o=document.createElement('option'); o.value=t; o.textContent=t; tipoEl.appendChild(o); });
-  });
+    const tipos = QB_TIPOS[areaVal] || [];
+    if (!tipos.length) {
+      tipoEl.innerHTML = '<option value="">Selecione a área primeiro</option>';
+      return;
+    }
+    tipoEl.innerHTML = '<option value="">Selecione o tipo</option>';
+    tipos.forEach(t => {
+      const o = document.createElement('option');
+      o.value = t.cod;
+      o.textContent = t.cod + ' — ' + t.motivo;
+      tipoEl.appendChild(o);
+    });
+  }
+  if (areaEl) areaEl.addEventListener('change', () => { qbPopularTipos(areaEl.value); });
 
   function renderQb() {
     if (!tbody) return;
@@ -2070,41 +2238,63 @@ const QB_TIPOS = {
     const qtd  = document.getElementById('qb-quantidade').value;
     const area = areaEl ? areaEl.value : '';
     const turno = document.getElementById('qb-turno').value;
-    const tipo = tipoEl ? tipoEl.value : '';
-    if (!qtd || !area || !turno || !tipo) { alert('Preencha quantidade, área, turno e tipo de quebra'); return; }
-    const codQuebra = area.slice(0,2).toUpperCase() + '-' + Date.now().toString().slice(-5);
+    const codQuebraVal = tipoEl ? tipoEl.value : '';
+    if (!qtd || !area || !turno || !codQuebraVal) { alert('Preencha quantidade, área, turno e tipo de quebra'); return; }
+    // Resolve motivo label from QB_TIPOS
+    const tiposArea = QB_TIPOS[area] || [];
+    const tipoObj = tiposArea.find(t => String(t.cod) === String(codQuebraVal));
+    const motivoLabel = tipoObj ? tipoObj.motivo : codQuebraVal;
     const row = {
       dataISO: todayISO(), data: todayBR(),
       codProduto: qbSelecionado ? String(qbSelecionado.codigo) : '',
       descricao: descEl ? descEl.value : '',
-      quantidade: Number(qtd), area, turno, codQuebra, motivo: tipo
+      quantidade: Number(qtd), area, turno,
+      codQuebra: String(codQuebraVal), motivo: motivoLabel
     };
+    qbRows.push(row);
+    qbLsSave();
+    renderQb();
+    toast('Quebra registrada!');
+    const cnt = document.getElementById('quebras-hist-cnt'); if(cnt) cnt.textContent = qbRows.length;
     const docId = await fbSave('quebras', row);
-    if (docId) { row._docId = docId; qbRows.push(row); renderQb(); toast('Quebra registrada!');
-      const cnt = document.getElementById('quebras-hist-cnt'); if(cnt) cnt.textContent = qbRows.length;
-    }
+    if (docId) { row._docId = docId; qbLsSave(); }
     ['qb-produtoInput','qb-codigo','qb-descricao','qb-quantidade'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
     qbSelecionado = null;
+    if (tipoEl) tipoEl.innerHTML = '<option value="">Selecione a área primeiro</option>';
+    if (areaEl) areaEl.value = '';
   };
 
   window.qbExcluir = async function(i) {
     if (!confirm('Remover este registro?')) return;
     const r = qbRows[i];
     if (r._docId) await fbDelete('quebras', r._docId);
-    qbRows.splice(i, 1); renderQb(); const qc=document.getElementById('quebras-hist-cnt'); if(qc) qc.textContent=qbRows.length;
+    qbRows.splice(i, 1); qbLsSave(); renderQb(); const qc=document.getElementById('quebras-hist-cnt'); if(qc) qc.textContent=qbRows.length;
   };
 
   window.qbLimparTabela = async function() {
     if (!confirm('Limpar TODOS os registros de quebras?')) return;
     for (const r of qbRows) { if (r._docId) await fbDelete('quebras', r._docId); }
-    qbRows = []; renderQb(); const qc2=document.getElementById('quebras-hist-cnt'); if(qc2) qc2.textContent=0;
+    qbRows = []; qbLsSave(); renderQb(); const qc2=document.getElementById('quebras-hist-cnt'); if(qc2) qc2.textContent=0;
   };
 
+  // Load localStorage immediately
+  qbLsLoad();
+
+  // Sync with Firebase: merge by _criadoEm to fill in missing _docIds
   setTimeout(async () => {
     if (!getDb()) return;
     try {
       const snap = await getDb().collection('quebras').orderBy('_criadoEm','asc').get();
-      qbRows = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
+      if (!snap.docs.length) return;
+      const fbRows = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
+      fbRows.forEach(fb => {
+        const local = qbRows.find(r => !r._docId && r._criadoEm && r._criadoEm === fb._criadoEm);
+        if (local) local._docId = fb._docId;
+      });
+      fbRows.forEach(fb => {
+        if (!qbRows.find(r => r._docId === fb._docId)) qbRows.push(fb);
+      });
+      qbLsSave();
       renderQb();
       const cnt = document.getElementById('quebras-hist-cnt'); if(cnt) cnt.textContent = qbRows.length;
     } catch(e) {}
