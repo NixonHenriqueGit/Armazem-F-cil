@@ -135,6 +135,8 @@ body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif}
 .nav-item.nav-repack.active::before{background:var(--amber)}
 .nav-item.nav-validades.active{background:rgba(168,85,247,.08);color:#a855f7;border-color:rgba(168,85,247,.15)}
 .nav-item.nav-validades.active::before{background:#a855f7}
+.nav-item.nav-refugo.active{background:rgba(234,179,8,.08);color:#eab308;border-color:rgba(234,179,8,.15)}
+.nav-item.nav-refugo.active::before{background:#eab308}
 .nav-item.nav-controle.active{background:rgba(6,182,212,.08);color:var(--cyan);border-color:rgba(6,182,212,.15)}
 .nav-item.nav-controle.active::before{background:var(--cyan)}
 .vld-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px}
@@ -758,6 +760,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
         <span class="nav-label">VALIDADES</span>
       </button>
 
+      <button class="nav-item nav-refugo" data-pane="refugo" onclick="navGoPane('refugo');refugoCarregar()">
+        <span class="nav-icon">🍾</span>
+        <span class="nav-label">BLITZ REFUGO</span>
+      </button>
+
       <button class="nav-item nav-emp" data-pane="emp" onclick="requestEmpTab()">
         <span class="nav-icon">🚜</span>
         <span class="nav-label">EMPILHADOR</span>
@@ -1132,6 +1139,122 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
     </div>
 
     <!-- ══════════════════════════════════════════════════
+         PANE — BLITZ DE REFUGO
+         ══════════════════════════════════════════════════ -->
+    <div class="pane" id="pane-refugo">
+      <div class="pane-topbar">
+        <div class="mobile-menu-gap"></div>
+        <span class="pane-topbar-title">🍾 BLITZ DE REFUGO — AFERIÇÃO DE GARRAFAS</span>
+        <div class="pane-topbar-actions">
+          <button class="btn btn-sm" style="background:rgba(234,179,8,.12);color:#eab308;border:1px solid rgba(234,179,8,.3)" onclick="refugoCarregar()">🔄 Atualizar</button>
+        </div>
+      </div>
+      <div class="wrap">
+        <div class="ptabs">
+          <button class="ptab active" data-ptab-group="refugo" data-ptab="form" onclick="ptabSwitch('refugo','form')">📋 AFERIR</button>
+          <button class="ptab" data-ptab-group="refugo" data-ptab="hist" onclick="ptabSwitch('refugo','hist');refugoCarregar()">📊 REGISTROS <span class="ptab-badge" id="refugo-hist-cnt">0</span></button>
+        </div>
+
+        <!-- ── ABA FORMULÁRIO ── -->
+        <div id="refugo-ptab-form" class="ptab-content active">
+
+          <!-- Dados Gerais -->
+          <div class="card">
+            <div class="card-title">📋 Dados da Blitz</div>
+            <div class="form-grid">
+              <div class="fg-4">
+                <div class="field-label">Data *</div>
+                <input type="date" id="rfg-data">
+              </div>
+              <div class="fg-8">
+                <div class="field-label">Ajudante *</div>
+                <input type="text" id="rfg-ajudante" placeholder="Nome do ajudante">
+              </div>
+              <div class="fg-4">
+                <div class="field-label">Placa do Veículo *</div>
+                <select id="rfg-placa" onchange="rfgOnPlacaChange()">
+                  <option value="" disabled selected>Selecione</option>
+                  <option>QSK7D92</option><option>OXO0532</option><option>OXO0542</option>
+                  <option>OXO0552</option><option>OXO0782</option><option>SLB4A26</option>
+                  <option>NPR2601</option><option>SLB4A56</option><option>TOZ8B20</option>
+                  <option>TOZ8B50</option><option>RLR8G79</option><option>RLU4H49</option>
+                  <option>TOU7F79</option><option>RLW0C17</option><option>SLB3J76</option>
+                  <option>RLU3F59</option><option>RLT5J54</option><option>RLT5J44</option>
+                  <option value="outra">Outra...</option>
+                </select>
+                <input type="text" id="rfg-placa-outro" placeholder="Digite a placa" maxlength="8"
+                  style="display:none;margin-top:6px">
+              </div>
+              <div class="fg-4">
+                <div class="field-label">Mapa</div>
+                <input type="text" id="rfg-mapa" placeholder="Nº mapa">
+              </div>
+              <div class="fg-4">
+                <div class="field-label">Rota</div>
+                <input type="text" id="rfg-rota" placeholder="Ex: 01">
+              </div>
+            </div>
+          </div>
+
+          <!-- Cards de embalagem (gerados por JS) -->
+          <div id="rfg-cards-emb"></div>
+
+          <!-- Observações -->
+          <div class="card">
+            <div class="card-title">📝 Observações</div>
+            <textarea id="rfg-obs" placeholder="Alguma observação sobre a blitz..."
+              style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 12px;font-size:13px;font-family:'Barlow',sans-serif;resize:vertical;min-height:64px"></textarea>
+          </div>
+
+          <!-- Resumo -->
+          <div class="card" style="border-color:rgba(234,179,8,.3);background:rgba(234,179,8,.04)">
+            <div class="card-title" style="color:#eab308">📊 Resumo da Aferição</div>
+            <table style="width:100%;border-collapse:collapse;font-size:13px">
+              <thead>
+                <tr style="background:var(--surface2)">
+                  <th style="padding:8px;text-align:left;border-bottom:1px solid var(--border)">Embalagem</th>
+                  <th style="padding:8px;text-align:center;border-bottom:1px solid var(--border)">Caixas</th>
+                  <th style="padding:8px;text-align:center;border-bottom:1px solid var(--border)">Unidades</th>
+                  <th style="padding:8px;text-align:center;border-bottom:1px solid var(--border)">Refugo</th>
+                  <th style="padding:8px;text-align:right;border-bottom:1px solid var(--border)">%</th>
+                </tr>
+              </thead>
+              <tbody id="rfg-resumo-tbody"></tbody>
+              <tfoot>
+                <tr style="background:var(--surface2);font-weight:700">
+                  <td style="padding:8px">TOTAL</td>
+                  <td style="padding:8px;text-align:center" id="rfg-res-cx-total">—</td>
+                  <td style="padding:8px;text-align:center" id="rfg-res-un-total">—</td>
+                  <td style="padding:8px;text-align:center" id="rfg-res-def-total">—</td>
+                  <td style="padding:8px;text-align:right;color:#eab308;font-size:16px" id="rfg-res-pct-total">—</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-bottom:16px">
+            <button class="btn btn-ghost" onclick="rfgLimpar()" style="flex:1">🗑 Limpar</button>
+            <button class="btn btn-amber" onclick="rfgSalvar()" style="flex:2">💾 SALVAR REGISTRO</button>
+          </div>
+        </div>
+
+        <!-- ── ABA HISTÓRICO ── -->
+        <div id="refugo-ptab-hist" class="ptab-content" data-ptab-pane="refugo">
+          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+            <input type="text" id="rfg-busca" placeholder="🔍 Placa, data, mapa..."
+              oninput="rfgRenderRegs()"
+              style="flex:1;min-width:140px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:13px;font-family:'Barlow',sans-serif">
+            <select id="rfg-filtro-placa" onchange="rfgRenderRegs()"
+              style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:13px;font-family:'Barlow',sans-serif">
+              <option value="">Todas as placas</option>
+            </select>
+          </div>
+          <div id="rfg-reg-list" style="display:flex;flex-direction:column;gap:10px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════
          PANE — EMPILHADOR
          ══════════════════════════════════════════════════ -->
     <div class="pane" id="pane-emp">
@@ -1323,6 +1446,14 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
             <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
               <button class="btn btn-red" onclick="exportarQuebrasExcel()">⬇ BAIXAR RELATÓRIO QUEBRAS (.xlsx)</button>
               <span id="quebras-export-status" style="font-size:12px;color:var(--text-dim)"></span>
+            </div>
+          </div>
+          <div class="card" style="margin-top:16px">
+            <div class="card-title" style="color:#eab308">🍾 Blitz de Refugo — Exportar Excel</div>
+            <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6">Exporta os registros de aferição de refugo por veículo e embalagem.</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <button class="btn" style="background:#eab308;color:#0b1220;font-weight:700" onclick="exportarRefugoExcel()">⬇ BAIXAR RELATÓRIO REFUGO (.xlsx)</button>
+              <span id="refugo-export-status" style="font-size:12px;color:var(--text-dim)"></span>
             </div>
           </div>
           <div style="margin-top:16px;display:flex;justify-content:flex-end">
@@ -3486,6 +3617,413 @@ async function controleCarregar() {
     console.error('Controle erro:', e);
   }
 }
+
+// ══════════════════════════════════════════════════════
+//  BLITZ DE REFUGO
+// ══════════════════════════════════════════════════════
+(function() {
+
+const RFG_COL = 'blitz_refugo';
+
+const RFG_DEFEITOS = [
+  {k:'quebrada',     l:'Quebrada'},
+  {k:'segunda',      l:'Segunda'},
+  {k:'bicada_int',   l:'Bicada Interna'},
+  {k:'bicada_ext',   l:'Bicada Externa'},
+  {k:'cor_fora',     l:'Cor Fora do Padrão'},
+  {k:'faltante',     l:'Faltante'},
+  {k:'logomarca',    l:'Logomarca Estranha'},
+  {k:'rotulo_plast', l:'Rótulo Plást.'},
+  {k:'sujidade_int', l:'Sujidade Interna'},
+  {k:'sujidade_ext', l:'Sujidade Externa'},
+  {k:'tampada',      l:'Tampada'},
+  {k:'trincada',     l:'Trincada'},
+];
+
+const RFG_TIPOS = [
+  {id:'1l',  label:'1 Litro',  badge:'1000 ml', fator:12},
+  {id:'600', label:'600 ml',   badge:'600 ml',  fator:24},
+  {id:'300', label:'300 ml',   badge:'300 ml',  fator:23},
+];
+
+// ── Build cards de embalagem ──────────────────────────
+function rfgBuildUI() {
+  const container = document.getElementById('rfg-cards-emb');
+  if (!container || container.dataset.built) return;
+  container.dataset.built = '1';
+
+  RFG_TIPOS.forEach(t => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.cssText = 'margin-bottom:14px;padding:0;overflow:hidden';
+    card.innerHTML = `
+      <div style="background:var(--surface2);padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:18px;letter-spacing:2px">
+          ${t.label} <span style="background:#eab308;color:#000;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px">${t.badge}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+          <span style="font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">Caixas Aferidas</span>
+          <input class="rfg-aferido" type="number" min="0" placeholder="0" id="rfg-af-${t.id}"
+            oninput="rfgRecalc('${t.id}')"
+            style="background:var(--surface);border:1px solid #eab308;border-radius:8px;color:#eab308;padding:7px 10px;font-size:16px;font-weight:700;font-family:'Barlow',sans-serif;width:88px;text-align:center">
+          <span id="rfg-un-${t.id}" style="font-size:10px;color:var(--text-dim);text-align:right"></span>
+        </div>
+      </div>
+      <div id="rfg-grid-${t.id}" style="display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--border)"></div>
+      <div style="background:var(--surface2);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px">Defeitos</span>
+          <span id="rfg-num-${t.id}" style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;color:var(--green)">0</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-dim)">% Refugo: <strong id="rfg-pct-${t.id}" style="color:var(--text)">—</strong></div>
+      </div>`;
+    container.appendChild(card);
+
+    const grid = card.querySelector(`#rfg-grid-${t.id}`);
+    RFG_DEFEITOS.forEach(d => {
+      const cell = document.createElement('div');
+      cell.style.cssText = 'background:var(--surface);padding:10px 12px;display:flex;flex-direction:column;gap:5px';
+      cell.innerHTML = `
+        <label style="font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px;font-weight:600">${d.l}</label>
+        <input type="number" min="0" placeholder="0" id="rfg-${t.id}-${d.k}"
+          oninput="rfgRecalc('${t.id}');this.style.color=this.value>0?'#eab308':''"
+          style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:9px;font-size:16px;font-weight:600;font-family:'Barlow',sans-serif;width:100%;text-align:center;-moz-appearance:textfield">`;
+      grid.appendChild(cell);
+    });
+  });
+
+  // Data hoje
+  const input = document.getElementById('rfg-data');
+  if (input && !input.value) {
+    const d = new Date();
+    input.value = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  }
+}
+
+// ── Placa "outra" ─────────────────────────────────────
+window.rfgOnPlacaChange = function() {
+  const sel = document.getElementById('rfg-placa');
+  const outro = document.getElementById('rfg-placa-outro');
+  if (!sel || !outro) return;
+  outro.style.display = sel.value === 'outra' ? 'block' : 'none';
+  if (sel.value === 'outra') outro.focus();
+};
+
+function rfgGetPlaca() {
+  const sel = document.getElementById('rfg-placa');
+  if (!sel) return '';
+  if (sel.value === 'outra') return (document.getElementById('rfg-placa-outro')?.value.trim().toUpperCase()) || '';
+  return sel.value;
+}
+
+// ── Recalc ────────────────────────────────────────────
+function rfgGv(id) { return parseInt(document.getElementById(id)?.value) || 0; }
+
+window.rfgRecalc = function(tid) {
+  const tipo = RFG_TIPOS.find(t => t.id === tid);
+  let totalDef = 0;
+  RFG_DEFEITOS.forEach(d => totalDef += rfgGv(`rfg-${tid}-${d.k}`));
+  const caixas = rfgGv(`rfg-af-${tid}`);
+  const unidades = caixas * tipo.fator;
+
+  const unEl = document.getElementById(`rfg-un-${tid}`);
+  if (unEl) unEl.textContent = caixas > 0 ? `= ${unidades} un` : '';
+
+  const numEl = document.getElementById(`rfg-num-${tid}`);
+  if (numEl) { numEl.textContent = totalDef; numEl.style.color = totalDef === 0 ? 'var(--green)' : 'var(--red)'; }
+
+  const pctEl = document.getElementById(`rfg-pct-${tid}`);
+  if (pctEl) pctEl.textContent = unidades > 0 ? `${((totalDef/unidades)*100).toFixed(2)}%` : '—';
+
+  rfgAtualizaResumo();
+};
+
+function rfgAtualizaResumo() {
+  const tbody = document.getElementById('rfg-resumo-tbody');
+  if (!tbody) return;
+  let cxG = 0, unG = 0, defG = 0;
+  const rows = RFG_TIPOS.map(t => {
+    const caixas = rfgGv(`rfg-af-${t.id}`);
+    const unidades = caixas * t.fator;
+    let def = 0; RFG_DEFEITOS.forEach(d => def += rfgGv(`rfg-${t.id}-${d.k}`));
+    const pct = unidades > 0 ? ((def/unidades)*100).toFixed(2)+'%' : '—';
+    const pctColor = def === 0 ? 'var(--green)' : '#eab308';
+    cxG += caixas; unG += unidades; defG += def;
+    return `<tr>
+      <td style="padding:8px">${t.label}</td>
+      <td style="padding:8px;text-align:center">${caixas > 0 ? caixas : '—'}</td>
+      <td style="padding:8px;text-align:center">${unidades > 0 ? unidades : '—'}</td>
+      <td style="padding:8px;text-align:center">${def || '—'}</td>
+      <td style="padding:8px;text-align:right;color:${pctColor};font-weight:700">${pct}</td>
+    </tr>`;
+  });
+  tbody.innerHTML = rows.join('');
+
+  const setEl = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  setEl('rfg-res-cx-total', cxG > 0 ? cxG : '—');
+  setEl('rfg-res-un-total', unG > 0 ? unG : '—');
+  setEl('rfg-res-def-total', defG > 0 ? defG : '—');
+  const pctEl = document.getElementById('rfg-res-pct-total');
+  if (pctEl) {
+    const pctVal = unG > 0 ? ((defG/unG)*100).toFixed(2)+'%' : '—';
+    pctEl.textContent = pctVal;
+    pctEl.style.color = defG === 0 ? 'var(--green)' : '#eab308';
+  }
+}
+
+// ── Limpar ────────────────────────────────────────────
+window.rfgLimpar = function() {
+  if (!confirm('Limpar todos os campos?')) return;
+  document.querySelectorAll('#rfg-cards-emb input[type=number]').forEach(e => { e.value = ''; e.style.color = ''; });
+  ['rfg-ajudante','rfg-mapa','rfg-rota','rfg-obs'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+  const sel = document.getElementById('rfg-placa'); if (sel) sel.value = '';
+  const outro = document.getElementById('rfg-placa-outro'); if (outro) { outro.value = ''; outro.style.display = 'none'; }
+  RFG_TIPOS.forEach(t => rfgRecalc(t.id));
+  toast('Formulário limpo');
+};
+
+// ── Coletar ───────────────────────────────────────────
+function rfgColetar() {
+  const emb = {};
+  RFG_TIPOS.forEach(t => {
+    const caixas = rfgGv(`rfg-af-${t.id}`);
+    emb[t.id] = { caixas, aferido: caixas * t.fator, fator: t.fator };
+    RFG_DEFEITOS.forEach(d => { emb[t.id][d.k] = rfgGv(`rfg-${t.id}-${d.k}`); });
+    emb[t.id].total_def = RFG_DEFEITOS.reduce((a, d) => a + emb[t.id][d.k], 0);
+  });
+  return emb;
+}
+
+// ── Salvar ────────────────────────────────────────────
+window.rfgSalvar = async function() {
+  const placa = rfgGetPlaca();
+  const ajudante = document.getElementById('rfg-ajudante')?.value.trim() || '';
+  const dataVal = document.getElementById('rfg-data')?.value || '';
+
+  if (!placa)    { toast('⚠ Selecione ou informe a placa', true); return; }
+  if (!ajudante) { toast('⚠ Informe o nome do ajudante', true); return; }
+  if (!dataVal)  { toast('⚠ Informe a data', true); return; }
+
+  const emb = rfgColetar();
+  const totalCaixas  = RFG_TIPOS.reduce((a, t) => a + emb[t.id].caixas, 0);
+  const totalAferido = RFG_TIPOS.reduce((a, t) => a + emb[t.id].aferido, 0);
+  const totalDef     = RFG_TIPOS.reduce((a, t) => a + emb[t.id].total_def, 0);
+
+  const registro = {
+    placa, ajudante,
+    data: dataVal, dataISO: dataVal,
+    mapa: document.getElementById('rfg-mapa')?.value.trim() || '',
+    rota: document.getElementById('rfg-rota')?.value.trim() || '',
+    obs:  document.getElementById('rfg-obs')?.value.trim()  || '',
+    emb, totalCaixas, totalAferido, totalDef,
+    pctRefugo: totalAferido > 0 ? +((totalDef/totalAferido)*100).toFixed(2) : 0,
+  };
+
+  if (!dbOk()) return;
+  try {
+    await fbSave(RFG_COL, registro);
+    toast('✅ Blitz salva com sucesso!');
+    rfgLimpar();
+    await refugoCarregar();
+  } catch(e) {
+    toast('❌ Erro ao salvar: ' + e.message, true);
+  }
+};
+
+// ── Registros ─────────────────────────────────────────
+let rfgTodosRegs = [];
+
+window.refugoCarregar = async function() {
+  try {
+    rfgTodosRegs = await fbBuscarTodos(RFG_COL);
+    rfgTodosRegs.sort((a,b) => (b.dataISO||b.data||'').localeCompare(a.dataISO||a.data||''));
+  } catch(e) { rfgTodosRegs = []; }
+
+  // Alimenta filtro de placas
+  const placas = [...new Set(rfgTodosRegs.map(r => r.placa))].filter(Boolean).sort();
+  const sel = document.getElementById('rfg-filtro-placa');
+  if (sel) sel.innerHTML = '<option value="">Todas as placas</option>' + placas.map(p => `<option>${p}</option>`).join('');
+
+  const badge = document.getElementById('refugo-hist-cnt');
+  if (badge) badge.textContent = rfgTodosRegs.length;
+
+  rfgRenderRegs();
+};
+
+window.rfgRenderRegs = function() {
+  const busca = (document.getElementById('rfg-busca')?.value || '').toLowerCase();
+  const plFiltro = document.getElementById('rfg-filtro-placa')?.value || '';
+
+  let lista = rfgTodosRegs.filter(r => {
+    const txt = `${r.placa} ${r.data} ${r.mapa} ${r.rota} ${r.ajudante}`.toLowerCase();
+    return (!busca || txt.includes(busca)) && (!plFiltro || r.placa === plFiltro);
+  });
+
+  const el = document.getElementById('rfg-reg-list');
+  if (!el) return;
+  if (!lista.length) {
+    el.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-dim);font-size:13px">📭 Nenhum registro encontrado</div>`;
+    return;
+  }
+  el.innerHTML = lista.map(r => rfgRenderCard(r)).join('');
+};
+
+function rfgFmtData(d) {
+  if (!d) return '—';
+  if (typeof d === 'string' && d.includes('-')) { const [y,m,dy] = d.split('-'); return `${dy}/${m}/${y}`; }
+  return d;
+}
+
+function rfgRenderCard(r) {
+  const pctCls = (r.pctRefugo || 0) === 0 ? 'var(--green)' : '#eab308';
+  const rows = RFG_TIPOS.map(t => {
+    const e = r.emb?.[t.id] || {};
+    const cx  = e.caixas || 0;
+    const un  = e.aferido || (cx * (e.fator || t.fator));
+    const def = e.total_def || 0;
+    const pct = un > 0 ? ((def/un)*100).toFixed(2)+'%' : '—';
+    const pctColor = def === 0 ? 'var(--green)' : '#eab308';
+    return `<tr>
+      <td style="padding:6px 8px">${t.label}</td>
+      <td style="padding:6px 8px;text-align:center">${cx} cx<br><small style="color:var(--text-dim)">${un} un</small></td>
+      <td style="padding:6px 8px;text-align:center">${def}</td>
+      <td style="padding:6px 8px;text-align:right;color:${pctColor};font-weight:700">${pct}</td>
+    </tr>`;
+  }).join('');
+
+  const chips = RFG_DEFEITOS.map(d => {
+    const total = RFG_TIPOS.reduce((a, t) => a + (r.emb?.[t.id]?.[d.k] || 0), 0);
+    const active = total > 0 ? `background:rgba(234,179,8,.15);border-color:#eab308;color:#eab308` : '';
+    return `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;border:1px solid var(--border);${active}">${d.l}${total > 0 ? ' ('+total+')' : ''}</span>`;
+  }).join('');
+
+  return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px">
+    <div style="background:var(--surface2);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;letter-spacing:2px;color:#eab308">${r.placa || '—'}</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:2px">👤 ${r.ajudante || '—'}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;color:var(--text-dim)">📅 ${rfgFmtData(r.data || r.dataISO)}</div>
+        ${r.mapa ? `<div style="font-size:11px;color:var(--text-dim)">Mapa: ${r.mapa}</div>` : ''}
+        ${r.rota ? `<div style="font-size:11px;color:var(--blue)">Rota ${r.rota}</div>` : ''}
+      </div>
+    </div>
+    <div style="padding:12px 14px">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead style="background:var(--surface2)">
+          <tr>
+            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--border)">Embalagem</th>
+            <th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border)">Aferido</th>
+            <th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border)">Refugo</th>
+            <th style="padding:6px 8px;text-align:right;border-bottom:1px solid var(--border)">%</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+        <tfoot style="background:var(--surface2);font-weight:700">
+          <tr>
+            <td style="padding:6px 8px">Total</td>
+            <td style="padding:6px 8px;text-align:center">${r.totalCaixas || 0} cx<br><small style="color:var(--text-dim)">${r.totalAferido || 0} un</small></td>
+            <td style="padding:6px 8px;text-align:center">${r.totalDef || 0}</td>
+            <td style="padding:6px 8px;text-align:right;color:${pctCls};font-size:15px">${r.pctRefugo || 0}%</td>
+          </tr>
+        </tfoot>
+      </table>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">${chips}</div>
+      ${r.obs ? `<div style="font-size:12px;color:var(--text-dim);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">📝 <span style="color:var(--text)">${r.obs}</span></div>` : ''}
+    </div>
+    <div style="background:var(--surface2);padding:8px 14px;display:flex;justify-content:flex-end">
+      <button onclick="rfgDeletar('${r._docId}')" style="background:transparent;border:1px solid var(--red);border-radius:6px;color:var(--red);font-size:11px;font-family:'Barlow',sans-serif;font-weight:600;padding:4px 10px;cursor:pointer">🗑 Excluir</button>
+    </div>
+  </div>`;
+}
+
+window.rfgDeletar = async function(docId) {
+  if (!confirm('Excluir este registro?')) return;
+  try {
+    await fbDelete(RFG_COL, docId);
+    rfgTodosRegs = rfgTodosRegs.filter(r => r._docId !== docId);
+    const badge = document.getElementById('refugo-hist-cnt');
+    if (badge) badge.textContent = rfgTodosRegs.length;
+    rfgRenderRegs();
+    toast('Registro excluído');
+  } catch(e) { toast('❌ Erro ao excluir: ' + e.message, true); }
+};
+
+// ── Exportar ──────────────────────────────────────────
+window.exportarRefugoExcel = function() {
+  const statusEl = document.getElementById('refugo-export-status');
+  const { de, ate } = getRelatorioData();
+  if (!de && !ate) {
+    if (statusEl) statusEl.textContent = '⚠ Selecione um intervalo de datas antes de exportar.';
+    return;
+  }
+
+  if (!rfgTodosRegs.length) {
+    if (statusEl) statusEl.textContent = '⚠ Nenhum registro disponível. Acesse Blitz Refugo primeiro.';
+    return;
+  }
+
+  const filtrados = rfgTodosRegs.filter(r => {
+    const dIso = r.dataISO || r.data || '';
+    if (de  && dIso < de)  return false;
+    if (ate && dIso > ate) return false;
+    return true;
+  });
+
+  if (!filtrados.length) {
+    if (statusEl) statusEl.textContent = `⚠ Nenhum registro para o período ${de} a ${ate}.`;
+    return;
+  }
+
+  const rows = filtrados.map(r => {
+    const row = {
+      'Data': rfgFmtData(r.data || r.dataISO),
+      'Placa': r.placa || '',
+      'Ajudante': r.ajudante || '',
+      'Mapa': r.mapa || '',
+      'Rota': r.rota || '',
+    };
+    RFG_TIPOS.forEach(t => {
+      const e = r.emb?.[t.id] || {};
+      row[`${t.label} - Caixas`] = e.caixas || 0;
+      row[`${t.label} - Unidades`] = e.aferido || 0;
+      row[`${t.label} - Refugo`] = e.total_def || 0;
+      row[`${t.label} - %`] = (e.aferido || 0) > 0 ? ((e.total_def||0)/e.aferido*100).toFixed(2) : '0';
+    });
+    row['Total Caixas'] = r.totalCaixas || 0;
+    row['Total Unidades'] = r.totalAferido || 0;
+    row['Total Refugo'] = r.totalDef || 0;
+    row['% Geral'] = r.pctRefugo || 0;
+    row['Obs'] = r.obs || '';
+    return row;
+  });
+
+  try {
+    const ws = XLSX.utils.json_to_sheet(rows);
+    if (typeof xlsAutoColWidth === 'function') xlsAutoColWidth(ws, rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Refugo');
+    const nomePeriodo = `${de||'inicio'}_a_${ate||'fim'}`;
+    XLSX.writeFile(wb, `blitz_refugo_${nomePeriodo}.xlsx`);
+    if (statusEl) statusEl.textContent = `✅ ${rows.length} registro(s) exportado(s).`;
+  } catch(e) {
+    if (statusEl) statusEl.textContent = '❌ Erro: ' + e.message;
+  }
+};
+
+// ── Init ao navegar para o pane ───────────────────────
+const origNavGoPane = window.navGoPane;
+window.navGoPane = function(id) {
+  origNavGoPane(id);
+  if (id === 'refugo') {
+    rfgBuildUI();
+    RFG_TIPOS.forEach(t => rfgRecalc(t.id));
+  }
+};
+window.goPane = window.navGoPane;
+
+})();
 
 // ══════════════════════════════════════════════════════
 //  INIT
