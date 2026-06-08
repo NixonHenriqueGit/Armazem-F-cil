@@ -137,6 +137,125 @@ body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif}
 .nav-item.nav-validades.active::before{background:#a855f7}
 .nav-item.nav-refugo.active{background:rgba(234,179,8,.08);color:#eab308;border-color:rgba(234,179,8,.15)}
 .nav-item.nav-refugo.active::before{background:#eab308}
+
+/* ══════════════════════════════════════════════════════
+   RESPONSIVO GLOBAL — cobre todas as telas
+   ══════════════════════════════════════════════════════ */
+
+/* ── Tabelas: scroll horizontal em mobile ── */
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+@media(max-width:600px){
+  [style*="overflow-x:auto"] table,
+  .ptab-content table{font-size:11px}
+  .ptab-content table th,
+  .ptab-content table td{padding:6px 5px}
+}
+
+/* ── Sidebar: nav labels menores em telas intermediárias ── */
+@media(max-width:900px) and (min-width:769px){
+  :root{--sidebar-w:180px}
+  .nav-label{font-size:11px}
+  .sidebar-brand-name{font-size:13px}
+}
+
+/* ── Dashboard/Controle cards ── */
+@media(max-width:600px){
+  .dash-cards{grid-template-columns:repeat(2,1fr);gap:8px}
+  .dash-kpi-val{font-size:26px}
+  .dash-kpi{padding:12px 8px}
+  .rel-summary{grid-template-columns:1fr 1fr}
+  .rel-sum-num{font-size:30px}
+}
+@media(max-width:380px){
+  .dash-cards{grid-template-columns:1fr}
+  .rel-summary{grid-template-columns:1fr}
+}
+
+/* ── Toast responsivo ── */
+@media(max-width:480px){
+  #toast{font-size:12px;padding:10px 18px;max-width:90vw;white-space:normal;text-align:center}
+}
+
+/* ── Modal responsivo ── */
+@media(max-width:600px){
+  .modal-box,.modal-box-xl{max-width:98vw;max-height:92vh;margin:4vh auto}
+  .pop-section{padding:12px}
+}
+
+/* ── Pane-topbar em telas muito pequenas: esconde texto de ação ── */
+@media(max-width:380px){
+  .pane-topbar-actions .btn-sm span:not(.nav-icon){display:none}
+}
+
+/* ── row2/row3 responsivo adicional ── */
+@media(max-width:480px){
+  .row2,.row3{grid-template-columns:1fr;gap:10px}
+  .add-row{flex-direction:column}
+}
+
+/* ── Sidebar brand menor em telas muito largas recolhidas ── */
+@media(max-width:768px){
+  .sidebar-footer{padding:10px 12px}
+  .clock-sidebar{font-size:12px}
+}
+
+/* ── form-grid responsivo aprimorado ── */
+@media(max-width:540px){
+  .form-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .fg-1,.fg-2,.fg-3,.fg-4,.fg-5,.fg-6,
+  .fg-7,.fg-8,.fg-9,.fg-10,.fg-11{grid-column:span 1}
+  .fg-12{grid-column:span 2}
+}
+@media(max-width:380px){
+  .form-grid{grid-template-columns:1fr;gap:8px}
+  .fg-1,.fg-2,.fg-3,.fg-4,.fg-5,.fg-6,
+  .fg-7,.fg-8,.fg-9,.fg-10,.fg-11,.fg-12{grid-column:span 1}
+  .field-label{font-size:9px}
+}
+
+/* ── Validades responsivo ── */
+@media(max-width:480px){
+  .vld-stats{grid-template-columns:repeat(2,1fr);gap:6px}
+  .vld-stat{padding:10px 6px}
+  .vld-stat-val{font-size:22px}
+  .vld-row{padding:8px 10px}
+  .vld-filter-row{gap:6px}
+  .vld-filter-row select,
+  .vld-filter-row input[type=date]{font-size:13px;padding:5px 8px}
+}
+
+/* ── sec-head / task cards ── */
+@media(max-width:480px){
+  .tc{padding:12px 10px}
+  .tc-qty-val{font-size:20px}
+  .tc-desc{font-size:13px}
+  .sec-head{padding:10px 12px}
+  .sec-cnt{font-size:15px}
+}
+
+/* ── CSV / Export filtro data ── */
+@media(max-width:540px){
+  #relatorio-data-de,#relatorio-data-ate{max-width:100%!important;font-size:14px!important}
+}
+
+/* ── KPI Controle dashboard ── */
+@media(max-width:700px){
+  [id^="ctrl-"] .dash-cards{grid-template-columns:repeat(2,1fr)}
+}
+
+/* ── Blitz Refugo: grid defeitos responsivo ── */
+@media(min-width:540px){
+  #rfg-cards-emb [id^="rfg-grid-"]{grid-template-columns:repeat(3,1fr)!important}
+}
+@media(max-width:380px){
+  #rfg-cards-emb [id^="rfg-grid-"]{grid-template-columns:1fr!important}
+  .rfg-aferido{width:72px!important;font-size:14px!important}
+}
+
+/* ── Garantias anti-overflow globais ── */
+img,svg,video,canvas{max-width:100%;height:auto}
+table{word-break:break-word}
+pre,code{overflow-x:auto;max-width:100%}
 .nav-item.nav-controle.active{background:rgba(6,182,212,.08);color:var(--cyan);border-color:rgba(6,182,212,.15)}
 .nav-item.nav-controle.active::before{background:var(--cyan)}
 .vld-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px}
@@ -260,6 +379,8 @@ body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif}
 /* ── Panes ── */
 .pane{display:none}.pane.active{display:block}
 .wrap{max-width:960px;margin:0 auto;padding:24px 20px}
+@media(max-width:600px){.wrap{padding:14px 12px}}
+@media(max-width:380px){.wrap{padding:10px 8px}}
 
 /* ── Pane header strip ── */
 .pane-topbar{
@@ -269,6 +390,10 @@ body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif}
   display:flex;align-items:center;gap:12px;
   position:sticky;top:0;z-index:30;
 }
+@media(max-width:480px){
+  .pane-topbar{padding:0 10px;gap:6px;height:auto;min-height:48px;flex-wrap:wrap;padding-top:6px;padding-bottom:6px}
+  .pane-topbar-actions{margin-left:0;width:100%;justify-content:flex-end;padding-bottom:4px}
+}
 .mobile-menu-gap{width:48px;display:none}
 @media(max-width:768px){.mobile-menu-gap{display:block}}
 .pane-topbar-title{
@@ -276,12 +401,17 @@ body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif}
   font-size:14px;letter-spacing:2px;text-transform:uppercase;
   color:var(--text-dim);
 }
+@media(max-width:480px){
+  .pane-topbar-title{font-size:12px;letter-spacing:1px}
+}
 .pane-topbar-actions{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 
 /* ════════════════════════════════════════════════════
    SHARED COMPONENT STYLES (from original)
    ════════════════════════════════════════════════════ */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:14px}
+@media(max-width:480px){.card{padding:14px 12px;border-radius:10px}}
+@media(max-width:380px){.card{padding:12px 10px}}
 .card-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--amber);margin-bottom:14px}
 .field-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:5px}
 .sh{display:flex;align-items:center;gap:10px;margin:18px 0 12px}
@@ -334,6 +464,9 @@ input,select,textarea{
   color:var(--text);font-family:'Barlow',sans-serif;font-size:14px;
   transition:border-color .2s;
 }
+@media(max-width:480px){
+  input,select,textarea{font-size:16px;padding:9px 10px} /* 16px evita zoom no iOS */
+}
 input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
 
 /* ── Buttons ── */
@@ -343,6 +476,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
   padding:10px 18px;border-radius:10px;border:none;cursor:pointer;
   transition:all .15s;display:inline-flex;align-items:center;gap:6px;
   white-space:nowrap;
+}
+@media(max-width:480px){
+  .btn{font-size:12px;padding:10px 14px;letter-spacing:1px}
+  .btn-sm{font-size:10px;padding:7px 10px}
+  .btn-row{gap:6px}
 }
 .btn-amber{background:var(--amber);color:#0a0c10}
 .btn-amber:hover{background:#fbbf24;box-shadow:0 0 18px rgba(245,166,35,.25)}
@@ -574,8 +712,12 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
 .modal-tipo-operador strong{color:var(--blue);font-weight:700}
 
 /* ── Abas internas dos panes ── */
-.ptabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:18px;overflow-x:auto}
+.ptabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:18px;overflow-x:auto;scrollbar-width:none}
+.ptabs::-webkit-scrollbar{display:none}
 .ptab{padding:10px 22px;font-size:11px;font-weight:700;letter-spacing:1.2px;cursor:pointer;border:none;background:transparent;color:var(--text-dim);border-bottom:2px solid transparent;transition:all .18s;white-space:nowrap;font-family:'Barlow Condensed',sans-serif}
+@media(max-width:480px){
+  .ptab{padding:9px 14px;font-size:10px;letter-spacing:.8px}
+}
 .ptab:hover{color:var(--text);background:var(--surface2)}
 .ptab.active{color:var(--amber);border-bottom-color:var(--amber);background:var(--amber-glow)}
 .ptab-content{display:none}
@@ -839,7 +981,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
             </div>
           </div>
         </div>
-        <div id="repack-ptab-hist" class="ptab-content" data-ptab-pane="repack" style="overflow-x:auto">
+        <div id="repack-ptab-hist" class="ptab-content table-scroll" data-ptab-pane="repack">
           <table style="width:100%;border-collapse:collapse;font-size:13px">
             <thead style="background:var(--surface2)">
               <tr>
@@ -898,7 +1040,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
             </div>
           </div>
         </div>
-        <div id="despejo-ptab-hist" class="ptab-content" data-ptab-pane="despejo" style="overflow-x:auto">
+        <div id="despejo-ptab-hist" class="ptab-content table-scroll" data-ptab-pane="despejo">
           <table style="width:100%;border-collapse:collapse;font-size:13px">
             <thead style="background:var(--surface2)">
               <tr>
@@ -955,7 +1097,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
             </div>
           </div>
         </div>
-        <div id="armazem-ptab-hist" class="ptab-content" data-ptab-pane="armazem" style="overflow-x:auto">
+        <div id="armazem-ptab-hist" class="ptab-content table-scroll" data-ptab-pane="armazem">
           <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:700px">
             <thead style="background:var(--surface2)">
               <tr>
@@ -1006,7 +1148,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
             </div>
           </div>
         </div>
-        <div id="quebras-ptab-hist" class="ptab-content" data-ptab-pane="quebras" style="overflow-x:auto">
+        <div id="quebras-ptab-hist" class="ptab-content table-scroll" data-ptab-pane="quebras">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
             <span style="font-size:12px;color:var(--green)">💾 Dados salvos localmente — disponíveis mesmo offline</span>
           </div>
@@ -1389,14 +1531,14 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
             <div class="card-title" style="color:var(--amber)">📅 Intervalo do Relatório</div>
             <p style="font-size:12px;color:var(--text-dim);margin-bottom:14px">Todos os relatórios abaixo serão filtrados pelo intervalo selecionado.</p>
             <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-              <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:130px">
                 <label style="font-size:10px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase">De</label>
-                <input type="date" id="relatorio-data-de" style="max-width:170px;font-size:15px;font-weight:700" onchange="atualizarLabelData()">
+                <input type="date" id="relatorio-data-de" style="font-size:15px;font-weight:700" onchange="atualizarLabelData()">
               </div>
               <div style="font-size:18px;color:var(--text-dim);margin-top:18px">→</div>
-              <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:130px">
                 <label style="font-size:10px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase">Até</label>
-                <input type="date" id="relatorio-data-ate" style="max-width:170px;font-size:15px;font-weight:700" onchange="atualizarLabelData()">
+                <input type="date" id="relatorio-data-ate" style="font-size:15px;font-weight:700" onchange="atualizarLabelData()">
               </div>
               <div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap">
                 <button class="btn btn-ghost btn-sm" onclick="relatorioSetHoje()">📅 Hoje</button>
