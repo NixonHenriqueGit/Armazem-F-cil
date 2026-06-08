@@ -176,11 +176,7 @@ body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif}
   #toast{font-size:12px;padding:10px 18px;max-width:90vw;white-space:normal;text-align:center}
 }
 
-/* ── Modal responsivo ── */
-@media(max-width:600px){
-  .modal-box,.modal-box-xl{max-width:98vw;max-height:92vh;margin:4vh auto}
-  .pop-section{padding:12px}
-}
+/* ── Modal: já tratado no bloco .modal-box acima ── */
 
 /* ── Pane-topbar em telas muito pequenas: esconde texto de ação ── */
 @media(max-width:380px){
@@ -641,17 +637,35 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
   position:fixed;inset:0;background:rgba(0,0,0,.75);
   display:none;align-items:center;justify-content:center;z-index:500;
   backdrop-filter:blur(4px);
+  padding:12px;
 }
 .modal-overlay[style*="flex"]{display:flex!important}
 .modal-box{
   background:var(--surface);border:1px solid var(--border);
   border-radius:18px;padding:32px 28px;
-  max-width:440px;width:90%;
+  max-width:440px;width:100%;
+  max-height:90vh;overflow-y:auto;
   box-shadow:0 20px 60px rgba(0,0,0,.5);
   animation:modalIn .25s ease;
 }
 .modal-box-lg{max-width:600px}
 .modal-box-xl{max-width:820px;max-height:90vh;overflow-y:auto}
+@media(max-width:600px){
+  .modal-overlay{padding:8px;align-items:flex-end}
+  .modal-box,.modal-box-lg,.modal-box-xl{
+    border-radius:18px 18px 12px 12px;
+    padding:22px 16px 24px;
+    max-width:100%;
+    max-height:88vh;
+    width:100%;
+  }
+  .modal-icon{font-size:32px;margin-bottom:8px}
+  .modal-title{font-size:17px;letter-spacing:2px}
+}
+@media(max-width:380px){
+  .modal-box,.modal-box-lg,.modal-box-xl{padding:18px 12px 20px}
+  .modal-title{font-size:15px}
+}
 @keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .modal-icon{font-size:42px;text-align:center;margin-bottom:10px;line-height:1}
 .modal-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;letter-spacing:3px;text-transform:uppercase;color:var(--amber);text-align:center;margin-bottom:6px}
