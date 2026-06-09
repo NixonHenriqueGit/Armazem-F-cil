@@ -539,8 +539,21 @@ const FB_KEY = 'pk_firebase_config';
 let fbApp = null, fbDb = null, fbUnsub = null;
 
 // ── Firebase helpers ─────────────────────────────────
+const FB_DEFAULT_CONFIG = {
+  apiKey:            'AIzaSyA_ykhJGRkIDbPuDNYooMIVvB2DeVzp2VE',
+  authDomain:        'armazemfacil-b2292.firebaseapp.com',
+  projectId:         'armazemfacil-b2292',
+  storageBucket:     'armazemfacil-b2292.firebasestorage.app',
+  messagingSenderId: '688234941301',
+  appId:             '1:688234941301:web:153e2ad3f634379fe3213c',
+  measurementId:     'G-6HFDEKWVDB',
+};
+
 function loadFbConfig() {
-  try { return JSON.parse(localStorage.getItem(FB_KEY) || 'null'); } catch(e) { return null; }
+  try {
+    const saved = JSON.parse(localStorage.getItem(FB_KEY) || 'null');
+    return saved || FB_DEFAULT_CONFIG;
+  } catch(e) { return FB_DEFAULT_CONFIG; }
 }
 
 function populateFbForm() {
