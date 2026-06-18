@@ -1148,25 +1148,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
             </div>
           </div>
         </div>
-        <div id="armazem-ptab-hist" class="ptab-content table-scroll" data-ptab-pane="armazem">
-          <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:700px">
-            <thead style="background:var(--surface2)">
-              <tr>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Operação</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Data</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Início</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Fim</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Status</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Empilhador</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Turno</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Placa</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Tipo</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Palhete</th>
-                <th style="padding:10px 8px;text-align:left;border-bottom:1px solid var(--border)">Observação</th>
-              </tr>
-            </thead>
-            <tbody id="af-tbody"></tbody>
-          </table>
+        <div id="armazem-ptab-hist" class="ptab-content" data-ptab-pane="armazem" style="padding:10px">
+          <div id="af-accordion"></div>
         </div>
       </div>
     </div>
@@ -1852,6 +1835,13 @@ input:focus,select:focus,textarea:focus{border-color:var(--amber);outline:none}
 <script>
 // PATCH ANTECIPADO — sobrescreve goPane ANTES do app.js rodar
 // Isso evita erros de null ao tentar acessar pane-menu
+window.afToggle = function(el) {
+  var b = el.nextElementSibling;
+  var open = b.style.display !== 'none';
+  b.style.display = open ? 'none' : 'block';
+  var chev = el.querySelector('.af-chev');
+  if (chev) chev.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+};
 window.goPane = function(name) {
   // Aguarda navGoPane estar disponível
   if (typeof navGoPane === 'function') { navGoPane(name); return; }
@@ -2116,13 +2106,19 @@ const DESPEJO_EMBALAGENS = [
 //  REPACK TIMER
 // ══════════════════════════════════════════════════════
 const REPACK_EMBALAGENS = [
-  { nome: 'LATA 250', meta: '00:04:00' },
-  { nome: 'LATA 269', meta: '00:04:00' },
-  { nome: 'LATA 350', meta: '00:04:30' },
-  { nome: 'LATA 473', meta: '00:04:30' },
-  { nome: 'LONG NECK', meta: '00:05:30' },
-  { nome: 'PET 1L', meta: '00:05:00' },
-  { nome: 'PET 2L', meta: '00:04:30' },
+  { nome: 'LATA 250', meta: '00:04:30' },
+  { nome: 'LATA 269', meta: '00:04:30' },
+  { nome: 'LATA 350', meta: '00:05:30' },
+  { nome: 'LATA 473', meta: '00:05:30' },
+  { nome: 'LONG NECK', meta: '00:06:00' },
+  { nome: 'PET 1L', meta: '00:05:30' },
+  { nome: 'PET 2L', meta: '00:05:00' },
+  { nome: 'PET 500ml', meta: '00:05:00' },
+  { nome: 'PET 200ml', meta: '00:04:30' },
+  { nome: 'PET 2,5L', meta: '00:04:30' },
+  { nome: 'PET 3,3L', meta: '00:04:00' },
+  { nome: '600 OW', meta: '00:05:00' },
+  { nome: '300 OW', meta: '00:04:00' },
 ];
 
 (function initRepack() {
@@ -2265,7 +2261,7 @@ const REPACK_EMBALAGENS = [
   const btnLimpar = document.getElementById('af-btnLimpar');
   const placa = document.getElementById('af-placa');
   const placaOutro = document.getElementById('af-placaOutro');
-  const tbody = document.getElementById('af-tbody');
+  // accordion mode — no static tbody
   const nowInfo = document.getElementById('armazem-nowInfo');
 
   if (data) data.value = todayISO();
@@ -2313,15 +2309,88 @@ const REPACK_EMBALAGENS = [
     } catch(e) {}
   }
   let armazemRows = [];
+  // afToggle is defined globally as window.afToggle
   function renderArmazem() {
-    if (!tbody) return;
-    tbody.innerHTML = '';
-    if (!armazemRows.length) { tbody.innerHTML = '<tr><td colspan="11" style="padding:20px;text-align:center;color:var(--text-muted)">Nenhum registro</td></tr>'; return; }
-    armazemRows.forEach((r,i) => {
-      const tr = document.createElement('tr');
-      const ok = r.status && r.status.includes('DENTRO');
-      tr.innerHTML = `<td style="padding:8px">${r.operacao||'—'}</td><td style="padding:8px">${r.data||'—'}</td><td style="padding:8px">${r.inicio||'—'}</td><td style="padding:8px">${r.fim||'—'}</td><td style="padding:8px;font-weight:700;color:${ok?'var(--green)':'var(--amber)'}">${r.status||'—'}</td><td style="padding:8px">${r.empilhador||'—'}</td><td style="padding:8px">${r.turno||'—'}</td><td style="padding:8px">${r.placa||'—'}</td><td style="padding:8px">${r.tipo||'—'}</td><td style="padding:8px">${r.palhete||0}</td><td style="padding:8px;max-width:200px;overflow:hidden;text-overflow:ellipsis">${r.obs||''}</td>`;
-      tbody.appendChild(tr);
+    var accordion = document.getElementById('af-accordion');
+    if (!accordion) return;
+    accordion.innerHTML = '';
+    if (!armazemRows.length) {
+      accordion.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text-muted)">Nenhum registro</div>';
+      return;
+    }
+    var groups = {};
+    armazemRows.forEach(function(r) {
+      var d = r.dataISO || r.data || 'sem-data';
+      if (!groups[d]) groups[d] = [];
+      groups[d].push(r);
+    });
+    Object.keys(groups).sort(function(a,b){ return b.localeCompare(a); }).forEach(function(dateKey, gi) {
+      var rows = groups[dateKey].slice().sort(function(a,b){ return (a.inicio||'').localeCompare(b.inicio||''); });
+      var total = rows.length;
+      var foraCount = rows.filter(function(r){ return r.status && r.status.includes('FORA'); }).length;
+      var totalPalhetes = rows.reduce(function(s,r){ return s+(Number(r.palhete)||0); }, 0);
+      var dateLabel = dateKey;
+      try {
+        var parts = dateKey.split('-');
+        var dt = new Date(Number(parts[0]), Number(parts[1])-1, Number(parts[2]));
+        var dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+        dateLabel = parts[2]+'/'+parts[1]+'/'+parts[0]+' \u2014 '+dias[dt.getDay()];
+      } catch(e) {}
+
+      var div = document.createElement('div');
+      div.style.cssText = 'margin-bottom:8px;border-radius:10px;overflow:hidden;border:1px solid var(--border)';
+
+      var foraTag = foraCount > 0
+        ? '<span style="font-size:11px;background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3);padding:2px 8px;border-radius:20px;font-weight:700">\u26a0 '+foraCount+' fora da janela</span>'
+        : '<span style="font-size:11px;background:rgba(34,197,94,.1);color:var(--green);border:1px solid rgba(34,197,94,.25);padding:2px 8px;border-radius:20px;font-weight:700">\u2705 Dentro da janela</span>';
+
+      var tableRows = rows.map(function(r) {
+        var ok = r.status && r.status.includes('DENTRO');
+        return '<tr style="border-bottom:1px solid rgba(255,255,255,.04)">'
+          +'<td style="padding:8px;white-space:nowrap">'+(r.operacao||'\u2014')+'</td>'
+          +'<td style="padding:8px">'+(r.inicio||'\u2014')+'</td>'
+          +'<td style="padding:8px">'+(r.fim||'\u2014')+'</td>'
+          +'<td style="padding:8px;font-weight:700;white-space:nowrap;color:'+(ok?'var(--green)':'var(--amber)')+'>'+(ok?'\u2705 Dentro':'\u26a0 Fora')+'</td>'
+          +'<td style="padding:8px">'+(r.empilhador||'\u2014')+'</td>'
+          +'<td style="padding:8px;font-family:Barlow Condensed,sans-serif;letter-spacing:1px;color:#eab308;font-weight:700">'+(r.placa||'\u2014')+'</td>'
+          +'<td style="padding:8px;text-transform:capitalize">'+(r.tipo||'\u2014')+'</td>'
+          +'<td style="padding:8px;text-align:center;font-weight:700">'+(r.palhete||0)+'</td>'
+          +'<td style="padding:8px;color:var(--text-dim);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(r.obs||'\u2014')+'</td>'
+          +'</tr>';
+      }).join('');
+
+      var header = document.createElement('div');
+      header.setAttribute('onclick','afToggle(this)');
+      header.style.cssText = 'background:var(--surface2);padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;gap:8px;flex-wrap:wrap';
+      header.innerHTML = '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+        +'<span style="font-family:Barlow Condensed,sans-serif;font-size:16px;font-weight:900;letter-spacing:1px;color:#eab308">\uD83D\uDCC5 '+dateLabel+'</span>'
+        +'<span style="font-size:11px;background:rgba(234,179,8,.15);color:#eab308;border:1px solid rgba(234,179,8,.3);padding:2px 8px;border-radius:20px;font-weight:700">'+total+' registro'+(total>1?'s':'')+'</span>'
+        +foraTag
+        +'<span style="font-size:11px;color:var(--text-dim)">\uD83E\uDEB5 '+totalPalhetes+' palhete'+(totalPalhetes!==1?'s':'')+'</span>'
+        +'</div>'
+        +'<span class="af-chev" style="color:var(--text-dim);font-size:14px;transition:transform .25s;display:inline-block">\u25bc</span>';
+
+      var body = document.createElement('div');
+      body.style.display = 'none';
+      body.style.overflowX = 'auto';
+      body.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:12px;min-width:580px">'
+        +'<thead><tr style="background:var(--bg)">'
+        +'<th style="padding:8px;text-align:left;border-bottom:1px solid var(--border);color:var(--text-dim);font-size:10px;text-transform:uppercase">Opera\u00e7\u00e3o</th>'
+        +'<th style="padding:8px;text-align:left;border-bottom:1px solid var(--border);color:var(--text-dim);font-size:10px;text-transform:uppercase">In\u00edcio</th>'
+        +'<th style="padding:8px;text-align:left;border-bottom:1px solid var(--border);color:var(--text-dim);font-size:10px;text-transform:uppercase">Fim</th>'
+        +'<th style="padding:8px;text-align:left;border-bottom:1px solid var(--border);color:var(--text-dim);font-size:10px;text-transform:uppercase">Status</th>'
+        +'<th style="padding:8px;text-align:left;border-bottom:1px solid var(--border);color:var(--text-dim);font-size:10px;text-transform:uppercase">Empilhador</th>'
+        +'<th style="padding:8px;text-align:left;border-bottom:1px solid var(--border);color:var(--text-dim);font-size:10px;text-transform:uppercase">Placa</th>'
+        +'<th style="padding:8px;text-align:left;border-bottom:1px solid var(--border);color:var(--text-dim);font-size:10px;text-transform:uppercase">Tipo</th>'
+        +'<th style="padding:8px;text-align:center;border-bottom:1px solid var(--border);color:var(--text-dim);font-size:10px;text-transform:uppercase">Palhetes</th>'
+        +'<th style="padding:8px;text-align:left;border-bottom:1px solid var(--border);color:var(--text-dim);font-size:10px;text-transform:uppercase">Obs</th>'
+        +'</tr></thead>'
+        +'<tbody>'+tableRows+'</tbody>'
+        +'</table>';
+
+      div.appendChild(header);
+      div.appendChild(body);
+      accordion.appendChild(div);
     });
   }
 
@@ -3812,6 +3881,307 @@ async function controleCarregar() {
 }
 
 // ══════════════════════════════════════════════════════
+//  MÓDULO VALIDADES — CONTROLE FEFO
+// ══════════════════════════════════════════════════════
+(function () {
+  const VLD_KEY = 'pk2_validades_rows';
+  let vldRows = [];
+  let vldEditId = null;
+
+  // ── Helpers ──────────────────────────────────────────
+  function vldLsLoad() {
+    try { const d = localStorage.getItem(VLD_KEY); if (d) vldRows = JSON.parse(d); } catch(e) {}
+  }
+  function vldLsSave() {
+    try { localStorage.setItem(VLD_KEY, JSON.stringify(vldRows)); } catch(e) {}
+  }
+  function vldDiasRestantes(valISO) {
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const val  = new Date(valISO + 'T00:00:00');
+    return Math.round((val - hoje) / 86400000);
+  }
+  function vldStatusClass(dias) {
+    if (dias < 0)  return 'expired';
+    if (dias <= 30) return 'crit';
+    if (dias <= 45) return 'warn';
+    if (dias <= 60) return 'alert';
+    return 'ok';
+  }
+  function vldStatusLabel(dias) {
+    if (dias < 0)  return '⛔ VENCIDO';
+    if (dias <= 30) return '🔴 CRÍTICO';
+    if (dias <= 45) return '🟠 ATENÇÃO';
+    if (dias <= 60) return '🟡 ALERTA';
+    return '🟢 OK';
+  }
+  function vldFmtDate(iso) {
+    if (!iso) return '—';
+    const [y,m,d] = iso.split('-');
+    return d+'/'+m+'/'+y;
+  }
+  function vldUpdateBadge() {
+    const el = document.getElementById('vld-lista-cnt');
+    if (el) el.textContent = vldRows.length;
+  }
+  function vldUpdateStats() {
+    const counts = {expired:0,crit:0,warn:0,alert:0,ok:0};
+    vldRows.forEach(function(r) { counts[vldStatusClass(vldDiasRestantes(r.validade))]++; });
+    ['exp','30','45','60','ok'].forEach(function(id, i) {
+      const key = ['expired','crit','warn','alert','ok'][i];
+      const el = document.getElementById('vs-'+id);
+      if (el) el.textContent = counts[key];
+    });
+  }
+
+  // ── Busca produto (autocomplete) ─────────────────────
+  window.vldBuscarProduto = function(q) {
+    const lista = document.getElementById('vld-listaProdutos');
+    if (!lista) return;
+    q = (q||'').toLowerCase().trim();
+    if (!q) { lista.style.display = 'none'; return; }
+    const results = (typeof PRODUCTS !== 'undefined' ? PRODUCTS : [])
+      .filter(function(p) {
+        return String(p.codigo).includes(q) || p.descricao.toLowerCase().includes(q);
+      }).slice(0, 12);
+    if (!results.length) { lista.style.display = 'none'; return; }
+    lista.innerHTML = results.map(function(p) {
+      var hov = 'onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'\'"';
+      return '<div onclick="vldSelecionarProduto('+p.codigo+')" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:12px" '+hov+'>'
+        + '<span style="color:#eab308;font-weight:700;margin-right:8px">'+p.codigo+'</span>'
+        + p.descricao
+        + '</div>';
+    }).join('');
+    lista.style.display = 'block';
+  };
+
+  window.vldSelecionarProduto = function(codigo) {
+    const p = (typeof PRODUCTS !== 'undefined' ? PRODUCTS : []).find(function(x){ return x.codigo === codigo; });
+    if (!p) return;
+    var el = document.getElementById('vld-produtoInput');
+    if (el) el.value = p.descricao;
+    var elCod = document.getElementById('vld-codigo');
+    if (elCod) elCod.value = p.codigo;
+    var elDesc = document.getElementById('vld-descricao');
+    if (elDesc) elDesc.value = p.descricao;
+    var lista = document.getElementById('vld-listaProdutos');
+    if (lista) lista.style.display = 'none';
+  };
+
+  // ── Salvar / Editar ───────────────────────────────────
+  window.vldSalvar = function() {
+    var codigo   = (document.getElementById('vld-codigo')     || {}).value || '';
+    var descricao= (document.getElementById('vld-descricao')  || {}).value.trim();
+    var palhete  = parseInt((document.getElementById('vld-palhete') || {}).value) || 0;
+    var lastro   = parseInt((document.getElementById('vld-lastro')  || {}).value) || 0;
+    var caixa    = parseInt((document.getElementById('vld-caixa')   || {}).value) || 0;
+    var validade = (document.getElementById('vld-validade')   || {}).value;
+    var loc      = (document.getElementById('vld-localizacao')|| {}).value || 'picking';
+
+    if (!descricao || !validade) {
+      if (typeof toast === 'function') toast('Preencha Descrição e Data de Validade', true);
+      else alert('Preencha Descrição e Data de Validade');
+      return;
+    }
+
+    if (vldEditId !== null) {
+      var idx = vldRows.findIndex(function(r){ return r.id === vldEditId; });
+      if (idx >= 0) {
+        vldRows[idx] = Object.assign(vldRows[idx], {codigo:codigo,descricao:descricao,palhete:palhete,lastro:lastro,caixa:caixa,validade:validade,localizacao:loc});
+      }
+      vldEditId = null;
+    } else {
+      vldRows.push({
+        id: Date.now(),
+        codigo: codigo, descricao: descricao,
+        palhete: palhete, lastro: lastro, caixa: caixa,
+        validade: validade, localizacao: loc,
+        cadastradoEm: new Date().toISOString()
+      });
+    }
+
+    vldLsSave();
+    vldRender();
+    vldUpdateBadge();
+    vldUpdateStats();
+    vldLimparForm();
+    // Sync Firebase
+    if (typeof fbSave === 'function') fbSave('validades', vldRows[vldRows.length-1]);
+    if (typeof toast === 'function') toast('Produto salvo!');
+  };
+
+  function vldLimparForm() {
+    ['vld-produtoInput','vld-codigo','vld-descricao','vld-validade'].forEach(function(id) {
+      var el = document.getElementById(id); if (el) el.value = '';
+    });
+    ['vld-palhete','vld-lastro','vld-caixa'].forEach(function(id) {
+      var el = document.getElementById(id); if (el) el.value = '0';
+    });
+    var btnCancel = document.getElementById('vld-btn-cancelar');
+    if (btnCancel) btnCancel.style.display = 'none';
+    var btnSalvar = document.getElementById('vld-btn-salvar');
+    if (btnSalvar) btnSalvar.textContent = '💾 SALVAR PRODUTO';
+    vldEditId = null;
+  }
+
+  window.vldCancelarEdicao = function() {
+    vldLimparForm();
+  };
+
+  // ── Editar inline ─────────────────────────────────────
+  window.vldEditar = function(id) {
+    var r = vldRows.find(function(x){ return x.id === id; });
+    if (!r) return;
+    vldEditId = id;
+    var set = function(elId, val) { var el = document.getElementById(elId); if (el) el.value = val || ''; };
+    set('vld-produtoInput', r.descricao);
+    set('vld-codigo', r.codigo);
+    set('vld-descricao', r.descricao);
+    set('vld-palhete', r.palhete);
+    set('vld-lastro', r.lastro);
+    set('vld-caixa', r.caixa);
+    set('vld-validade', r.validade);
+    set('vld-localizacao', r.localizacao);
+    var btnCancel = document.getElementById('vld-btn-cancelar');
+    if (btnCancel) btnCancel.style.display = '';
+    var btnSalvar = document.getElementById('vld-btn-salvar');
+    if (btnSalvar) btnSalvar.textContent = '✏ ATUALIZAR PRODUTO';
+    // Switch to form tab
+    if (typeof ptabSwitch === 'function') ptabSwitch('validades','form');
+    window.scrollTo(0,0);
+  };
+
+  // ── Excluir ───────────────────────────────────────────
+  window.vldExcluir = function(id) {
+    if (!confirm('Excluir este registro de validade?')) return;
+    var r = vldRows.find(function(x){ return x.id === id; });
+    if (r && r._docId && typeof fbDelete === 'function') fbDelete('validades', r._docId);
+    vldRows = vldRows.filter(function(x){ return x.id !== id; });
+    vldLsSave();
+    vldRender();
+    vldUpdateBadge();
+    vldUpdateStats();
+    if (typeof toast === 'function') toast('Registro excluído');
+  };
+
+  // ── Limpar tudo ───────────────────────────────────────
+  window.vldLimparTudo = function() {
+    if (!confirm('Apagar TODOS os registros de validade?')) return;
+    vldRows = [];
+    vldLsSave();
+    vldRender();
+    vldUpdateBadge();
+    vldUpdateStats();
+    if (typeof toast === 'function') toast('Todos os registros apagados');
+  };
+
+  // ── Render lista ──────────────────────────────────────
+  window.vldRender = function() {
+    var body = document.getElementById('vld-lista-body');
+    if (!body) return;
+
+    var fLoc    = (document.getElementById('vld-f-loc')    || {}).value || 'todos';
+    var fStatus = (document.getElementById('vld-f-status') || {}).value || 'todos';
+    var fSort   = (document.getElementById('vld-f-sort')   || {}).value || 'asc';
+
+    var rows = vldRows.slice();
+
+    // Filtrar
+    if (fLoc !== 'todos') rows = rows.filter(function(r){ return r.localizacao === fLoc; });
+    if (fStatus !== 'todos') rows = rows.filter(function(r){
+      return vldStatusClass(vldDiasRestantes(r.validade)) === fStatus;
+    });
+
+    // Ordenar
+    rows.sort(function(a,b) {
+      if (fSort === 'asc')  return a.validade.localeCompare(b.validade);
+      if (fSort === 'desc') return b.validade.localeCompare(a.validade);
+      if (fSort === 'loc')  return a.localizacao.localeCompare(b.localizacao) || a.validade.localeCompare(b.validade);
+      return 0;
+    });
+
+    if (!rows.length) {
+      body.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text-muted)">Nenhum produto encontrado</div>';
+      return;
+    }
+
+    body.innerHTML = rows.map(function(r) {
+      var dias  = vldDiasRestantes(r.validade);
+      var cls   = vldStatusClass(dias);
+      var lbl   = vldStatusLabel(dias);
+      var diasTxt = dias < 0 ? Math.abs(dias)+' dias VENCIDO' : dias === 0 ? 'VENCE HOJE' : dias+' dias restantes';
+      var borderColor = {expired:'var(--red)',crit:'var(--red)',warn:'#f97316',alert:'#eab308',ok:'var(--green)'}[cls];
+      return '<div style="background:var(--surface);border:1px solid '+borderColor+';border-left:4px solid '+borderColor+';border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">'
+        + '<div style="flex:1;min-width:0">'
+        + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">'
+        + (r.codigo ? '<span style="font-size:10px;background:rgba(234,179,8,.12);color:#eab308;border:1px solid rgba(234,179,8,.3);padding:1px 7px;border-radius:10px;font-weight:700">'+r.codigo+'</span>' : '')
+        + '<span style="font-size:11px;background:rgba(255,255,255,.05);color:var(--text-dim);padding:1px 7px;border-radius:10px;text-transform:uppercase">'+r.localizacao+'</span>'
+        + '<span style="font-size:11px;font-weight:700;color:'+borderColor+'">'+lbl+'</span>'
+        + '</div>'
+        + '<div style="font-size:13px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+r.descricao+'</div>'
+        + '<div style="margin-top:6px;display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--text-dim)">'
+        + '<span>📅 Val: <strong style="color:var(--text-primary)">'+vldFmtDate(r.validade)+'</strong></span>'
+        + '<span>⏳ <strong style="color:'+borderColor+'">'+diasTxt+'</strong></span>'
+        + (r.palhete ? '<span>🪵 '+r.palhete+' pal.</span>' : '')
+        + (r.lastro  ? '<span>📦 '+r.lastro+' last.</span>' : '')
+        + (r.caixa   ? '<span>🗃 '+r.caixa+' cx</span>' : '')
+        + '</div>'
+        + '</div>'
+        + '<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">'
+        + '<button onclick="vldEditar('+r.id+')" style="padding:4px 12px;font-size:11px;font-weight:700;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text-primary);cursor:pointer">✏ Editar</button>'
+        + '<button onclick="vldExcluir('+r.id+')" style="padding:4px 12px;font-size:11px;font-weight:700;border-radius:8px;border:1px solid rgba(239,68,68,.4);background:rgba(239,68,68,.1);color:#fca5a5;cursor:pointer">🗑 Excluir</button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+
+    vldUpdateStats();
+    vldUpdateBadge();
+  };
+
+  // ── Export Excel ──────────────────────────────────────
+  window.vldExportExcel = function() {
+    if (!vldRows.length) { if (typeof toast === 'function') toast('Nenhum dado para exportar', true); return; }
+    var header = ['Código','Descrição','Localização','Validade','Dias Restantes','Status','Paletes','Lastros','Caixas'];
+    var rows = [header].concat(vldRows.map(function(r) {
+      var dias = vldDiasRestantes(r.validade);
+      return [r.codigo||'',r.descricao,r.localizacao,vldFmtDate(r.validade),dias,vldStatusLabel(dias).replace(/[^\w\s]/g,'').trim(),r.palhete||0,r.lastro||0,r.caixa||0];
+    }));
+    var csv = rows.map(function(r){ return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
+    var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'validades_'+new Date().toISOString().slice(0,10)+'.csv';
+    a.click();
+    if (typeof toast === 'function') toast('Exportado!');
+  };
+
+  // ── Init ──────────────────────────────────────────────
+  vldLsLoad();
+  vldUpdateBadge();
+  vldUpdateStats();
+
+  // Firebase sync
+  setTimeout(function() {
+    if (typeof getDb !== 'function' || !getDb()) return;
+    try {
+      getDb().collection('validades').get().then(function(snap) {
+        if (!snap.docs.length) return;
+        snap.docs.forEach(function(doc) {
+          var fb = Object.assign({}, doc.data(), {_docId: doc.id});
+          if (!vldRows.find(function(r){ return r._docId === doc.id || String(r.id) === String(fb.id); })) {
+            vldRows.push(fb);
+          }
+        });
+        vldLsSave();
+        vldUpdateBadge();
+        vldUpdateStats();
+      });
+    } catch(e) {}
+  }, 2500);
+
+})();
+
+
+// ══════════════════════════════════════════════════════
 //  BLITZ DE REFUGO
 // ══════════════════════════════════════════════════════
 (function() {
@@ -4069,6 +4439,8 @@ function rfgFmtData(d) {
 
 function rfgRenderCard(r) {
   const pctCls = (r.pctRefugo || 0) === 0 ? 'var(--green)' : '#eab308';
+
+  // Build rows: cada embalagem com seus defeitos detalhados
   const rows = RFG_TIPOS.map(t => {
     const e = r.emb?.[t.id] || {};
     const cx  = e.caixas || 0;
@@ -4076,19 +4448,42 @@ function rfgRenderCard(r) {
     const def = e.total_def || 0;
     const pct = un > 0 ? ((def/un)*100).toFixed(2)+'%' : '—';
     const pctColor = def === 0 ? 'var(--green)' : '#eab308';
+
+    // Lista de defeitos com valor > 0 para esta embalagem
+    const defAtivos = RFG_DEFEITOS.filter(d => (e[d.k] || 0) > 0);
+    const defDetalhe = defAtivos.length > 0
+      ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:5px">`
+        + defAtivos.map(d =>
+            `<span style="display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:20px;font-size:9px;font-weight:700;background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.4);color:#eab308;letter-spacing:.3px">`
+            + `${d.l} <span style="background:#eab308;color:#000;border-radius:10px;padding:0 5px;font-size:9px;font-weight:900">${e[d.k]}</span>`
+            + `</span>`
+          ).join('')
+        + `</div>`
+      : '';
+
     return `<tr>
       <td style="padding:6px 8px">${t.label}</td>
-      <td style="padding:6px 8px;text-align:center">${cx} cx<br><small style="color:var(--text-dim)">${un} un</small></td>
-      <td style="padding:6px 8px;text-align:center">${def}</td>
+      <td style="padding:6px 8px;text-align:center">${cx > 0 ? cx+' cx' : '—'}<br><small style="color:var(--text-dim)">${un > 0 ? un+' un' : ''}</small></td>
+      <td style="padding:6px 8px;text-align:center">
+        <div style="font-weight:700;color:${pctColor}">${def || '—'}</div>
+        ${defDetalhe}
+      </td>
       <td style="padding:6px 8px;text-align:right;color:${pctColor};font-weight:700">${pct}</td>
     </tr>`;
   }).join('');
 
-  const chips = RFG_DEFEITOS.map(d => {
-    const total = RFG_TIPOS.reduce((a, t) => a + (r.emb?.[t.id]?.[d.k] || 0), 0);
-    const active = total > 0 ? `background:rgba(234,179,8,.15);border-color:#eab308;color:#eab308` : '';
-    return `<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;border:1px solid var(--border);${active}">${d.l}${total > 0 ? ' ('+total+')' : ''}</span>`;
-  }).join('');
+  // Chips totais por tipo de defeito (só os que têm valor)
+  const chipsAtivos = RFG_DEFEITOS.filter(d =>
+    RFG_TIPOS.reduce((a, t) => a + (r.emb?.[t.id]?.[d.k] || 0), 0) > 0
+  );
+  const chips = chipsAtivos.length > 0
+    ? chipsAtivos.map(d => {
+        const total = RFG_TIPOS.reduce((a, t) => a + (r.emb?.[t.id]?.[d.k] || 0), 0);
+        return `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);color:#fca5a5">`
+          + `${d.l} <span style="background:var(--red);color:#fff;border-radius:10px;padding:0 6px;font-size:9px;font-weight:900">${total}</span>`
+          + `</span>`;
+      }).join('')
+    : `<span style="font-size:11px;color:var(--green)">✅ Nenhum defeito registrado</span>`;
 
   return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px">
     <div style="background:var(--surface2);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
@@ -4108,7 +4503,7 @@ function rfgRenderCard(r) {
           <tr>
             <th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--border)">Embalagem</th>
             <th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border)">Aferido</th>
-            <th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border)">Refugo</th>
+            <th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border)">Refugo / Anomalias</th>
             <th style="padding:6px 8px;text-align:right;border-bottom:1px solid var(--border)">%</th>
           </tr>
         </thead>
@@ -4122,7 +4517,7 @@ function rfgRenderCard(r) {
           </tr>
         </tfoot>
       </table>
-      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">${chips}</div>
+      ${chipsAtivos.length > 0 ? `<div style="margin-top:10px;padding:8px 10px;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.2);border-radius:8px"><div style="font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:5px">⚠ Anomalias Totais</div><div style="display:flex;flex-wrap:wrap;gap:4px">${chips}</div></div>` : `<div style="margin-top:8px;padding:6px 10px;background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.2);border-radius:8px;font-size:11px;color:var(--green)">✅ Nenhum defeito registrado</div>`}
       ${r.obs ? `<div style="font-size:12px;color:var(--text-dim);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">📝 <span style="color:var(--text)">${r.obs}</span></div>` : ''}
     </div>
     <div style="background:var(--surface2);padding:8px 14px;display:flex;justify-content:flex-end">
@@ -4176,17 +4571,25 @@ window.exportarRefugoExcel = function() {
       'Ajudante': r.ajudante || '',
       'Mapa': r.mapa || '',
       'Rota': r.rota || '',
+      'Ajudante/Motorista': r.ajudante || '',
     };
     RFG_TIPOS.forEach(t => {
       const e = r.emb?.[t.id] || {};
       row[`${t.label} - Caixas`] = e.caixas || 0;
       row[`${t.label} - Unidades`] = e.aferido || 0;
-      row[`${t.label} - Refugo`] = e.total_def || 0;
-      row[`${t.label} - %`] = (e.aferido || 0) > 0 ? ((e.total_def||0)/e.aferido*100).toFixed(2) : '0';
+      RFG_DEFEITOS.forEach(d => {
+        row[`${t.label} - ${d.l}`] = e[d.k] || 0;
+      });
+      row[`${t.label} - Total Defeitos`] = e.total_def || 0;
+      row[`${t.label} - % Refugo`] = (e.aferido || 0) > 0 ? ((e.total_def||0)/e.aferido*100).toFixed(2) : '0';
     });
     row['Total Caixas'] = r.totalCaixas || 0;
     row['Total Unidades'] = r.totalAferido || 0;
-    row['Total Refugo'] = r.totalDef || 0;
+    // Totais de cada anomalia somados em todas as embalagens
+    RFG_DEFEITOS.forEach(d => {
+      row[`TOTAL - ${d.l}`] = RFG_TIPOS.reduce((a, t) => a + (r.emb?.[t.id]?.[d.k] || 0), 0);
+    });
+    row['Total Defeitos'] = r.totalDef || 0;
     row['% Geral'] = r.pctRefugo || 0;
     row['Obs'] = r.obs || '';
     return row;
@@ -4196,10 +4599,52 @@ window.exportarRefugoExcel = function() {
     const ws = XLSX.utils.json_to_sheet(rows);
     if (typeof xlsAutoColWidth === 'function') xlsAutoColWidth(ws, rows);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Refugo');
+    XLSX.utils.book_append_sheet(wb, ws, 'Refugo Completo');
+
+    // Aba 2: Anomalias por Embalagem (uma linha por embalagem por registro)
+    const rowsAnomalia = [];
+    filtrados.forEach(r => {
+      RFG_TIPOS.forEach(t => {
+        const e = r.emb?.[t.id] || {};
+        const linha = {
+          'Data': rfgFmtData(r.data || r.dataISO),
+          'Placa': r.placa || '',
+          'Ajudante': r.ajudante || '',
+          'Mapa': r.mapa || '',
+          'Rota': r.rota || '',
+          'Ajudante/Motorista': r.ajudante || '',
+          'Embalagem': t.label,
+          'Caixas Aferidas': e.caixas || 0,
+          'Unidades Aferidas': e.aferido || 0,
+        };
+        RFG_DEFEITOS.forEach(d => { linha[d.l] = e[d.k] || 0; });
+        linha['Total Defeitos'] = e.total_def || 0;
+        linha['% Refugo'] = (e.aferido || 0) > 0
+          ? +((e.total_def||0)/e.aferido*100).toFixed(2) : 0;
+        rowsAnomalia.push(linha);
+      });
+    });
+    const ws2 = XLSX.utils.json_to_sheet(rowsAnomalia);
+    if (typeof xlsAutoColWidth === 'function') xlsAutoColWidth(ws2, rowsAnomalia);
+    XLSX.utils.book_append_sheet(wb, ws2, 'Anomalias por Embalagem');
+
+    // Aba 3: Resumo por tipo de defeito (total geral do período)
+    const resumoAnomalia = RFG_DEFEITOS.map(d => {
+      const row3 = { 'Anomalia': d.l };
+      RFG_TIPOS.forEach(t => {
+        row3[t.label] = filtrados.reduce((a, r) => a + (r.emb?.[t.id]?.[d.k] || 0), 0);
+      });
+      row3['TOTAL GERAL'] = filtrados.reduce((a, r) =>
+        a + RFG_TIPOS.reduce((b, t) => b + (r.emb?.[t.id]?.[d.k] || 0), 0), 0);
+      return row3;
+    });
+    const ws3 = XLSX.utils.json_to_sheet(resumoAnomalia);
+    if (typeof xlsAutoColWidth === 'function') xlsAutoColWidth(ws3, resumoAnomalia);
+    XLSX.utils.book_append_sheet(wb, ws3, 'Resumo Anomalias');
+
     const nomePeriodo = `${de||'inicio'}_a_${ate||'fim'}`;
     XLSX.writeFile(wb, `blitz_refugo_${nomePeriodo}.xlsx`);
-    if (statusEl) statusEl.textContent = `✅ ${rows.length} registro(s) exportado(s).`;
+    if (statusEl) statusEl.textContent = `✅ ${rows.length} registro(s) exportado(s) — 3 abas geradas.`;
   } catch(e) {
     if (statusEl) statusEl.textContent = '❌ Erro: ' + e.message;
   }
